@@ -1,0 +1,13 @@
+#  compilated code
+*.pyc
+__pycache__
+# rendered videos
+*.mp4
+# media folder
+presentations
+media
+slides
+Assets
+w3python_assets
+W3Slides_python_assets
+Video_player_app.py
