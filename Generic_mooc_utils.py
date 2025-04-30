@@ -29,6 +29,105 @@ def pixel2p(x, y):
         0
     ]
 
+
+class HighlightRectangle(BackgroundRectangle):
+    def __init__(
+        self,
+        mobject: Mobject,
+        color = BLUE,
+        corner_radius: float = 0.1,
+        buff: float = 0.05,
+        **kwargs
+    ):
+        super().__init__(mobject, color=color, 
+                         stroke_width=0, stroke_opacity=0, fill_opacity=1, 
+                         buff=buff, corner_radius=corner_radius, **kwargs)
+        self.set_z_index(mobject.z_index - 0.1)
+        
+class DynamicSplitScreen(VMobject):
+    '''Horizontal spliscreen that adapts dynamically to the content.'''
+    def __init__(
+        self,
+        main_color=BLUE,
+        side_color=RED,
+        buff=SMALL_BUFF*2
+    ):
+        super().__init__()
+        self.mainRect = Rectangle(
+            color=main_color, 
+            width=FRAME_WIDTH, 
+            height=FRAME_HEIGHT, 
+            fill_opacity=1, 
+            stroke_width=0
+        ).center()
+        self.secondaryRect = Rectangle(
+            color=side_color, 
+            width=FRAME_WIDTH,
+            height= 2 * buff,
+            fill_opacity=1,
+            stroke_width=0
+        ).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        self.mainObj = None
+        self.secondaryObj = None
+        self.brought_in_ = False
+        self.buff_ = buff
+
+        self.mainRect.add_updater(
+            lambda r: r.stretch_to_fit_height(
+                FRAME_HEIGHT/2 +self.secondaryRect.get_bottom()[1]
+                ).move_to([0, -FRAME_HEIGHT/2, 0], aligned_edge=DOWN)
+        )
+        self.add(self.mainRect, self.secondaryRect)
+
+    def add_main_obj(self, main_obj: VMobject):
+        self.remove_main_obj()
+        self.mainObj = main_obj
+        self.mainObj.move_to(self.mainRect)
+        self.add(self.mainObj)
+
+    def remove_main_obj(self):
+        if self.mainObj is not None:
+            self.remove(self.mainObj)
+            self.mainObj = None
+
+    def add_side_obj(self, secondary_object: VMobject):
+        self.remove_side_obj()
+        self.secondaryRect.stretch_to_fit_height(secondary_object.height + 2 * self.buff)
+        if self.brought_in_ == False:
+            self.secondaryRect.move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        else:
+            self.secondaryRect.move_to([0, -FRAME_HEIGHT/2, 0], aligned_edge=UP)
+            self.mainRect.update()
+        self.secondaryObj = secondary_object
+        secondary_object.move_to(self.secondaryRect)
+        self.add(self.secondaryObj)
+    
+    def remove_side_obj(self):
+        if self.secondaryObj is not None:
+            self.remove(self.secondaryObj)
+            self.secondaryObj = None
+
+    def bring_in(self):
+        '''Can be used with animate keyword.'''
+        if not self.brought_in_:
+            self.brought_in_=True
+            self.secondaryRect.shift(DOWN*self.secondaryRect.height)
+            if self.secondaryObj is not None:
+                self.secondaryObj.shift(DOWN*self.secondaryRect.height)
+            if self.mainObj is not None:
+                self.mainObj.shift(DOWN*self.secondaryRect.height/2)
+    
+    def bring_out(self):
+        '''Can be used with animate keyword.'''
+        if self.brought_in_:
+            self.brought_in_=False
+            self.secondaryRect.shift(UP*self.secondaryRect.height)
+            if self.secondaryObj is not None:
+                self.secondaryObj.shift(UP*self.secondaryRect.height)
+            if self.mainObj is not None:
+                self.mainObj.shift(UP*self.secondaryRect.height/2)
+
+
 class Cursor(SVGMobject):
     '''Classic hand cursor for tutorial animations.'''
     def __init__(self, **kwargs):

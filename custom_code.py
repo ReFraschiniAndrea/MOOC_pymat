@@ -122,19 +122,19 @@ class CustomCode(VMobject):
         base_paragraph_config = self.default_paragraph_config.copy()
         base_paragraph_config.update(paragraph_config)
 
-        self.code_lines = Paragraph(
+        self.code = Paragraph(
             *code_lines,
             **base_paragraph_config,
         )
-        for line, color_range in zip(self.code_lines, color_ranges):
+        for line, color_range in zip(self.code, color_ranges):
             for start, end, color in color_range:
                 line[start:end].set_color(color)
 
-        self.add(self.code_lines)
+        self.add(self.code)
 
 
     def __getitem__(self, value):
-        return self.code_lines.__getitem__(value)
+        return self.code.__getitem__(value)
 
 
     def add_background_window(self, rectangle: Rectangle = None, background_config=None):
