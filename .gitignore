@@ -1,8 +1,9 @@
 #  compilated code
 *.pyc
 __pycache__
-# rendered videos
+# rendered videos and presentations
 *.mp4
+*.pptx
 # media folder
 presentations
 media

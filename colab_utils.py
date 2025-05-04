@@ -3,36 +3,34 @@ __all__ = [
     "COLAB_GRAY",
     "COLAB_DARKGRAY",
     "COLAB_FONT_SIZE",
-
+    "ColabCode",
+    "ColabCodeBlock",
+    "ColabBlockOutputText",
+    "ColabEnv",
+    "ColabCodeWithLogo"
 ]
 
 from manim import *
 from Generic_mooc_utils import *
-from custom_code import CustomCode
+from custom_code import CustomCode, CodeWithLogo
 from typing import Any
 
 # import custom lexer and style for Colab-like python code listings
-from pygments.styles import STYLE_MAP
-from pygments.style import Style
-from pygments import highlight
-from pygments.lexers import PythonLexer
-from pygments.formatters import HtmlFormatter
-
-# Import your style class
-from my_style import MyCustomStyle
-
-# Register it under a name of your choice
-from pygments.styles import get_all_styles
-from pygments.style import Style
-import pygments.styles
-
-pygments.styles.STYLE_MAP['mycustom'] = 'my_style::MyCustomStyle'
-pygments.styles.STYLES['mycustom'] = MyCustomStyle  # Optional for some versions
-
+# Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
+from pygments.styles._mapping import STYLES
+# from pygments.styles.__init__ import _STYLE_NAME_TO_MODULE_MAP 
 from pygments.lexers._mapping import LEXERS
-from pygments.lexers import get_lexer_by_name
 
-LEXERS['MySimpleLang'] = ('my_lexer', 'MySimpleLang', ('mysimple',), ('*.mys',), ('text/x-mysimple',))
+# STYLES['ColabStyle'] = ('ColabStyle', 'colab', ())
+# _STYLE_NAME_TO_MODULE_MAP['colab'] = 'ColabStyle'
+# pygments.styles.STYLES['colab'] = ColabStyle  # Optional for some versions
+LEXERS['ColabPythonLexer'] = (
+    'ColabPythonLexer', # name of the module
+    'Colab-python', # Name of the lexer
+    ('colabpython',), # aliases
+    ('*.py',), # extensions
+    () # mime types
+    )
 
 # Colab constants
 COLAB_LIGHTGRAY = "#f7f7f7" # Main color of colab cell
@@ -59,12 +57,11 @@ class ColabCode(CustomCode):
         "buff": MED_SMALL_BUFF
     }
     default_paragraph_config: dict[str, Any] = {
-        "font": "Monospace",
+        "font": CODE_FONT,
         "font_size": 24,
         "line_spacing": 0.5,
         "disable_ligatures": True,
     }
-
     def __init__(
         self,
         code_string: str = None, 
@@ -74,12 +71,12 @@ class ColabCode(CustomCode):
         super().__init__(
             code_file, 
             code_string, 
-            language='python',
-            formatter_style='paraiso-light',
+            language='colabpython',
+            formatter_style='colab',
             paragraph_config=paragraph_config
         )
 
-    def into_colab(self, colab_env: 'ColabEnv', **kwargs):
+    def IntoColab(self, colab_env: 'ColabEnv', **kwargs):
         target = ColabCodeBlock(self.code_string)
         colab_env.add_cell(target)
         cells_to_fade = colab_env.cells[:-1]
@@ -100,11 +97,12 @@ class ColabCode(CustomCode):
 class ColabCodeBlock(Mobject):
     def __init__(self, code: str):
         super().__init__()
-        self.colabCode = ColabCode(code, font_size=COLAB_FONT_SIZE)
+        self.colabCode = ColabCode(code, paragraph_config={'font_size': COLAB_FONT_SIZE})
+        target_height = self.colabCode.code.height + 2*_COLAB_SURROUND_CODE_BUFF if code != '' else 0.4766081925925926
         self.colabCode.add_background_window(
             Rectangle(
                 width=_COLAB_BLOCK_WIDTH,
-                height= 0 if code != '' else 0.4766081925925926,
+                height= target_height,
                 fill_color=COLAB_LIGHTGRAY, 
                 fill_opacity=1,
                 stroke_width=0
@@ -165,14 +163,30 @@ class ColabCodeBlock(Mobject):
     def Run(self):
         self.cursor = Cursor().move_to(self.playButton)
         self.add(self.cursor)
+        # add again the output so it is above everything else
+        self.add(self.outputWindow, self.output)
         return Succession(
             GrowFromCenter(self.cursor),
             AnimationGroup(
-                self.cursor.click(),
+                self.cursor.Click(),
                 FadeIn(self.outputWindow, self.output, run_time=0),
                 lag_ratio=0.5),
             lag_ratio=1
         )
+    
+    def focus_output(self, scale=0.75):
+        '''Can be used with animate keyword'''
+        if self.outputWindow is None or self.output is None:
+            raise ValueError('Cell does not have output.')
+        
+        self.outputWindow.become(
+                Rectangle(
+                color=WHITE,
+                height=FRAME_HEIGHT,
+                width=FRAME_WIDTH,
+                fill_opacity=1)
+            )
+        self.output.scale_to_fit_width(FRAME_WIDTH*scale).center()
 
 
 class ColabBlockOutputText(Paragraph):
@@ -184,9 +198,12 @@ class ColabEnv(Mobject):
     def __init__(self, background=None):
         super().__init__()
         self.TOP_LEFT_CORNER_ = pixel2p(77, 156)
-        self.env_image = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-1) # background
+        self.env_image = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-2)
         self.add(self.env_image)
         self.cells = []
+
+    def set_image(self, image_path: str):
+         self.env_image.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-2)
 
     def add_cell(self, cell: ColabCodeBlock):
         if len(self.cells) == 0:
@@ -218,18 +235,18 @@ class ColabEnv(Mobject):
             Transform(cell.colabCode, target),
             FadeOut(self.env_image, cell.gutter, cell.playButton)
         )
-    
-    def focus_output(self, cell: ColabCodeBlock, scale=0.75):
-        '''Can be used with animate keyword'''
-        if cell.outputWindow is None or cell.output is None:
-            raise ValueError('Cell does not have output.')
-        
-        cell.outputWindow.become(
-                Rectangle(
-                color=WHITE,
-                height=FRAME_HEIGHT,
-                width=FRAME_WIDTH,
-                fill_opacity=1)
-            )
-        cell.output.scale_to_fit_width(FRAME_WIDTH*scale).center()
-        
+
+class ColabCodeWithLogo(CodeWithLogo):
+    def __init__(
+        self,
+        code,
+        logo_pos=UP,
+        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER,
+        **kwargs
+    ):
+        super().__init__(
+            code_mobj=ColabCode(code, **kwargs),
+            logo_mobj=ImageMobject(_PYTHON_LOGO).scale(0.5),
+            logo_pos=logo_pos,
+            logo_buff=logo_buff
+        )

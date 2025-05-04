@@ -5,6 +5,7 @@ from __future__ import annotations
 
 __all__ = [
     "CustomCode",
+    "CodeWithLogo"
 ]
 
 from pathlib import Path
@@ -23,6 +24,13 @@ from manim.mobject.types.vectorized_mobject import VGroup, VMobject
 from manim.typing import StrPath
 from manim.utils.color import WHITE, ManimColor
 
+from manim.animation.composition import AnimationGroup
+from manim.animation.creation import AddTextLetterByLetter
+from manim.utils.rate_functions import linear
+from manim.mobject.mobject import Mobject
+from manim.mobject.types.image_mobject import ImageMobject
+
+_LOGO_SHIFT_BUFF = 0.5
 
 class CustomCode(VMobject):
     """A highlighted source code listing."""
@@ -131,6 +139,7 @@ class CustomCode(VMobject):
                 line[start:end].set_color(color)
 
         self.add(self.code)
+        self.window = None
 
 
     def __getitem__(self, value):
@@ -163,3 +172,22 @@ class CustomCode(VMobject):
                 anims.append(AddTextLetterByLetter(self.code[i], rate_func=linear, time_per_char=0.01))
         return AnimationGroup(*anims, lag_ratio=lag_ratio)
 
+class CodeWithLogo(Mobject):
+    def __init__(
+        self,
+        code_mobj: CustomCode,
+        logo_mobj: ImageMobject,
+        logo_pos=UP,
+        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER
+    ):
+        super().__init__()
+        self.codeMobject = code_mobj
+        if self.codeMobject.window is None:
+            self.codeMobject.add_background_window()
+        self.logo = logo_mobj.next_to(self.codeMobject, logo_pos, buff=logo_buff)
+        if (logo_pos == UP).all():
+            self.logo.align_to(self.codeMobject.window, LEFT).shift(RIGHT*_LOGO_SHIFT_BUFF)
+        elif (logo_pos == LEFT).all():
+             self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*_LOGO_SHIFT_BUFF)
+        self.add(self.codeMobject)
+        self.add(self.logo)
