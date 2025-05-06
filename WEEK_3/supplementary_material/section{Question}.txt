@@ -1,0 +1,63 @@
+\section{Question}
+\subsection{Statement}
+\begin{enumerate}
+\item Try to run the gradient descent algorithm for our robot arm example with target points and same initial condition.
+Consider the values $(x_p, y_p)=(0.75, -1), (1, 1), (2, 2.5)$ for the target point; for the other parameters, use $\alpha=0.1, tol=1e-6, N_{iter}=1000$
+\item Collect the values of the distances of the robot tip to the target and plot them as a function of iteration.
+\end{enumerate}
+Pay attention in particular to what happens in the case $(x_p, y_p)=(...)$, which is not reachable by the robot, since its distance from the robot base is greater than the sum of the lengths of its arms.
+
+
+\subsection{Theory}
+Gradient Descent is an iterative algorithm used to solve (approximatively) a minimization problem:
+\begin{equation}
+	\min_{\mathbf{x} \in \mathbb{R}} J(\mathbf{x})
+\end{equation}
+This is done by taking an initial guess $\bbmath{x}_0 \in \mathbb{R}^n$ and updating it by moving in the direction opposite to the gradient:
+\begin{equation}
+	\mathbf{x}_{n+1} = \mathbf{x}_n - \alpha \nabla J(\mathbf{x}_n)
+\end{equation}
+The main idea is that the gradient of a function corresponds to the direction of its greatest increse, so moving in the opposite direction means decreasing the objective function.
+
+In our robot arm example, the objective function $J$ is the squared distance between the robot tip and the target point $(x_p, y_p)$, so we can compute the distance simply by taking its square root.
+\begin{equation}
+	d_p(\theta_1, \theta_2) = \sqrt{J(\theta_1, \theta_2)}
+\end{equation}
+
+
+\subsection{Python solution}
+The code for gradient descent algorithm is the same as the one seen in the lecture, we just have to modify it slighlty to store the distances. 
+
+However, since the algorithm can take a different number of iterations to converge depending on the parameters, we do not know a priori how many distance values we will get. This means that we cannot allocate a list "statically" with … like we did before: we have to instead grow the list dynamically while the algorithm progresses. 
+To to this, we can use the \py{append} method, which takes in input an object and inserts it at the end of the list, increasing its length by one.
+
+a=[2,3] 	# List has two elements
+a.append(4) 	# Now the list has 3 elements: [2, 3, 4]
+
+At the start of the algorithm we initialize an empty list \py{dp=[]}. Then, at each iteration of the while loop, we append the new distance value: \py{dp.append(sqrt(Jval))}.
+We can then plot them with matplotlib.
+The full code is reported in Listing \ref{}.
+
+
+\subsection{Matlab solution}
+The code for gradient descent algorithm is the same as the one seen in the lecture, we just have to modify it slighlty to store the distances. 
+
+Since the number of iterations needed by the algorithm to converge is not known a priori, we cannot use \py{np.zeros(N)} like before to store the distance values; instead we need to grow a vector dynamically while the algorithm progresses.
+Matlab allows us to do this by simply accessing the corresponding index of the vector.
+That is, if the vector is shorter than the index that we access, the corresponding element will be created in that moment (and any other intermediate values will be filled with zeros).
+
+a = [2, 3]  	% Vector has 2 elements
+a[5] = 4 	% Now it has 5 elements: a = [2, 3, 0, 0, 4]
+
+At the start of the algorithm we initialize an empty list \py{dp=[]}. Then, at each iteration of the while loop, we simply add the new distance value with \dp[i]=sqrt(Jval)}.
+We can then plot them with matplotlib.
+The full code is reported in Listing \ref{}.
+
+
+\subsection{Comments}
+We can see that, starting from an initial positive value, the target distance initially decreases quite fast, while at the end it plateaus, until the algorithm stops because we have reached the required tolerance.
+Indeed, at each iteration we take a step that is proportial to the gradient, so the steepest the gradient the lager the step and thus the decrease. Near the minimum of the objectuve function J, the function is much "flatter" i.e. the gradient magnitude is low, and so the convergence is slow.
+
+Something different happens in the last case. As higlighted, the sum of the length of the robot arms is $L_1 + L_2 = 1 + 1.5 = 2.5$, while the distance of the target from the base is $\sqrt{2^2+2.5^2}=3.2015$, so the point is not reacheable. The Gradient Descent algorithm however does not really care about this: the distance between the robot tip and the target is minmized, which means that thethe robot stretches out to it without actually reaching. Since this minimum distance is much greater than the tolerance that we fixed, the stop criterion will never be satisfied and the algorithms runs for the maximum number of iterations $\N_{iter}$.
+
+

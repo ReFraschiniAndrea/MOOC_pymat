@@ -39,7 +39,8 @@ class W3Slides_python(Slide):
             pc[i].align_on_border(LEFT)
         pc.scale_to_fit_width(FRAME_WIDTH*0.65).center()
         pc.save_state()
-        surrounding_pc = SurroundingRectangle(pc, fill_color=WHITE, fill_opacity=1, stroke_width=0.5, stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
+        surrounding_pc = SurroundingRectangle(pc, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,
+                                              stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
         self.play(FadeIn(cl_env))
         self.wait(1)
         self.play(FadeIn(surrounding_pc, pc))
@@ -179,7 +180,6 @@ class W3Slides_python(Slide):
             [CLICK]
             '''
         )
-
         # dictionary to make it more legible
         input_data_words = {
             'target' : RequireLine[8:15],
@@ -194,7 +194,7 @@ class W3Slides_python(Slide):
         self.play(
             Create(input_data_high_rect['target']),
             input_data_code.TypeLetterbyLetter(lines=[1])
-            )
+        )
         
         # SLIDE 09:  ===========================================================
         # DATA LINE IS WRITTEN
@@ -207,7 +207,7 @@ class W3Slides_python(Slide):
         self.play(
             ReplacementTransform(input_data_high_rect['target'], input_data_high_rect['arm_length'], run_time=1),
             input_data_code.TypeLetterbyLetter(lines=[2,3])
-            )
+        )
         
         # SLIDE 11:  ===========================================================
         # DATA LINE IS WRITTEN
@@ -220,7 +220,7 @@ class W3Slides_python(Slide):
         self.play(
             ReplacementTransform(input_data_high_rect['arm_length'], input_data_high_rect['initial_guess'], run_time=1),
             input_data_code.TypeLetterbyLetter(lines=[4])
-            )
+        )
         
         # SLIDE 12:  ===========================================================
         # DATA LINE IS WRITTEN
@@ -233,7 +233,7 @@ class W3Slides_python(Slide):
         self.play(
             ReplacementTransform(input_data_high_rect['initial_guess'], input_data_high_rect['tolerance'], run_time=1),
             input_data_code.TypeLetterbyLetter(lines=[5])
-            )
+        )
     
         # SLIDE 13:  ===========================================================
         # DATA LINE IS WRITTEN
@@ -246,7 +246,7 @@ class W3Slides_python(Slide):
         self.play(
             ReplacementTransform(input_data_high_rect['tolerance'], input_data_high_rect['alpha'], run_time=1),
             input_data_code.TypeLetterbyLetter(lines=[6])
-            )
+        )
         
         # SLIDE 14:  ===========================================================
         # DATA LINE IS WRITTEN
@@ -261,7 +261,7 @@ class W3Slides_python(Slide):
         self.play(
             ReplacementTransform(input_data_high_rect['alpha'], input_data_high_rect['max_iter'], run_time=1),
             input_data_code.TypeLetterbyLetter(lines=[7])
-            )
+        )
         
         # SLIDE 15:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
@@ -293,14 +293,14 @@ class W3Slides_python(Slide):
             FadeOut(input_data_code, import_code),
             input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height),
             DSS.bringOut()
-            )
+        )
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
         DSS.add_side_obj(kinematics_eq)
         kinematics_code.move_to(DSS.mainRect)
         self.play(
             DSS.bringIn(),
             kinematics_code.TypeLetterbyLetter(lines=[0])
-            )
+        )
         
         # SLIDE 16:  ===========================================================
         # NEW BLOCK APPEARS, FUNCTION DEFINITION IS WRITTEN
@@ -313,7 +313,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             kinematics_code.TypeLetterbyLetter(lines=range(1,6))
-            )
+        )
         
         # SLIDE 17:  ===========================================================
         # PRINT LINES ARE WRITTEN.
@@ -328,7 +328,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             kinematics_code.TypeLetterbyLetter(lines=[7,8,9])
-            )
+        )
         self.wait(0.2)
         cl_env.clear()
         cl_env.add_cell(ColabCodeBlock(code=import_code.code_string + input_data_code.code_string))
@@ -389,7 +389,6 @@ class W3Slides_python(Slide):
         self.play(AnimationGroup(
             FadeOut(pc),
             AnimationGroup(Transform(nabla_J_pc, nabla_J_eq[0][0]), Transform(J_pc, J_eq[0])),
-            # FadeIn(J_eq[1:], nabla_J_eq[0][1], nabla_J_eq[1]),
             FadeIn(J_eq, nabla_J_eq),
             lag_ratio=0.6
         ))
@@ -461,7 +460,7 @@ class W3Slides_python(Slide):
             gradient of J at a given point, which takes in input the angles theta_1
             and theta_2  and outputs the values dJ_dt1 and dJ_dt2.
             Here, we use the analytical derivation of the gradient of J.
-            For instance, 
+            For instance, [CLICK]
             '''
         )
         nabla_J_code = ColabCode(
@@ -490,7 +489,6 @@ class W3Slides_python(Slide):
         nabla_J_code.move_to(DSS.get_final_mainObj_pos())
         self.play(AnimationGroup(
             FadeIn(DSS.mainRect),
-            # FadeIn(nabla_J_eq, DSS.secondaryRect, shift=DOWN*2),
             AnimationGroup(
                 DSS.bringIn(),
                 nabla_J_code.TypeLetterbyLetter(lines=[0])
@@ -505,7 +503,7 @@ class W3Slides_python(Slide):
         self.next_slide(
             notes=
             '''... , the partial derivative of x with respect to theta_1
-            is coded this a way[CLICK]
+            is coded this a way [CLICK] ...
             '''
         )
         # 1->matrix; 0->content of matrix; 0 or 1-> first or second row; 2 or 7 -> nonsense
@@ -701,7 +699,7 @@ class W3Slides_python(Slide):
         cl_env.clear()
         self.play(FadeOut(*highlight_rect_2))
         GD_code.add_background_window(DSS.mainRect)
-        self.play( GD_code.IntoColab(cl_env), FadeOut(pc[2:], DSS.secondaryObj,  DSS.secondaryRect))
+        self.play(GD_code.IntoColab(cl_env), FadeOut(pc[2:], DSS.secondaryObj,  DSS.secondaryRect))
         final_output_text = ColabBlockOutputText(
             'Converged after 38 iterations.\n'  
             'Final angle combination: [0.6293180379169862, 4.687572633369985]\n'
@@ -722,7 +720,7 @@ class W3Slides_python(Slide):
             '''1 - the method converges in 38 iterations [CLICK]
             '''
         )
-        self.play(Circumscribe(final_output_text[0], run_time=2, time_width=0.3, color=BLUE))
+        self.play(Circumscribe(final_output_text[0], run_time=2, color=BLUE))
 
         # SLIDE 33:  ===========================================================
         # HIGLIGHT SECOND LINE
@@ -731,7 +729,7 @@ class W3Slides_python(Slide):
             '''2 - The numerical solution is the pair of angles [0.62, 4.68] [CLICK]
             '''
         )
-        self.play(Circumscribe(final_output_text[1], run_time=2, time_width=0.3, color=BLUE))
+        self.play(Circumscribe(final_output_text[1], run_time=2, color=BLUE))
 
         # SLIDE 34:  ===========================================================
         # HIGLIGHT THIRD LINE
@@ -743,6 +741,6 @@ class W3Slides_python(Slide):
             [END]
             '''
         )
-        self.play(Circumscribe(final_output_text[2], run_time=2, time_width=0.3, color=BLUE))
+        self.play(Circumscribe(final_output_text[2], run_time=2, color=BLUE))
 
 
