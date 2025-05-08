@@ -338,7 +338,7 @@ class W3Slides_python(Slide):
             kinematics_code.IntoColab(colab_env=cl_env),
             lag_ratio=0.5
             ))
-        starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012].'  )
+        starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012]'  )
         starting_output_img = ImageMobject(r'Assets\W3\RobotArmStart_py.png').scale(0.7).next_to(starting_output_text, DOWN).align_to(starting_output_text, LEFT)
         cl_env.cells[-1].add_output(Group(starting_output_text, starting_output_img))
         self.play(cl_env.cells[-1].Run())

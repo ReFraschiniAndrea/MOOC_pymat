@@ -24,7 +24,7 @@ class W3Slides_matlab(Slide):
             Descent algorithm. [CLICK]
             '''
         )
-        mat_env = MatlabEnv(r'Assets\matlab.png')
+        mat_env = MatlabEnv(r'Assets\matlab_noscript.png')
         pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
                  r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
                  r"{{1: $i = 1$ \newline}}"
@@ -54,7 +54,7 @@ class W3Slides_matlab(Slide):
             '''
         )
         self.play(FadeOut(surrounding_pc, pc))
-        hand_cursor = Cursor().move_to(pixel2p(25, 437))  # new script position
+        hand_cursor = Cursor().move_to(mat_env.NEW_SCRIPT_)  # new script position
         self.wait(1)
         self.play(GrowFromCenter(hand_cursor))
 
@@ -69,11 +69,11 @@ class W3Slides_matlab(Slide):
         )
         self.play(Succession(
             hand_cursor.click(),
-            mat_env.env_image.animate(run_time=0).become(ImageMobject(r'Assets\matlab.png').scale_to_fit_height(FRAME_HEIGHT).set_z_index(-1)),    #//
+            mat_env.animate(run_time=0).set_image(r'Assets\matlab.png'),
             lag_ratio=0.5
         ))
         self.wait(0.5)
-        self.play(hand_cursor.animate.move_to(pixel2p(84, 290)))  # SAVE ICON POSITION
+        self.play(hand_cursor.animate.move_to(mat_env.SAVE_))  # SAVE ICON POSITION
         
         # SLIDE 04:  ===========================================================
         # SAVE ICON IS CLICKED, SAVE PROMPT WINDOW APPEARS
@@ -85,14 +85,14 @@ class W3Slides_matlab(Slide):
         )
         self.play(Succession(
             hand_cursor.click(),
-            mat_env.env_image.animate(run_time=0).become(ImageMobject(r'Assets\matlab.png').scale_to_fit_height(FRAME_HEIGHT).set_z_index(-1)),
+            # mat_env.animate(run_time=0).set_image(r'Assets\soe.png'),
             lag_ratio=0.5
         ))
         self.wait(0.25)
-        self.play(hand_cursor.animate.move_to(pixel2p(210, 105)))  # 'save' position
+        self.play(hand_cursor.animate.move_to())  # 'save' position
         self.play(Succession(
             hand_cursor.click(),
-            mat_env.env_image.animate(run_time=0).become(ImageMobject(r'Assets\matlab.png').scale_to_fit_height(FRAME_HEIGHT).set_z_index(-1)),
+            mat_env.animate(run_time=0).set_image(r'Assets\matlab.png'),
             lag_ratio=0.5
         ))
 
@@ -106,6 +106,7 @@ class W3Slides_matlab(Slide):
             '''
         )
         self.play(ShrinkToCenter(hand_cursor))
+
         # SLIDE 06:  ===========================================================
         # ADDPATH LINE IS WRITTEN
         self.next_slide(
@@ -115,12 +116,8 @@ class W3Slides_matlab(Slide):
             '''
         )
         empty_cell = MatlabCodeBlock(code='')
-        self.play(hand_cursor.click())
-        mat_env.env_image.become(ImageMobject(r'Assets\colabGD.png').scale_to_fit_height(FRAME_HEIGHT).set_z_index(-1))
-        self.add(mat_env)  # update change of background
         mat_env.add_cell(empty_cell)
-        self.wait(0.2)
-        self.play(mat_env.outof_colab(empty_cell), FadeOut(hand_cursor))
+        self.play(mat_env.OutofMatlab(empty_cell))
         self.wait(0.2)
 
         import_code = MatlabCode(
@@ -133,17 +130,18 @@ class W3Slides_matlab(Slide):
             % Definition of robotic arm variables and function
             xp = [0.75 , -1];         % target point 
             L1 = 1;                   % length of arm1 
-            L2 = 1.5;                 % lenght of arm2 
-            theta = [2.5 2.7];        % inital angles 
+            L2 = 1.5;                 % length of arm2 
+            theta = [2.5 2.7];        % initial angles 
             tol = 0.01;               % tolerance 
             alpha = 0.1;              % learning rate 
             Niter = 1000;             % max iteration number
             '''
         )
-        import_code.window.become(empty_cell.colabCode.window)
-        self.add(import_code.window)
-        self.remove(empty_cell.colabCode.window)
-        self.play(import_code.typeLetterbyLetter(lines=[0]))
+        DSS = DynamicSplitScreen(main_color=WHITE, side_color=LIGHT_GRAY)
+        self.add(DSS)
+        self.remove(empty_cell.window)
+        self.play(import_code.TypeLetterbyLetter(lines=[0]))
+        self.wait(0.1)
 
         # SLIDE 07:  ===========================================================
         # PSEUDO CODE APPEARS, 
@@ -327,14 +325,14 @@ class W3Slides_matlab(Slide):
         kinematics_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(AnimationGroup(
             FadeOut(kinematics_eq, DSS.secondaryRect),
-            kinematics_code.IntoColab(colab_env=cl_env),
+            kinematics_code.IntoMatlab(mat_env),
             lag_ratio=0.5
             ))
-        starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012].'  )
-        starting_output_img = ImageMobject(r'Assets\W3\RobotArmStart_py.png').scale(0.7).next_to(starting_output_text, DOWN).align_to(starting_output_text, LEFT)
-        cl_env.cells[-1].add_output(Group(starting_output_text, starting_output_img))
-        self.play(cl_env.cells[-1].Run())
-
+        mat_env.add_output(
+            output_text='[-2.1572518285725253, 1.2395419644547012]', 
+            output_image=r'Assets\W3\RobotArmStart_mat.png'
+        )
+        self.play(mat_env.Run())
         
         # SLIDE 18:  ===========================================================
         # COLAB ENV FADES OUT
@@ -438,14 +436,14 @@ class W3Slides_matlab(Slide):
         )
         self.play(J_code.TypeLetterbyLetter(lines=[6, 7]))
         J_code.add_background_window(DSS.mainRect.suspend_updating())
-        cl_env.clear()
+        mat_env.clear()
         self.play(AnimationGroup(
-            J_code.IntoColab(cl_env),
+            J_code.IntoMatlab(mat_env),
             FadeOut(DSS.secondaryObj, DSS.secondaryRect)
             ))
         
-        cl_env.cells[-1].add_output(output = '13.467661405291913' )
-        self.play(cl_env.cells[-1].Run())
+        mat_env.add_output(output_text = '13.467661405291913' )
+        self.play(mat_env.Run())
 
         
         # SLIDE 21:  ===========================================================
@@ -669,19 +667,19 @@ class W3Slides_matlab(Slide):
         mat_env.clear()
         self.play(FadeOut(*highlight_rect_2, pc))
         GD_code.add_background_window(DSS.mainRect)
-        self.play(GD_code.IntoColab(cl_env), FadeOut(pc[2:], DSS.secondaryObj,  DSS.secondaryRect))
-        final_output_text = ColabBlockOutputText(
+        self.play(GD_code.IntoColab(mat_env), FadeOut(pc[2:], DSS.secondaryObj,  DSS.secondaryRect))
+        final_output_text = (
             'Converged after 38 iterations.\n'
             'Final angle combination:  0.6293184.2 4.6875734.2 \n'
             'Final distance:  0.0083814.2'
         )
-        final_output_img = ImageMobject(r'Assets\W3\RobotArmEnd_mat.png').scale(0.5).next_to(final_output_text, DOWN).align_to(final_output_text, LEFT)
-        mat_env.cells[-1].add_output(
-            Group(final_output_text, final_output_img)
+        mat_env.add_output(
+            output_text=final_output_text,
+            output_image=r'Assets\W3\RobotArmEnd_mat.png'
         )
-        self.play(cl_env.cells[-1].Run())
+        self.play(mat_env.Run())
         self.wait(1)
-        self.play(cl_env.cells[-1].animate.focus_output(scale = 0.8))
+        self.play(mat_env.animate.focus_output(scale = 0.8))
 
         # SLIDE 32:  ===========================================================
         # HIGLIGHT FIRST LINE
