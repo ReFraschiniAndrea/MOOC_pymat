@@ -176,7 +176,7 @@ class W3Slides_python(Slide):
         # DATA LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''1 - the target point target = [0.75, -1] 
+            '''1 - the target point xp = [0.75, -1] 
             [CLICK]
             '''
         )
@@ -412,7 +412,7 @@ class W3Slides_python(Slide):
                 Jval = (x-xp[0])**2 + (y-xp[1])**2 
                 return Jval
             
-            print(J(angles, target, L1, L2))
+            print(J(angles, xp, L1, L2))
             '''
         )
         DSS.reset()
@@ -593,7 +593,7 @@ class W3Slides_python(Slide):
             '''
         )
         DSS.add_side_obj(pc[2:].copy().scale(0.4))
-        GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN)
+        GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN*0.5)
         self.play(
             Succession(
                 AnimationGroup(
@@ -685,7 +685,7 @@ class W3Slides_python(Slide):
             final arm's configuration. [CLICK]
             '''
         )
-        self.play(VGroup(GD_code.code[:19], *[highlight_rect_2[i] for i in [2,4,6,8,9]]).animate.shift(UP))
+        self.play(VGroup(GD_code.code[:19], *[highlight_rect_2[i] for i in [2,4,6,8,9]]).animate.shift(UP*0.5))
         GD_code.code[19:].shift(UP)
         self.play(GD_code.TypeLetterbyLetter(lines=[20,21,22], lag_ratio=0))
 

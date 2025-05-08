@@ -18,6 +18,7 @@ _MATLAB_LOGO = r'Assets\matlab_logo.png'
 COLAB_FONT_SIZE = 12
 MATLAB_FONT_SIZE = 12
 MATLAB_PLOT_WIDTH = 2
+MATLAB_GRAY = "#f0f0f0"
 
 class MatlabCode(CustomCode):
     # override default options
@@ -72,27 +73,24 @@ class MatlabCodeBlock(MatlabCode):
     def __init__(self, code: str):
         super().__init__(code,
                          paragraph_config={'font_size': MATLAB_FONT_SIZE})
-        target_height = self.colabCode.code.height + 2*_COLAB_SURROUND_CODE_BUFF if code != '' else 0.4766081925925926
-        self.colabCode.add_background_window(
-            Rectangle(
-                width=_COLAB_BLOCK_WIDTH,
-                height= target_height,
-                fill_color=COLAB_LIGHTGRAY, 
-                fill_opacity=1,
-                stroke_width=0
-            )
-        )
-        self.gutter = self._create_Gutter().next_to(self.colabCode.window, LEFT, buff=0)
-        self.playButton = self._create_PlayButton().move_to(self.gutter.get_center()).align_to(self.gutter, UP).shift(DOWN*0.1)
-        # be careful if the code is empty
-        if self.colabCode.code.family_members_with_points():
-            self.colabCode.code.align_to(self.colabCode.window, LEFT).shift(RIGHT*_COLAB_GUTTER_TO_TEXT_BUFF)
-        self.output = None
-        self.outputWindow = None
+        # target_height = self.colabCode.code.height + 2*_COLAB_SURROUND_CODE_BUFF if code != '' else 0.4766081925925926
+        # self.colabCode.add_background_window(
+        #     Rectangle(
+        #         width=_COLAB_BLOCK_WIDTH,
+        #         height= target_height,
+        #         fill_color=COLAB_LIGHTGRAY, 
+        #         fill_opacity=1,
+        #         stroke_width=0
+        #     )
+        # )
+        # self.gutter = self._create_Gutter().next_to(self.colabCode.window, LEFT, buff=0)
+        # self.playButton = self._create_PlayButton().move_to(self.gutter.get_center()).align_to(self.gutter, UP).shift(DOWN*0.1)
+        # # be careful if the code is empty
+        # if self.colabCode.code.family_members_with_points():
+        #     self.colabCode.code.align_to(self.colabCode.window, LEFT).shift(RIGHT*_COLAB_GUTTER_TO_TEXT_BUFF)
 
-        self.add(self.colabCode)
-        self.add(self.gutter)
-        self.add(self.playButton)
+        # self.add(self.colabCode)
+
 
 class MatlabEnv(Mobject):
     def __init__(self, background=None):

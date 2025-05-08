@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 L1 = 1                # length of arm1 
 L2 = 1.5              # length of arm2 
 theta = [2.5, 2.7]    # initial angles 
-tol = 0.0001            # tolerance 
+tol = 0.0001          # tolerance 
 alpha = 0.1           # learning rate 
-Niter = 100          # max iterations
+Niter = 100           # max iterations
 
 targets = [
     [0.75, -1],
@@ -65,11 +65,13 @@ for xp in targets:
             break 
         i = i + 1
 
-    plt.plot(distances, label = '(x_p, y_p) = '+str(xp))
+    plt.plot(distances, label = '(x_p, y_p) = '+str(xp), marker='o', markersize=3)
 
 plt.xlabel("Iterations")
 plt.ylabel("Distance")
 plt.title("Robot tip to target distance")
+plt.xlim((0, 100))
+plt.ylim((0, 4))
 plt.legend()
 plt.grid()
 plt.show()

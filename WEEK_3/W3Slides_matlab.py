@@ -168,7 +168,7 @@ class W3Slides_matlab(Slide):
         # DATA LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''1 - the target point target = [0.75, -1] 
+            '''1 - the target point xp = [0.75, -1] 
             [CLICK]
             '''
         )
@@ -563,7 +563,7 @@ class W3Slides_matlab(Slide):
                 theta = theta - alpha * grad;  
 
                 % Compute the current distance
-                Jval = J(theta, target, L1, L2);
+                Jval = J(theta, xp, L1, L2);
 
                 % Check for convergence
                 if Jval < tol
@@ -575,7 +575,7 @@ class W3Slides_matlab(Slide):
 
             fprintf('%s %f4.2 %f4.2 \n','Final angle combination: ', theta) 
             fprintf('%s %f4.2 \n','Final distance: ', Jval) 
-            plot_robot_arm(theta, target, [L1, L2]);
+            plot_robot_arm(theta, xp, [L1, L2]);
             ''')
 
         # SLIDE 24:  ===========================================================
@@ -589,7 +589,7 @@ class W3Slides_matlab(Slide):
             '''
         )
         DSS.add_side_obj(pc[2:].copy().scale(0.4))
-        GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN)
+        GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN*0.5)
         self.play(
             Succession(
                 AnimationGroup(
@@ -655,7 +655,7 @@ class W3Slides_matlab(Slide):
             final arm's configuration. [CLICK]
             '''
         )
-        self.play(VGroup(GD_code.code[:19], *[highlight_rect_2[i] for i in [2,4,6,8,9]]).animate.shift(UP))
+        self.play(VGroup(GD_code.code[:19], *[highlight_rect_2[i] for i in [2,4,6,8,9]]).animate.shift(UP*0.5))
         GD_code.code[19:].shift(UP)
         self.play(GD_code.typeLetterbyLetter(lines=[20,21,22], lag_ratio=0))
 
