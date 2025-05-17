@@ -5,6 +5,7 @@ from manim import *
 from manim_slides import Slide
 from Generic_mooc_utils import *
 from colab_utils import *
+from W3Anim import NewDB
 
 config.renderer='cairo'
 config.background_color = WHITE
@@ -55,7 +56,7 @@ class W3Slides_python(Slide):
             '''
         )
         self.play(FadeOut(surrounding_pc, pc))
-        hand_cursor = Cursor().move_to(pixel2p(25, 437))
+        hand_cursor = Cursor()
         self.wait(1)
         self.play(GrowFromCenter(hand_cursor))
 
@@ -68,25 +69,23 @@ class W3Slides_python(Slide):
             of available files. Let us click [CLICK] on the upload button...
             '''
         )
-        self.play(Succession(
-            hand_cursor.Click(),
-            cl_env.animate(run_time=0).set_image(r'Assets\W3\colabGD_sidemenu.png'),
-            lag_ratio=0.5
-        ))
-        self.wait(1)
-        self.play(hand_cursor.animate.move_to(pixel2p(84, 290)))
+        self.play(hand_cursor.animate.move_to(cl_env.MENU_))
+        self.play(hand_cursor.Click())
+        cl_env.set_image(r'Assets\W3\colabGD_sidemenu.png')
+        self.wait(0.1)
         
         # SLIDE 04:  ===========================================================
         # CLICK ON UPLOAD BUTTON AND NEW SIDE MENU APPEARS
         self.next_slide(
             notes=
             '''... and select from your local file system the file my_functions.py.
-            To import this function we click on + Code [CLICK] ... 
+            To import this function we click [CLICK] on + Code  ... 
             '''
         )
+        self.play(hand_cursor.animate.move_to(cl_env.UPLOAD_))
         self.play(hand_cursor.Click())
-        self.wait(0.5)
-        self.play(hand_cursor.animate.move_to(pixel2p(210, 105)))
+        cl_env.set_image(r'Assets\W3\colabGD_uploaded.png'),
+        self.wait(0.1)
 
         # SLIDE 05:  ===========================================================
         # CLICK ON + CODE
@@ -100,6 +99,7 @@ class W3Slides_python(Slide):
             [CLICK]
             '''
         )
+        self.play(hand_cursor.animate.move_to(pixel2p(210, 105)))
         empty_cell = ColabCodeBlock(code='')
         self.play(hand_cursor.Click())
         cl_env.set_image(r'Assets\W3\colabGD.png')
@@ -109,15 +109,12 @@ class W3Slides_python(Slide):
         self.play(cl_env.OutofColab(empty_cell), FadeOut(hand_cursor))
         self.wait(0.2)
 
-        import_code = ColabCode(
+        init_code = ColabCode(
             r'''
             from my_functions import plot_robot_arm  
             from math import cos, sin  
             from matplotlib import pyplot as plt
-            '''
-        )
-        input_data_code = ColabCode(
-            r'''
+
             # Input parameters 
             xp = [0.75, -1]       # target point 
             L1 = 1                # length of arm1 
@@ -131,7 +128,13 @@ class W3Slides_python(Slide):
         DSS = DynamicSplitScreen(main_color=COLAB_LIGHTGRAY, side_color=WHITE)
         self.add(DSS)
         self.remove(empty_cell.colabCode.window)
-        self.play(import_code.TypeLetterbyLetter(lines=[0]))
+        RequireLine = pc[1]
+        DSS.add_side_obj(RequireLine)
+        init_code.move_to(DSS.get_final_mainObj_pos())
+        import_code = init_code[0]
+        import_code.save_state()
+        import_code.shift(DOWN*1.5)
+        self.play(init_code.TypeLetterbyLetter(lines=[0]))
         self.wait(0.1)
 
         # SLIDE 06:  ===========================================================
@@ -142,20 +145,20 @@ class W3Slides_python(Slide):
             and the pyplot library used for the graphics: [CLICK]
             '''
         )
-        self.play(import_code.TypeLetterbyLetter(lines=[1]))
+        self.play(init_code.TypeLetterbyLetter(lines=[1]))
         self.wait(0.05)
 
-        # SLIDE 06:  ===========================================================
+        # SLIDE 07:  ===========================================================
         #  NEXT CODE LINES ARE WRITTEN
         self.next_slide(
             notes=
             '''from matplotlib import pyplot as plt [CLICK]
             '''
         )
-        self.play(import_code.TypeLetterbyLetter(lines=[2]))
+        self.play(init_code.TypeLetterbyLetter(lines=[2]))
         self.wait(0.05)
 
-        # SLIDE 07:  ===========================================================
+        # SLIDE 08:  ===========================================================
         # PSEUDO CODE APPEARS, NEW CODE BLOCK WITH #DATA REPLACES OLD ONE
         self.next_slide(
             notes=
@@ -163,16 +166,13 @@ class W3Slides_python(Slide):
             parameters: [CLICK]
             '''
         )
-        RequireLine = pc[1]
-        DSS.add_side_obj(RequireLine)
-        
-        self.play(DSS.bringIn(), import_code.code.animate.shift(UP*1.5))
+        self.play(DSS.bringIn(), import_code.animate.restore())
         self.wait(0.5)
-        input_data_code.code.next_to(import_code.code, DOWN)
-        input_data_code.code.align_to(import_code.code, LEFT)
-        self.play(input_data_code.TypeLetterbyLetter(lines=[0]))
+        init_code.next_to(import_code, DOWN)
+        init_code.align_to(import_code, LEFT)
+        self.play(init_code.TypeLetterbyLetter(lines=[4]))
 
-        # SLIDE 08:  ===========================================================
+        # SLIDE 09:  ===========================================================
         # DATA LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -193,10 +193,10 @@ class W3Slides_python(Slide):
         
         self.play(
             Create(input_data_high_rect['target']),
-            input_data_code.TypeLetterbyLetter(lines=[1])
+            init_code.TypeLetterbyLetter(lines=[5])
         )
         
-        # SLIDE 09:  ===========================================================
+        # SLIDE 10:  ===========================================================
         # DATA LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -206,7 +206,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             ReplacementTransform(input_data_high_rect['target'], input_data_high_rect['arm_length'], run_time=1),
-            input_data_code.TypeLetterbyLetter(lines=[2,3])
+            init_code.TypeLetterbyLetter(lines=[6, 7])
         )
         
         # SLIDE 11:  ===========================================================
@@ -219,7 +219,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             ReplacementTransform(input_data_high_rect['arm_length'], input_data_high_rect['initial_guess'], run_time=1),
-            input_data_code.TypeLetterbyLetter(lines=[4])
+            init_code.TypeLetterbyLetter(lines=[8])
         )
         
         # SLIDE 12:  ===========================================================
@@ -232,7 +232,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             ReplacementTransform(input_data_high_rect['initial_guess'], input_data_high_rect['tolerance'], run_time=1),
-            input_data_code.TypeLetterbyLetter(lines=[5])
+            init_code.TypeLetterbyLetter(lines=[9])
         )
     
         # SLIDE 13:  ===========================================================
@@ -245,7 +245,7 @@ class W3Slides_python(Slide):
         )
         self.play(
             ReplacementTransform(input_data_high_rect['tolerance'], input_data_high_rect['alpha'], run_time=1),
-            input_data_code.TypeLetterbyLetter(lines=[6])
+            init_code.TypeLetterbyLetter(lines=[10])
         )
         
         # SLIDE 14:  ===========================================================
@@ -254,15 +254,30 @@ class W3Slides_python(Slide):
             notes=
             '''6 - The maximum number of iterations. Since the convergence in 
             not a-priori guaranteed, we fix the total iteration number Niter 
-            equal to 1000. This prevents the algorithm from running endlessly.
-            [CLICK]
+            equal to 1000. [CLICK]
             '''
         )
         self.play(
             ReplacementTransform(input_data_high_rect['alpha'], input_data_high_rect['max_iter'], run_time=1),
-            input_data_code.TypeLetterbyLetter(lines=[7])
+            init_code.TypeLetterbyLetter(lines=[11])
         )
         
+        # SLIDE 14:  ===========================================================
+        # ZOOM OUT TO COLAB, CELL IS RUN
+        self.next_slide(
+            notes=
+            '''This prevents the algorithm from running endlessly. [CLICK]
+            '''
+        )
+        init_code.add_background_window(DSS.mainRect.suspend_updating())
+        cl_env.clear()
+        self.play(
+            init_code.IntoColab(cl_env),
+            DSS.bringOut(),
+            input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height)
+        )
+        self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
+
         # SLIDE 15:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
         self.next_slide(
@@ -270,6 +285,9 @@ class W3Slides_python(Slide):
             '''Now we want to compute the position of the robot according to 
             this formulas. To that end we define [CLICK]...
             '''
+        )
+        self.play(
+            FadeOut(cl_env)
         )
         kinematics_eq = VGroup(
             MathTex(r"x(\theta_1, \theta_2) = L_1 \cos(\theta_1) + L_2 \cos(\theta_2)", color=BLACK),
@@ -289,12 +307,7 @@ class W3Slides_python(Slide):
             plot_robot_arm(theta_0, xp, [L1, L2])
             '''
         )
-        self.play(
-            FadeOut(input_data_code, import_code),
-            input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height),
-            DSS.bringOut()
-        )
-        self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
+        DSS.reset()
         DSS.add_side_obj(kinematics_eq)
         kinematics_code.move_to(DSS.mainRect)
         self.play(
@@ -317,28 +330,32 @@ class W3Slides_python(Slide):
         
         # SLIDE 17:  ===========================================================
         # PRINT LINES ARE WRITTEN.
-        # CAMERA ZOOMS OUT TO REVEAL COLAB ENVIRONMENT, RUN BUTTON IS CLICKED, 
-        # OUTPUT APPEARS.
+        # CAMERA ZOOMS OUT TO REVEAL COLAB ENVIRONMENT
         self.next_slide(
             notes=
             '''... of the robot tip giving the initial guess for the angles and 
-            visualize the corresponding robot position using the function we imported.
-            [CLICK]
+            visualize the corresponding robot position using the function we
+            imported. [CLICK]
             '''
         )
         self.play(
             kinematics_code.TypeLetterbyLetter(lines=[7,8,9])
         )
         self.wait(0.2)
-        cl_env.clear()
-        cl_env.add_cell(ColabCodeBlock(code=import_code.code_string + input_data_code.code_string))
         kinematics_code.add_background_window(DSS.mainRect.suspend_updating())
-        self.play(AnimationGroup(
-            FadeOut(kinematics_eq, DSS.secondaryRect),
+        self.play(
             kinematics_code.IntoColab(colab_env=cl_env),
-            lag_ratio=0.5
-            ))
-        starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012]'  )
+            DSS.bringOut()
+        )
+
+        # SLIDE 17:  ===========================================================
+        # RUN BUTTON IS CLICKED, OUTPUT APPEARS.
+        self.next_slide(
+            notes=
+            '''... using the function we imported. [CLICK]
+            '''
+        )
+        starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012] '  )
         starting_output_img = ImageMobject(r'Assets\W3\RobotArmStart_py.png').scale(0.7).next_to(starting_output_text, DOWN).align_to(starting_output_text, LEFT)
         cl_env.cells[-1].add_output(Group(starting_output_text, starting_output_img))
         self.play(cl_env.cells[-1].Run())
@@ -354,7 +371,7 @@ class W3Slides_python(Slide):
         self.play(FadeOut(cl_env))
         self.play(FadeIn(pc.restore().scale_to_fit_width(FRAME_WIDTH*0.9).center()))
         self.wait(0.3)
-        self.play(Circumscribe(pc[2:], run_time=2, color=BLUE))
+        self.play(Circumscribe(pc[2:], run_time=3, color=BLUE))
 
         # SLIDE 19:  ===========================================================
         # HIGHLIGHT J AND NABLA J IN PSEUDO CODE.
@@ -444,10 +461,10 @@ class W3Slides_python(Slide):
         self.play(J_code.TypeLetterbyLetter(lines=[6]))
         J_code.add_background_window(DSS.mainRect.suspend_updating())
         cl_env.clear()
-        self.play(AnimationGroup(
+        self.play(
             J_code.IntoColab(cl_env),
-            FadeOut(DSS.secondaryObj, DSS.secondaryRect)
-            ))
+            DSS.bringOut()
+        )
         
         cl_env.cells[-1].add_output(output = '13.467661405291913' )
         self.play(cl_env.cells[-1].Run())
@@ -503,7 +520,7 @@ class W3Slides_python(Slide):
         self.next_slide(
             notes=
             '''... , the partial derivative of x with respect to theta_1
-            is coded this a way [CLICK] ...
+            is coded this way [CLICK] ...
             '''
         )
         # 1->matrix; 0->content of matrix; 0 or 1-> first or second row; 2 or 7 -> nonsense
@@ -592,14 +609,19 @@ class W3Slides_python(Slide):
             instructions: [CLICK]
             '''
         )
+        DSS.reset()
         DSS.add_side_obj(pc[2:].copy().scale(0.4))
+        DSS.bring_in()
         GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN*0.5)
         self.play(
             Succession(
                 AnimationGroup(
                     FadeOut(pc[:2]),
-                    ReplacementTransform(pc[2:], DSS.secondaryObj),
-                    FadeIn(DSS)
+                    AnimationGroup(
+                        ReplacementTransform(pc[2:], DSS.secondaryObj),
+                        FadeIn(DSS.mainRect, DSS.secondaryRect)
+                    ),
+                    lag_ratio=0.5
                 ),
                 GD_code.TypeLetterbyLetter(lines=[0])
             )
@@ -665,7 +687,7 @@ class W3Slides_python(Slide):
             ))
         self.wait(0.2)
         # SLIDE 29:  ===========================================================
-        # HIGLIGHT STOPPING CRITERION (CODE AND PSEUDO-CODE)
+        # HIGHLIGHT STOPPING CRITERION (CODE AND PSEUDO-CODE)
         self.next_slide(
             notes=
             '''3 - Perform the stopping criterion and print the number of 
@@ -686,20 +708,31 @@ class W3Slides_python(Slide):
             '''
         )
         self.play(VGroup(GD_code.code[:19], *[highlight_rect_2[i] for i in [2,4,6,8,9]]).animate.shift(UP*0.5))
-        GD_code.code[19:].shift(UP)
+        GD_code.code[19:].shift(UP*0.5)
         self.play(GD_code.TypeLetterbyLetter(lines=[20,21,22], lag_ratio=0))
 
         # SLIDE 31:  ===========================================================
         # INTO COLAB, PRESS RUN, OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''Let us run the script and comment the outputs: [CLICK]
+            '''Let us run the script [CLICK] ...
             '''
         )
         cl_env.clear()
         self.play(FadeOut(*highlight_rect_2))
         GD_code.add_background_window(DSS.mainRect)
-        self.play(GD_code.IntoColab(cl_env), FadeOut(pc[2:], DSS.secondaryObj,  DSS.secondaryRect))
+        self.play(
+            GD_code.IntoColab(cl_env),
+            DSS.bringOut()
+        )
+
+        # SLIDE 35:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''...[CLICK]
+            '''
+        )
         final_output_text = ColabBlockOutputText(
             'Converged after 38 iterations.\n'  
             'Final angle combination: [0.6293180379169862, 4.687572633369985]\n'
@@ -710,7 +743,14 @@ class W3Slides_python(Slide):
             Group(final_output_text, final_output_img)
         )
         self.play(cl_env.cells[-1].Run())
-        self.wait(1)
+
+        # SLIDE 35:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''...and comment the outputs: [CLICK]
+            '''
+        )
         self.play(cl_env.cells[-1].animate.focus_output(scale = 0.8))
 
         # SLIDE 32:  ===========================================================
@@ -720,7 +760,9 @@ class W3Slides_python(Slide):
             '''1 - the method converges in 38 iterations [CLICK]
             '''
         )
-        self.play(Circumscribe(final_output_text[0], run_time=2, color=BLUE))
+        final_output_text.set_z_index(1)
+        output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
+        self.play(Create(output_highlights[0]))
 
         # SLIDE 33:  ===========================================================
         # HIGLIGHT SECOND LINE
@@ -729,7 +771,7 @@ class W3Slides_python(Slide):
             '''2 - The numerical solution is the pair of angles [0.62, 4.68] [CLICK]
             '''
         )
-        self.play(Circumscribe(final_output_text[1], run_time=2, color=BLUE))
+        self.play(ReplacementTransform(output_highlights[0], output_highlights[1]))
 
         # SLIDE 34:  ===========================================================
         # HIGLIGHT THIRD LINE
@@ -737,10 +779,47 @@ class W3Slides_python(Slide):
             notes=
             '''The final computed squared distance J between the arm's tip and
             the target point is 0.008. Note that it is smaller than the tolerance.
-            The method works! We found a pair of angles to reach the target point.
+            [CLICK]
+            '''
+        )
+        self.play(ReplacementTransform(output_highlights[1], output_highlights[2]))
+
+        # SLIDE 35:  ===========================================================
+        # PYTHON PLOT TRANSFORMS INTO ROBOT ARM GRAPHIC WITH ANGLES TO BE CLEARER
+        self.next_slide(
+            notes=
+            '''The method works! We found a pair of angles to reach the target point.
             [END]
             '''
         )
-        self.play(Circumscribe(final_output_text[2], run_time=2, color=BLUE))
+        self.play(FadeOut( output_highlights[2]))
 
+        ax = NumberPlane(
+            x_range=[-2, 3],
+            y_range=[-2, 2],
+            x_length=5,
+            y_length=4,
+            x_axis_config={'stroke_color':BLACK, 'include_ticks':False, 'include_tip':False, 'stroke_width':0.5},
+            y_axis_config={'stroke_color':BLACK, 'include_ticks':False, 'include_tip':False, 'stroke_width':0.5},
+            background_line_style={'stroke_color':BLACK, 'stroke_width':0.5}
+        ).scale(1).move_to(final_output_img).shift(RIGHT*6).set_z(0)
+        T1, T2 = 0.6293184, 4.6875734
+        robot_arm=NewDB(ax, 1, 1.5,  T1, T2)
+        robot_arm.suspend_updating()
+        target = Star(color=ORANGE, fill_opacity=1).scale(0.1).move_to(
+            ax.c2p(0.75, -1, 0))
+        end = VGroup(ax, robot_arm, target)
+        start = end.copy().scale_to_fit_height(final_output_img.height).scale(0.8*0.66).move_to(final_output_img).set_opacity(0).set_z(0)
+        sub_false = DashedLine(robot_arm.foot.get_center(), robot_arm.foot.get_center()+RIGHT, stroke_color=BLACK, stroke_width=0.3)
+        subline = DashedLine(robot_arm.joint.get_center(), robot_arm.joint.get_center()+RIGHT*0.3, stroke_color=BLACK, stroke_width=0.3)
+        angle1 = Angle(sub_false, robot_arm.arm1, color=BLUE_B, radius=0.25)
+        angle2 = Angle(subline, robot_arm.arm2, color=BLUE_B, radius=0.25)
+        t1_label = Variable(var=T1, label=MathTex(r'\theta_1')).set_color(BLACK).scale(0.75).next_to(angle1, LEFT).shift(UP*0.2).suspend_updating()
+        t2_label = Variable(var=T2, label=MathTex(r'\theta_2')).set_color(BLACK).scale(0.75).next_to(angle2, UP*0.25).suspend_updating()
 
+        self.play(Transform(start, end))
+        self.play(
+            FadeIn(angle1, angle2,sub_false, subline, t1_label.label, t2_label.label),
+            ReplacementTransform(final_output_text[1][23:41].copy(), t1_label.value),
+            ReplacementTransform(final_output_text[1][42:-1].copy(), t2_label.value)
+        )

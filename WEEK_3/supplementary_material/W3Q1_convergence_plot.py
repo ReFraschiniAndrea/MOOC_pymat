@@ -1,4 +1,4 @@
-from math import sin, cos, sqrt
+from math import sin, cos
 from matplotlib import pyplot as plt
 
 # Input parameters 
@@ -48,7 +48,7 @@ def grad_J(theta, xp, L1, L2):
 plt.figure(figsize=(10, 5))
 # Gradient Descent Method 
 for xp in targets:
-    distances = []
+    values = []
     i = 1 
     while i <= Niter: 
         # Gradient of the objective function 
@@ -56,22 +56,21 @@ for xp in targets:
         # Update theta with gradient 
         theta[0] -= alpha * grad[0] 
         theta[1] -= alpha * grad[1] 
-        # Compute the current distance 
+        # Compute the current value 
         Jval = J(theta, xp, L1, L2) 
-        distances.append(sqrt(Jval))
+        values.append(Jval)
         # Check for convergence 
         if Jval < tol: 
             print(f"Converged after {i} iterations.") 
             break 
         i = i + 1
 
-    plt.plot(distances, label = '(x_p, y_p) = '+str(xp), marker='o', markersize=3)
+    plt.semilogy(values, label = '(x_p, y_p) = '+str(xp), marker='o', markersize=3)
 
 plt.xlabel("Iterations")
-plt.ylabel("Distance")
-plt.title("Robot tip to target distance")
+plt.ylabel("J")
+plt.title("Objective function values")
 plt.xlim((0, 100))
-plt.ylim((0, 4))
 plt.legend()
 plt.grid()
 plt.show()

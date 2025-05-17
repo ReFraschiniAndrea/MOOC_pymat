@@ -198,12 +198,15 @@ class ColabEnv(Mobject):
     def __init__(self, background=None):
         super().__init__()
         self.TOP_LEFT_CORNER_ = pixel2p(77, 156)
+        self.MENU_ = pixel2p(25, 381)
+        self.UPLOAD_ = pixel2p(83, 206)
+        self.PLUS_CODE_ = pixel2p(210, 105)
         self.env_image = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-2)
         self.add(self.env_image)
         self.cells = []
 
     def set_image(self, image_path: str):
-         self.env_image.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-2)
+        self.env_image.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-2)
 
     def add_cell(self, cell: ColabCodeBlock):
         if len(self.cells) == 0:
