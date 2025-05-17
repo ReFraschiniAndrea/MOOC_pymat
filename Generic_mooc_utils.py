@@ -46,7 +46,7 @@ class HighlightRectangle(BackgroundRectangle):
         super().__init__(mobject, color=color, 
                          stroke_width=0, stroke_opacity=0, fill_opacity=0.4, 
                          buff=buff, corner_radius=corner_radius, **kwargs)
-        self.set_z_index(mobject.z_index - 0.1)
+        self.set_z_index(mobject.z_index-0.1)
         
 class DynamicSplitScreen(VMobject):
     '''Horizontal spliscreen that adapts dynamically to the content.'''
@@ -185,3 +185,24 @@ class Cursor(SVGMobject):
             target = point_or_mobject
         self.shift(target - self.fingertip())
         return self
+
+
+class CustomDecimalNumber(DecimalNumber):
+    '''Override of default decimal number to allow for different fonts.'''
+    def __init__(self, font=None, **kwargs):
+        self.string_to_mob_map = {}  # presonal dict
+        self.font = font
+        super().__init__(**kwargs)
+
+    def _string_to_mob(self, string: str, mob_class: VMobject | None = None, **kwargs):
+        if mob_class is None:
+            mob_class = self.mob_class
+
+        if string not in self.string_to_mob_map:
+            if self.mob_class == Text and self.font is not None:
+                self.string_to_mob_map[string] = mob_class(string, font = self.font, **kwargs)
+            else:
+                self.string_to_mob_map[string] = mob_class(string, **kwargs)
+        mob = self.string_to_mob_map[string].copy()
+        mob.font_size = self._font_size
+        return mob

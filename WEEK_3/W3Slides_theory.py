@@ -20,7 +20,7 @@ config.pixel_width = 1440
 config.pixel_height = 1080 
 
 LABELS_SIZE = 0.75
-LBELS_SIZE_3D = 1.3
+LBELS_SIZE_3D = 1.5
 class WEEK3Anim_GradientDescent(ThreeDSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
@@ -110,9 +110,9 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             stroke_color=RED, 
             stroke_width=2,
             max_tip_length_to_length_ratio=0.05)
-        dist_label = MathTex('d', color=BLACK).scale(LABELS_SIZE).next_to(distance_arrow, RIGHT, buff=-0.5).shift(UP*0.5)
+        # dist_label = MathTex('d', color=BLACK).scale(LABELS_SIZE).next_to(distance_arrow, RIGHT, buff=-0.5).shift(UP*0.5)
         self.wait(0.5)
-        self.play(Create(distance_arrow), Write(dist_label))
+        self.play(Create(distance_arrow))#, Write(dist_label))
 
         # SLIDE 05:  ===========================================================
         # ARM IS MOVED AND AXES ARE MODIFIED TO THE EXPLANATION CONFIGURATION
@@ -122,7 +122,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             with the foot fixed at the origin of the axis. [CLICK]
             '''
         )
-        self.play(FadeOut(distance_arrow, dist_label))
+        self.play(FadeOut(distance_arrow))#, dist_label))
         self.play(robot_arm.MoveToAngles(-PI*2/3, -PI/7)) # intermediate position
         self.wait(0.3)
         T1, T2 = PI*4/5, PI*11/12   # Arm angular positions for explanation
@@ -198,7 +198,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # ROBOT HAND IS INDICATED, AND ITS COORDINATES APPEAR
         self.next_slide(
             notes=
-            '''The green point (x,y) is the position of the tip, which depends
+            '''The point (x,y) is the position of the tip, which depends
             only on the two angles theta_1 and theta_2. [CLICK]
             '''
         )
@@ -368,9 +368,9 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
                 Line(ax_3d.c2p(0, dx, 0), ax_3d.c2p(2*PI, dx, 0), stroke_color=BLACK, stroke_width=0.2),
             )
         ax_3d_labels = ax_3d.get_axis_labels(
-            x_label = MathTex(r'\theta_1', color=BLACK).rotate(0).rotate(+PI/2, axis=RIGHT).scale(1.3), 
-            y_label = MathTex(r'\theta_2', color=BLACK).rotate(+PI/2, axis=RIGHT).rotate(-PI/2).scale(1.3), 
-            z_label = MathTex(r'J', color=BLACK).rotate(0).rotate(0, RIGHT).scale(1.3)
+            x_label = MathTex(r'\theta_1', color=BLACK).rotate(+PI/2, axis=X_AXIS).rotate(-PI/6).scale(LBELS_SIZE_3D), 
+            y_label = MathTex(r'\theta_2', color=BLACK).rotate(+PI/2, axis=X_AXIS).rotate(-120*DEGREES).scale(LBELS_SIZE_3D), 
+            z_label = MathTex(r'J', color=BLACK).rotate(-PI/6, axis=Y_AXIS).scale(LBELS_SIZE_3D)
             )
         ax_3d_labels[0].shift(DOWN)
         ax_3d_labels[1].shift(LEFT)
@@ -383,13 +383,13 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         obj_surf = ax_3d.plot_surface(
             gd.J,
             u_range=[0, 2*PI], v_range=[0, 2*PI], 
-            colorscale=[BLUE, TEAL,YELLOW],
+            colorscale=[BLUE, TEAL, YELLOW],
             colorscale_axis=2,
             fill_opacity=0.9
             )
         obj_surf.save_state()
         self.set_camera_orientation(phi=75 * DEGREES, theta=-120 * DEGREES, zoom=0.75)
-        self.play(FadeIn(obj_surf, ref_sys))
+        self.play(FadeIn(obj_surf, ax_3d, plane))
 
         # SLIDE 17:  ===========================================================
         # AXIS LABELS ARE HIGHLIGHTED
@@ -401,8 +401,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         )
         for lb in ax_3d_labels:
             lb.save_state()
-        self.play(Indicate(ax_3d_labels[0], color=BLUE, rate_func=linear), 
-                  Indicate(ax_3d_labels[1], color=BLUE, rate_func=linear))
+        self.play(Write(ax_3d_labels[0])) 
+        self.play(Write(ax_3d_labels[1])) 
         
         # SLIDE 18:  ===========================================================
         # AXIS LABELS ARE HIGHLIGHTED
@@ -412,9 +412,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             on the vertical one. [CLICK]
             '''
         )
-        self.play(ax_3d_labels[0].animate.restore(), 
-                  ax_3d_labels[1].animate.restore())
-        self.play(Indicate(ax_3d_labels[2], color=BLUE, rate_func=linear))
+        self.play(Write(ax_3d_labels[2]))
 
         # SLIDE 19:  ===========================================================
         # CREATE TARGET STAR AND ADD ITS LABELS
@@ -426,13 +424,11 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             can we find them? [CLICK]
             '''
         )
-        self.play(ax_3d_labels[2].animate.restore())
-
         angular_target = Star(color=ORANGE, fill_opacity=1).scale(0.2).move_to(ax_3d.c2p(T1_3d, T2_3d,0))
         target_projline = ax_3d.get_lines_to_point(angular_target.get_center(), color=ORANGE, stroke_width=1.5)
         tstar_labels = VGroup(
-             MathTex(r'\theta_1^*', color=BLACK).move_to(ax_3d.c2p(T1_3d,-1,0)).rotate(0).rotate(+PI/2, axis=RIGHT).scale(1.3),
-             MathTex(r'\theta_2^*', color=BLACK).move_to(ax_3d.c2p(-1,T2_3d,0)).rotate(+PI/2, axis=RIGHT).scale(1.3)
+             MathTex(r'\theta_1^*', color=BLACK).move_to(ax_3d.c2p(T1_3d,-1,0)).rotate(+PI/2, axis=X_AXIS).rotate(-PI/6).scale(LBELS_SIZE_3D),
+             MathTex(r'\theta_2^*', color=BLACK).move_to(ax_3d.c2p(-1,T2_3d,0)).rotate(+PI/2, axis=X_AXIS).rotate(-PI/6).scale(LBELS_SIZE_3D)
         ).save_state()
         target_3d_plot = VGroup(angular_target, target_projline, tstar_labels).save_state()
     
@@ -440,8 +436,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.play(Create(target_projline))
         self.play(Write(tstar_labels))
         self.wait(0.5)
-        self.play(Indicate(tstar_labels[0], color=BLUE, rate_func=linear),
-                  Indicate(tstar_labels[1], color=BLUE, rate_func=linear))
+        # self.play(Indicate(tstar_labels[0], color=BLUE, rate_func=linear),
+                #   Indicate(tstar_labels[1], color=BLUE, rate_func=linear))
 
         # SLIDE 20:  ===========================================================
         # GRADIENT DESCENT TITLE IS WRITTEN
@@ -451,8 +447,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             Descent method. Let us briefly explain how it works. [CLICK]
             '''
         )
-        self.play(tstar_labels.animate.restore())
-        GD_title = Tex('Gradient Descent', color=BLACK).scale(1.5).to_edge(UP).shift(UP*0.75)
+        # self.play(tstar_labels.animate.restore())
+        GD_title = Text('Gradient Descent', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.75)
         self.add_fixed_in_frame_mobjects(GD_title)
         self.play(Write(GD_title))
 
@@ -528,7 +524,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
 
         # SLIDE 22:  ===========================================================
         # GRADIENT DEFINITION IS WRITTEN
-        # GRADIENT FACTOR FIELD APPEARS
+        # GRADIENT VECTOR FIELD APPEARS
         self.next_slide(
             notes=
             '''... by this expression. [CLICK]
@@ -599,7 +595,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         ch_eq_6 = MathTex(r"\frac{\partial y}{\partial \theta_2}", "=", r"L_2 \cos(\theta_2)" , color=BLACK)
         
         ch_eqs = VGroup(ch_eq_1, ch_eq_2, ch_eq_3, ch_eq_4, ch_eq_5, ch_eq_6
-                        ).arrange_in_grid(3,2).scale(0.7).next_to(gradient_with_chain_rule, DOWN).shift(DOWN*0.3)
+                        ).arrange_in_grid(3,2, cell_alignment=LEFT).scale(0.7).next_to(gradient_with_chain_rule, DOWN).shift(DOWN*0.3)
        
         self.play(FadeIn(*ch_eqs[:2]))
         self.play(FadeIn(*ch_eqs[2:]))
@@ -703,7 +699,6 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             r"\boldsymbol{\theta}^n = \boldsymbol{\theta}^{n-1} -{{\alpha}} \nabla J (\boldsymbol{\theta}^{n-1})",
             color=BLACK).shift(DOWN)
         self.play(Write(GD_update_eq))
-        self.play(Circumscribe(GD_update_eq, color=BLUE, run_time=2))
         
         # SLIDE 30:  ===========================================================
         # HIGHLIGHT LEARNING RATE
@@ -749,5 +744,5 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             learn how to write the algorithm. [END]
             '''
         )
-        self.play(Circumscribe(pc[3], color=BLUE, run_time=2))
+        self.play(Circumscribe(pc[3], color=BLUE, run_time=3))
         self.wait(1)

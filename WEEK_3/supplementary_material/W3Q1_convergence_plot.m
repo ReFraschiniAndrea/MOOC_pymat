@@ -1,4 +1,4 @@
-% Definition of robotic arm variables and function
+% Input parameters
 L1 = 1;                   % length of arm1
 L2 = 1.5;                 % lenght of arm2
 theta = [2.5 2.7];        % inital angles
@@ -47,24 +47,24 @@ hold on
 % Gradient Descent Method
 for j = 1:3
     xp = targets(j, :);
-    dp = [];
+    values = [];
     i = 1;
     while i <= Niter
         % Gradient of the objective function
         grad = grad_J(theta, xp, L1, L2);
         % Update theta with gradient
         theta = theta - alpha * grad;
-        % Compute the current distance
+        % Compute the current value
         Jval = J(theta, xp, L1, L2);
-        dp(i) = sqrt(Jval);
+        values(i) = Jval;
         % Check for convergence
         if Jval < tol
-            fprintf('%s %d %s \n','Converged after', i, 'iterations.')
+            fprintf('Converged after %d iterations.\n', i)
             break
         end
         i = i + 1;
     end
-    plot(dp, '-o', 'markersize', 3)
+    semilogy(values, '-o', 'markersize', 3)
 end
 legend('(x_p, y_p)=[0.75,-1]', '(x_p, y_p)=[1,1]', '(x_p, y_p)=[2,2.5]')
 

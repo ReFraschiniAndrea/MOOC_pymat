@@ -3,22 +3,20 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from manim_slides import ThreeDSlide
-from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, HighlightRectangle
+from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, HighlightRectangle, CustomDecimalNumber
 from matlab_utils import MatlabCodeWithLogo
 from colab_utils import ColabCodeWithLogo, ColabCode
 from W3Anim import double_arm_kinematics, NewDB, RobotGradientDescent
 
 config.background_color=WHITE
 config.renderer="cairo"
-# test resolution
-# config.pixel_width = 960 
+# config.pixel_width = 960
 # config.pixel_height = 720
-# release resolution
 config.pixel_width = 1440 
 config.pixel_height = 1080
 
-
 LABELS_SIZE = 0.75
+LBELS_SIZE_3D = 1.5
 
 class W3WrapUp_GradientDescent(ThreeDSlide):
     def construct(self):
@@ -146,11 +144,11 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
                 Line(ax_3d.c2p(0, dx, 0), ax_3d.c2p(2*PI, dx, 0), stroke_color=BLACK, stroke_width=0.2),
             )
         ax_3d_labels = ax_3d.get_axis_labels(
-            x_label = MathTex(r'\theta_1', color=BLACK).rotate(+PI/2, axis=RIGHT).scale(1.3), 
-            y_label = MathTex(r'\theta_2', color=BLACK).rotate(+PI/2, axis=RIGHT).rotate(-PI/2).scale(1.3), 
-            z_label = MathTex(r'J', color=BLACK).rotate(0).rotate(0, RIGHT).scale(1.3)
+            x_label = MathTex(r'\theta_1', color=BLACK).rotate(+PI/2, axis=X_AXIS).rotate(-10*DEGREES).scale(LBELS_SIZE_3D), 
+            y_label = MathTex(r'\theta_2', color=BLACK).rotate(+PI/2, axis=X_AXIS).rotate(-100*DEGREES).scale(LBELS_SIZE_3D), 
+            z_label = MathTex(r'J', color=BLACK).rotate(-10*DEGREES, axis=Y_AXIS).scale(LBELS_SIZE_3D)
             )
-        ax_3d_labels[0].shift(LEFT+DOWN)
+        ax_3d_labels[0].shift(LEFT*1.2+DOWN*1.2)
         ax_3d_labels[1].shift(LEFT)
         ax_3d_labels[2].shift([0,0,0.5])
         T1_3d, T2_3d = PI/1.8, +PI/6
@@ -158,8 +156,8 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         angular_target = Star(color=ORANGE, fill_opacity=1).scale(0.2).move_to(ax_3d.c2p(*[T1_3d, T2_3d,0]))
         target_projline = ax_3d.get_lines_to_point(angular_target.get_center(), color=ORANGE, stroke_width=1.5)
         tstar_labels = VGroup(
-            MathTex(r'\theta_1^*', color=BLACK).move_to(ax_3d.c2p(T1_3d,-1,0)).rotate(+PI/2, axis=RIGHT).scale(1.3),
-            MathTex(r'\theta_2^*', color=BLACK).move_to(ax_3d.c2p(-1,T2_3d,0)).rotate(+PI/2, axis=RIGHT).scale(1.3)
+            MathTex(r'\theta_1^*', color=BLACK).move_to(ax_3d.c2p(T1_3d,-1,0)).rotate(+PI/2, axis=X_AXIS).rotate(-10*DEGREES).scale(LBELS_SIZE_3D),
+            MathTex(r'\theta_2^*', color=BLACK).move_to(ax_3d.c2p(-1,T2_3d,0)).rotate(+PI/2, axis=X_AXIS).rotate(-10*DEGREES).scale(LBELS_SIZE_3D)
         )
         
         ref_sys = VGroup(ax_3d, plane, ax_3d_labels, angular_target, target_projline, tstar_labels
@@ -423,23 +421,23 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         db2 = NewDB(ax_2d_new, L1, L2, *startig_points[0], ORANGE, z_index=2)
         db3 = NewDB(ax_2d_new, L1, L2, *startig_points[0], GREEN, z_index=1)
 
-        def my_counter(text, color, c_type=Integer, **kwargs):
+        def my_counter(text, color, **kwargs):
             label = Text(text, color=color, font='Aptos Mono')
             label.add(Text('=', color=color, font='Aptos Mono').next_to(label, RIGHT))
-            counter =  c_type(0, color=color, mob_class = Text, **kwargs).next_to(label, RIGHT)
+            counter =  CustomDecimalNumber(font='Aptos Mono', color=color, mob_class = Text, **kwargs).next_to(label, RIGHT)
             return VGroup(label, counter)
 
-        iter_1 = my_counter('iter', color=BLUE)
-        iter_2 = my_counter('iter', color=ORANGE)
-        iter_3 = my_counter('iter', color=GREEN)
+        iter_1 = my_counter('iter', num_decimal_places=0, color=BLUE)
+        iter_2 = my_counter('iter', num_decimal_places=0, color=ORANGE)
+        iter_3 = my_counter('iter', num_decimal_places=0, color=GREEN)
 
-        J_1 = my_counter('J', color=BLUE, num_decimal_places=4).next_to(iter_1, DOWN)
-        J_2 = my_counter('J', color=ORANGE, num_decimal_places=4).next_to(iter_2, DOWN)
-        J_3 = my_counter('J', color=GREEN, num_decimal_places=4).next_to(iter_3, DOWN)
+        J_1 = my_counter('J', num_decimal_places=4, color=BLUE)
+        J_2 = my_counter('J', num_decimal_places=4, color=ORANGE)
+        J_3 = my_counter('J', num_decimal_places=4, color=GREEN)
 
-        counter1 = VGroup(iter_1, J_1).to_corner(UR, buff = 1)
-        counter2 = VGroup(iter_2, J_2).center().to_edge(RIGHT, buff = 1)
-        counter3 = VGroup(iter_3, J_3).to_corner(DR, buff = 1)
+        counter1 = VGroup(iter_1, J_1).arrange_in_grid(2, 1, cell_alignment=LEFT).to_corner(UR, buff = 1)
+        counter2 = VGroup(iter_2, J_2).arrange_in_grid(2, 1, cell_alignment=LEFT).center().to_edge(RIGHT, buff = 1)
+        counter3 = VGroup(iter_3, J_3).arrange_in_grid(2, 1, cell_alignment=LEFT).to_corner(DR, buff = 1)
         
         common_target = Star(color=RED,fill_opacity=1).scale(0.1).move_to( ax_2d_new.c2p(*common_target, 0))
 
@@ -488,22 +486,29 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         self.play(FadeOut(db1, db2, db3, ax_2d_new, counter1, counter2, counter3, common_target))
 
         plane = NumberPlane(
-            x_range=[0, 10, 1],
-            y_range=[0, 4, 0.4],
+            x_range=[0, 45, 5],
+            y_range=[-2, 2, 1] ,
             x_length=9,
             y_length=9,
             x_axis_config={'stroke_color': BLACK, 'include_ticks': False, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
-            y_axis_config={'stroke_color': BLACK, 'include_ticks': False, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex},
+            y_axis_config={'stroke_color': BLACK, 'include_ticks': False, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex,
+                           'scaling': LogBase(custom_labels=True), 'numbers_to_include':[-2, -1, 0, 1]},
             background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
         ).scale(0.65).move_to(HALF_SCREEN_LEFT)
         plane.x_axis.numbers.set_color(BLACK)
-        plane.y_axis.numbers.set_color(BLACK)
+        plane.y_axis.labels.set_color(BLACK)
         plane_labels =plane.get_axis_labels(
-            MathTex('i', color=BLACK).scale(LABELS_SIZE),  #, font='Aptos'
-            MathTex('d_p', color=BLACK).scale(LABELS_SIZE)
+            Text('iter', color=BLACK, font='Aptos Mono').scale(LABELS_SIZE),  #, font='Aptos'
+            Text('J', color=BLACK, font='Aptos Mono').scale(LABELS_SIZE)
         )
-        dots = [Dot(plane.c2p(i, np.sqrt(gd_traj1[i, 2]), 0), color=RED) for i in range(4)]
-        lines = [Line(dots[i], dots[i+1], color=RED, stroke_width=2) for i in range(3)]
+        dots = [Dot(plane.c2p(i, gd_traj1[i, 2], 0), color=RED, radius=0.8*DEFAULT_DOT_RADIUS) for i in range(len(gd_traj1))]
+        lines = [Line(dots[i].get_center(), dots[i+1].get_center(), color=RED, stroke_width=2) for i in range(len(gd_traj1)-1)]
+
+        iter_c = my_counter('iter', color=BLACK, num_decimal_places=0)
+        J_c = my_counter('J', color=BLACK, num_decimal_places=4).next_to(iter_c, DOWN)
+        iter_c[1].set_value(0)
+        J_c[1].set_value(gd_traj1[0, 2])
+        counterc = VGroup(iter_c, J_c).arrange_in_grid(2,1, cell_alignment=LEFT).to_edge(UP).shift(UP)
 
         ax_2d_new.scale(0.65).move_to(HALF_SCREEN_RIGHT)
         common_target.move_to(ax_2d_new.c2p(0.75, -1, 0)).set_color(ORANGE)
@@ -515,7 +520,7 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             stroke_width=2,
             max_tip_length_to_length_ratio=0.05)
 
-        self.play(FadeIn(ax_2d_new, final_robot_arm , common_target, distance_arrow, plane, plane_labels))
+        self.play(FadeIn(ax_2d_new, final_robot_arm , common_target, distance_arrow, plane, plane_labels, counterc, dots[0]))
         distance_arrow.add_updater(
             lambda m: m.become(DoubleArrow(
             final_robot_arm.hand, common_target, 
@@ -525,12 +530,17 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             max_tip_length_to_length_ratio=0.05))
         )
         self.wait(0.5)
-        self.play(GrowFromCenter(dots[0], run_time=0.75))
-        for i in range(0, 3):
+        # self.play(GrowFromCenter(dots[0], run_time=0.1))
+        for i in range(1,len(dots)):
+            dt = 0.1/(1+ i/10)
             self.play(AnimationGroup(
-                final_robot_arm.MoveToAngles(gd_traj1[i, 0], gd_traj1[i, 1], rate_func=smooth, run_time=0.75),
-                GrowFromCenter(dots[i+1], run_time=0.75)))
-            self.play(Create(lines[i], run_time=0.25))
+                final_robot_arm.MoveToAngles(gd_traj1[i, 0], gd_traj1[i, 1], rate_func=smooth, run_time=dt),
+                GrowFromCenter(dots[i], run_time=dt),
+                Create(lines[i-1], run_time=dt)
+            ))
+            iter_c[1].set_value(i)
+            J_c[1].set_value(gd_traj1[i, 2])
+        self.wait(0.05)
 
         # SLIDE 10:  ===========================================================
         # ROBOT ARM WITH CIRCLE TO SHOW REACH APPEARS
@@ -542,7 +552,7 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         )
         self.play(
             AnimationGroup(
-                FadeOut(plane, *dots, *lines, plane_labels, distance_arrow),
+                FadeOut(plane, *dots, *lines, plane_labels, distance_arrow, counterc),
                 VGroup(ax_2d_new, common_target).animate.center().scale(1.4),
                 lag_ratio=0.75   
             )
