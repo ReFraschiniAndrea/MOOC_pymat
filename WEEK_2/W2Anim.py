@@ -83,26 +83,73 @@ def GenerateDataset(
 def PointsFromData(data: np.ndarray, ax: Axes, **kwargs):
     return [Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data))]
 
+class LinearRegressionEquations(VMobject):
+    def __init__(self):
+        super().__init__()
+        self.m_eq = MathTex(
+            r'\hat{m} = '
+            r'\frac{n \sum\limits_{i=1}^n x_i y_i - \sum\limits_{i=1}^n x_i \sum\limits_{i=1}^n y_i}'
+            r'{ n \sum\limits_{i=1}^n x_i^2 - \left( \sum\limits_{i=1}^n x_i \right)^2}',
+            color=BLACK
+        )
+        for i in [9, 10, 19, 20, 35, 37, 45, 46]:
+            self.m_eq[0][i].set_color(BLUE)
+        for j in [11, 12, 26, 27]:
+            self.m_eq[0][j].set_color(ORANGE)
 
+        self.q_eq = MathTex(
+            r'\hat{q} = '
+            r'\frac{\sum\limits_{i=1}^n y_i - \hat{m} \sum\limits_{i=1}^n x_i}{n}',
+            color=BLACK
+        )
+        self.q_eq[0][8:10].set_color(ORANGE)
+        self.q_eq[0][18:20].set_color(BLUE)
+        self.q_eq.next_to(self.m_eq, RIGHT, buff=0.5).align_to(self.m_eq, UP)
+        self.add(self.m_eq, self.q_eq)
+        self.center()
+ 
+        # add utilities to access certain terms
+        self.m_sum_x = VGroup(
+            self.m_eq[0][14:21],
+            self.m_eq[0][40:47],
+        )
+        self.m_sum_y = self.m_eq[0][21:28]
+        self.m_sum_x_y = self.m_eq[0][4:13]
+        self.m_sum_x_sq = self.m_eq[0][30:38]
+
+        self.q_sum_x = self.q_eq[0][13:20]
+        self.q_sum_y = self.q_eq[0][3:10]
+
+
+config.background_color = WHITE
+config.pixel_width=960
+config.pixel_height=720
 class Test(Scene):
     def construct(self):
-        ax = Axes(
-            x_range=[0,2,0.5],
-            y_range=[0,2,0.5],
-            x_length=8,
-            y_length=8,
-            x_axis_config={'stroke_color':WHITE, 'include_ticks':True},
-            y_axis_config={'stroke_color':WHITE, 'include_ticks':True}
-        )
-        m, q = 1, 0.5
-        data = GenerateDataset(20, m, q, sigma=0.25)
-        points = PointsFromData(data, ax, color=RED)
-        self.add(ax, *points)
-        l = RegressionLine(m,q, ax, color=GREEN, dash_length=0.25, dashed_ratio=0.25)
-        self.add(l)
-        l.add_dataset(points)
-        self.wait()
-        self.play(l.slope.animate.set_value(0), l.intercept.animate.set_value(0))
-        self.wait()
-        ecounter = ECounter(l, data).to_edge(UP)
-        self.add(ecounter)
+        # ax = Axes(
+        #     x_range=[0,2,0.5],
+        #     y_range=[0,2,0.5],
+        #     x_length=8,
+        #     y_length=8,
+        #     x_axis_config={'stroke_color':WHITE, 'include_ticks':True},
+        #     y_axis_config={'stroke_color':WHITE, 'include_ticks':True}
+        # )
+        # m, q = 1, 0.5
+        # data = GenerateDataset(20, m, q, sigma=0.25)
+        # points = PointsFromData(data, ax, color=RED)
+        # self.add(ax, *points)
+        # l = RegressionLine(m,q, ax, color=GREEN, dash_length=0.25, dashed_ratio=0.25)
+        # self.add(l)
+        # l.add_dataset(points)
+        # self.wait()
+        # self.play(l.slope.animate.set_value(0), l.intercept.animate.set_value(0))
+        # self.wait()
+        # ecounter = ECounter(l, data).to_edge(UP)
+        # self.add(ecounter)
+
+        a =  LinearRegressionEquations()
+        self.add(a)#, index_labels(m[0]), index_labels(q[0]))
+        self.play(Indicate(a.m_eq.sum_x_sq))
+        # a= MathTex(r'\sum_{i=1}^n x_i', color=BLACK)
+        # self.add(a)
+

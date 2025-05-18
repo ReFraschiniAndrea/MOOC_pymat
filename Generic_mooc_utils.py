@@ -3,7 +3,8 @@
 __all__ = [
     "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO", "CODE_FONT",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
-    "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle"
+    "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle",
+    "CustomDecimalNumber"
 ]
 
 from manim import *
@@ -189,10 +190,15 @@ class Cursor(SVGMobject):
 
 class CustomDecimalNumber(DecimalNumber):
     '''Override of default decimal number to allow for different fonts.'''
-    def __init__(self, font=None, **kwargs):
+    def __init__(
+        self,
+        number: float = 0,
+        font: str = None,
+        **kwargs
+    ):
         self.string_to_mob_map = {}  # presonal dict
         self.font = font
-        super().__init__(**kwargs)
+        super().__init__(number, **kwargs)
 
     def _string_to_mob(self, string: str, mob_class: VMobject | None = None, **kwargs):
         if mob_class is None:

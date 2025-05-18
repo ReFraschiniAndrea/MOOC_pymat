@@ -99,7 +99,7 @@ class W3Slides_python(Slide):
             [CLICK]
             '''
         )
-        self.play(hand_cursor.animate.move_to(pixel2p(210, 105)))
+        self.play(hand_cursor.animate.move_to(cl_env.PLUS_CODE_))
         empty_cell = ColabCodeBlock(code='')
         self.play(hand_cursor.Click())
         cl_env.set_image(r'Assets\W3\colabGD.png')
