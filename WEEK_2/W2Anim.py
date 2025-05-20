@@ -84,7 +84,7 @@ def PointsFromData(data: np.ndarray, ax: Axes, **kwargs):
     return [Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data))]
 
 class LinearRegressionEquations(VMobject):
-    def __init__(self):
+    def __init__(self, x_i_color = BLUE, y_i_color=ORANGE):
         super().__init__()
         self.m_eq = MathTex(
             r'\hat{m} = '
@@ -93,17 +93,17 @@ class LinearRegressionEquations(VMobject):
             color=BLACK
         )
         for i in [9, 10, 19, 20, 35, 37, 45, 46]:
-            self.m_eq[0][i].set_color(BLUE)
+            self.m_eq[0][i].set_color(x_i_color)
         for j in [11, 12, 26, 27]:
-            self.m_eq[0][j].set_color(ORANGE)
+            self.m_eq[0][j].set_color(y_i_color)
 
         self.q_eq = MathTex(
             r'\hat{q} = '
             r'\frac{\sum\limits_{i=1}^n y_i - \hat{m} \sum\limits_{i=1}^n x_i}{n}',
             color=BLACK
         )
-        self.q_eq[0][8:10].set_color(ORANGE)
-        self.q_eq[0][18:20].set_color(BLUE)
+        self.q_eq[0][8:10].set_color(y_i_color)
+        self.q_eq[0][18:20].set_color(x_i_color)
         self.q_eq.next_to(self.m_eq, RIGHT, buff=0.5).align_to(self.m_eq, UP)
         self.add(self.m_eq, self.q_eq)
         self.center()

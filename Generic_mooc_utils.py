@@ -47,7 +47,9 @@ class HighlightRectangle(BackgroundRectangle):
         super().__init__(mobject, color=color, 
                          stroke_width=0, stroke_opacity=0, fill_opacity=0.4, 
                          buff=buff, corner_radius=corner_radius, **kwargs)
-        self.set_z_index(mobject.z_index-0.1)
+        # mobject.add_to_back(self)
+        # bring mobject to foreground
+        mobject.set_z_index(mobject.z_index+0.1)
         
 class DynamicSplitScreen(VMobject):
     '''Horizontal spliscreen that adapts dynamically to the content.'''
@@ -64,14 +66,14 @@ class DynamicSplitScreen(VMobject):
             height=FRAME_HEIGHT, 
             fill_opacity=1, 
             stroke_width=0
-        ).set_z_index(-1).center()
+        ).set_z_index(0).center()
         self.secondaryRect = Rectangle(
             color=side_color, 
             width=FRAME_WIDTH,
             height= 2 * buff,
             fill_opacity=1,
             stroke_width=0
-        ).set_z_index(-1).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        ).set_z_index(0).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
         self.mainRect.save_state()
         self.secondaryRect.save_state()
 

@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import Slide
+# from manim_slides import Slide
 from Generic_mooc_utils import *
 from colab_utils import *
 from W2Anim import LinearRegressionEquations
@@ -13,9 +13,12 @@ config.pixel_width=960
 config.pixel_height=720
 # config.pixel_width=1440
 # config.pixel_height=1080
+print('HELLOOOOO qulcosa da RICORDARSO')
 
 
-class W2Python_slides(Slide):
+class W2Python_slides(Scene):
+    def next_slide(self, notes):
+        pass
     def construct(self):
         # SLIDE 01:  ===========================================================
         # AXIS WITH DATA POINTS APPEAR
@@ -84,9 +87,9 @@ class W2Python_slides(Slide):
         )
         self.play(hand_cursor.animate.move_to(cl_env.PLUS_CODE_))
         empty_cell = ColabCodeBlock(code='')
-        cl_env.add_cell(empty_cell)
         self.play(hand_cursor.Click())
         cl_env.set_image(r'Assets\W2\colabSLR.png')
+        cl_env.add_cell(empty_cell)
         self.wait(0.8)
         self.play(cl_env.OutofColab(empty_cell), FadeOut(hand_cursor))
 
@@ -99,7 +102,7 @@ class W2Python_slides(Slide):
             '''
         )
         import_code = ColabCode(
-            code=r'''
+            r'''
             import numpy as np
             import pandas as pd
             import matplotlib.pyplot as plt
@@ -188,12 +191,16 @@ class W2Python_slides(Slide):
         self.play(import_code.IntoColab(cl_env))
         self.wait(1)
         self.play(cl_env.cells[0].Run())
-        hand_cursor : Cursor = cl_env.cells[0].cursor
+        hand_cursor = cl_env.cells[0].cursor
         self.wait(0.5)
         self.play(hand_cursor.animate.move_to(cl_env.PLUS_CODE_))
         self.play(hand_cursor.Click())
-        cl_env.add_cell(empty_cell)
-        self.play(cl_env.OutofColab(cl_env.cells[1]))
+        new_empty_cell=ColabCodeBlock(code='')
+        cl_env.add_cell(new_empty_cell)
+        self.add(cl_env)  # to update
+        self.wait(0.5)
+        self.play(cl_env.OutofColab(new_empty_cell))
+        self.remove(hand_cursor)
 
         # SLIDE 12:  ===========================================================
         # FIRST COMMENT LINE IS WRITTEN
@@ -227,7 +234,7 @@ class W2Python_slides(Slide):
             '''In this case we have 59 rows and 4 columns. [CLICK]
             '''
         )
-        dataset_size_code.add_background_window(empty_cell.colabCode.window)
+        dataset_size_code.add_background_window(new_empty_cell.colabCode.window)
         cl_env.clear()
         self.play(dataset_size_code.IntoColab(cl_env))
         cl_env.cells[0].add_output('(59,  4)')
@@ -245,6 +252,7 @@ class W2Python_slides(Slide):
         DSS = DynamicSplitScreen(COLAB_LIGHTGRAY, WHITE)
         self.play(FadeIn(DSS.mainRect))
         self.remove(cl_env)
+        cl_env.cells[0].remove(cl_env.cells[0].cursor) # remove the cursor that remained from previous run
         dataset_head_code = ColabCode(
             r'''
             # Showing the data
@@ -283,6 +291,7 @@ class W2Python_slides(Slide):
         head_table.scale(0.25).next_to(head_text, DOWN).align_to(head_text, LEFT)
         cl_env.cells[-1].add_output(VGroup(head_text, head_table))
         self.play(cl_env.cells[-1].Run())
+        self.wait(0.1)
 
         # SLIDE 15:  ===========================================================
         # 
@@ -293,7 +302,7 @@ class W2Python_slides(Slide):
             that event:
             '''
         )
-        self.play(cl_env.cells[-1].animate.focus_output(scale=0.8))
+        self.play(cl_env.cells[-1].animate.focus_output(scale=0.5, alignment=LEFT))
 
         # SLIDE 16:  ===========================================================
         # HIGHLIGHT TEMPERATURE
@@ -305,14 +314,14 @@ class W2Python_slides(Slide):
         highlight_colors = [BLUE, TEAL, ORANGE, PINK]
         full_labels = VGroup(Text(label, font=CODE_FONT, color=BLACK) for label in
                        ['Temperature', 'Relative Humidity', 'Build-Up Index', 'Fire Weather Index'])
-        full_labels.arrange_in_grid((4,1), cell_alignment=LEFT).next_to(head_table, RIGHT).shift(RIGHT)
-        colored_dots = VGroup(Dot(color=highlight_colors[i], fill_opacity=0.4, stroke_width=0).next_to(full_labels[i], LEFT) for i in range(4))
+        full_labels.scale(0.75).arrange_in_grid(4,1, cell_alignment=LEFT).next_to(head_table, RIGHT).shift(RIGHT)
+        colored_dots = VGroup(Dot(color=highlight_colors[i], radius=0.15, fill_opacity=0.4, stroke_width=0).next_to(full_labels[i], LEFT) for i in range(4))
         column_highlights = VGroup(HighlightRectangle(head_table.get_columns()[i+1][1:], color = highlight_colors[i]) for i in range(4))
 
         self.play(
             Create(column_highlights[0]),
             Create(colored_dots[0]),
-            AddTextLetterByLetter(full_labels[i], rate_func=linear, time_per_char=0.01)
+            AddTextLetterByLetter(full_labels[0], rate_func=linear, time_per_char=0.01)
         )
 
         # SLIDE 17:  ===========================================================
@@ -389,15 +398,19 @@ class W2Python_slides(Slide):
         ).center()
         DSS.reset()
         self.play(FadeIn(DSS))
+        self.remove(cl_env)
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[0]))
 
         # SLIDE 22:  ===========================================================
-        # 
+        # SCHEMATIC DRAWING OF THE FUNCTION IS BROUGHT IN
         self.next_slide(
             notes=
             '''We are going to write a function that [CLICK] takes as inputs the datapoints, organized in two lists.
             '''
         )
+        DSS.add_side_obj(Text('Lorem Ipsum', color=BLACK))
+        self.play(DSS.bringIn())
+        """
         # SLIDE 23:  ===========================================================
         # 
         self.next_slide(
@@ -427,7 +440,7 @@ class W2Python_slides(Slide):
             '''
         )
         # SLIDE 27:  ===========================================================
-        # LINEAR REGRESSION FORMUALS APPEAR
+        # LINEAR REGRESSION FORMULAS APPEAR
         self.next_slide(
             notes=
             '''This function will perform linear regression by computing the coefficients m and q according to these formulas.
@@ -438,6 +451,7 @@ At first glance, this might seem overwhelming, but let's simplify it by breaking
         self.play(DSS.bringOut())
         self.wait(0.2)
         LR_equations = LinearRegressionEquations().scale(0.75)
+        LR_equations.save_state()
         DSS.add_side_obj(LR_equations)
         self.play(DSS.bringIn())
         # SLIDE 28:  ===========================================================
@@ -500,33 +514,57 @@ We can take advantage of this, and compute these terms once and reuse the result
         )
 
         # SLIDE 31:  ===========================================================
-        # 
+        # THE NON RPEATED SUM TERMS ARE EXTRACTED FROM THE EQUATIONS
         self.next_slide(
             notes=
             '''We are going to write now a python code that computes these four terms.
             '''
         )
         sum_terms = VGroup(LR_equations.m_sum_x.copy(), LR_equations.m_sum_y.copy(), LR_equations.m_sum_x_y.copy(), LR_equations.m_sum_x_sq.copy())
-        sum_terms.arrange().scale(1.2).move_to(DSS.secondaryRect)
+        sum_terms.arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
+        self.play(
+            ReplacementTransform(LR_equations.m_sum_x[0], sum_terms[0]),
+            ReplacementTransform(LR_equations.m_sum_x[1], sum_terms[0]),
+            ReplacementTransform(LR_equations.q_sum_x, sum_terms[0]),
+            ReplacementTransform(LR_equations.m_sum_y, sum_terms[1]),
+            ReplacementTransform(LR_equations.q_sum_y, sum_terms[1]),
+            ReplacementTransform(LR_equations.m_sum_x_y, sum_terms[2]),
+            ReplacementTransform(LR_equations.m_sum_x_sq, sum_terms[3]),
+        )
+        """
         # SLIDE 32:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''These sums can be computed by writing suitable "for" loops. However, we will compute them in a more concise and readable way by leveraging the np.sum function 
+            '''These sums can be computed by writing suitable "for" loops.
+            However, we will compute them in a more concise and readable way by
+            leveraging the np.sum function from the NumPy library (imported as np).
             '''
         )
+        for_sum_code = ColabCode(
+            r'''
+            sum_x = 0
+            for i in range(len(x)):
+                sum_x += x[i]
+            '''
+        ).align_to(linear_regression_code[2][16:], UL)
+        self.play(for_sum_code.TypeLetterbyLetter())
+
         # SLIDE 33:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''from the NumPy library (imported as np). This function allows us to compute directly the sum of all elements in an array
+            ''' This function allows us to compute directly the sum of all elements in an array
+            For example, np.sum(x) calculates the sum of all the x-coordinates
             '''
         )
+        self.play(ReplacementTransform(for_sum_code, linear_regression_code[2][16:]))
+
         # SLIDE 34:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''For example, np.sum(x) calculates the sum of all the x-coordinates
+            '''
             '''
         )
         # SLIDE 35:  ===========================================================
@@ -536,6 +574,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''Similarly, np.sum(y) calculates the sum of all the yi
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[3]))
+
         # SLIDE 36:  ===========================================================
         # 
         self.next_slide(
@@ -571,7 +611,6 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''Similarly, the element-wise power operation x ** 2 is also vectorized, meaning it applies the power operation to each element of the array individually. 
 [CLICK] so that combining this operation with np.sum gives the last term.
             Very good. Now the hardest part is behind us. We just need to combine these quantities to finalize the computation.
-
             '''
         )
         # SLIDE 41:  ===========================================================
@@ -581,6 +620,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''First, we compute the numerator of the expression giving m
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[7, 8]))
         # SLIDE 42:  ===========================================================
         # 
         self.next_slide(
@@ -588,6 +628,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''Then, we compute the denominator.
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[9]))
+
         # SLIDE 43:  ===========================================================
         # 
         self.next_slide(
@@ -595,6 +637,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''and we divide the numerator by the denominator to obtain the value of m. 
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[10]))
+
         # SLIDE 44:  ===========================================================
         # 
         self.next_slide(
@@ -604,6 +648,10 @@ We can take advantage of this, and compute these terms once and reuse the result
 
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[11]))
+        self.wait()
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[13]))
+
         # SLIDE 45:  ===========================================================
         # 
         self.next_slide(
@@ -618,6 +666,15 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''the function takes two arrays as inputs, containing the x and y coordinates of the data points
             '''
         )
+        code_recap_highlights = [
+            HighlightRectangle(code_snippet) for code_snippet in
+            [linear_regression_code[1][12:],
+             VGroup(linear_regression_code[i][16:] for i in range(2,6)),
+             VGroup(linear_regression_code[i][16:] for i in range(7,12)),
+             linear_regression_code[13][16:]]
+        ]
+        self.play(Create(code_recap_highlights[0]))
+
         # SLIDE :  ===========================================================
         # 
         self.next_slide(
@@ -625,6 +682,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''First we compute the sums needed to perform the linear regression
             '''
         )
+        self.play(ReplacementTransform(code_recap_highlights[0], code_recap_highlights[1]))
+
         # SLIDE :  ===========================================================
         # 
         self.next_slide(
@@ -632,6 +691,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''next, we combine these terms thus getting the optimal coefficients m and q
             '''
         )
+        self.play(ReplacementTransform(code_recap_highlights[1], code_recap_highlights[2]))
+
         # SLIDE :  ===========================================================
         # 
         self.next_slide(
@@ -639,35 +700,69 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''Finally, we return m, q.
             '''
         )
+        self.play(ReplacementTransform(code_recap_highlights[2], code_recap_highlights[3]))
+        
         # SLIDE :  ===========================================================
-        # 
+        # INTO COLAB, FUNCTION DEFINITION CELL IS RUN
         self.next_slide(
             notes=
             '''Now that the function has been written we can run the block and it is ready to be used
             '''
         )
+        self.play(FadeOut(code_recap_highlights[3]))
+        linear_regression_code.add_background_window(DSS.mainRect.suspend_updating())
+        cl_env.clear()
+        self.play(linear_regression_code.IntoColab(cl_env))
+        self.play(cl_env.cells[0].Run())
+
         # SLIDE :  ===========================================================
-        # 
+        # NEW EMPTY SCREEN FADES IN
+        # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
             '''In this way, we are ready to apply it to the Algerian forest dataset.
             We wonder how the temperature influences the Fire Weather Index,
             '''
         )
+        LR_example_code = ColabCode(
+            r'''
+            # Perform simple linear regression
+            x = my_dataset['Temperature'].values
+            y = my_dataset['FWI'].values
+
+            m, q = linear_regression(x, y)
+
+            # Print results
+            print('Linear model results:')
+            print(f'Slope (m): {m:.4f}')
+            print(f'Y-intercept (q): {q:.4f}')
+            '''
+        )
+
+        LR_example_code.center()
+        DSS.reset()
+        self.play(FadeIn(DSS))
+        self.remove(cl_env)
+        self.play(LR_example_code.TypeLetterbyLetter(lines=[0]))
+
         # SLIDE :  ===========================================================
-        # 
+        # X = TEMPERATURE CODE LINE APPEARS
         self.next_slide(
             notes=
             '''To this goal, we chose the temperature as the x, using this code 
             '''
         )
+        self.play(LR_example_code.TypeLetterbyLetter(lines=[1]))
+
         # SLIDE :  ===========================================================
-        # 
+        # Y = FWI CODE LINE APPEARS
         self.next_slide(
             notes=
             '''The label "Temperature" extracts the corresponding column from the dataset 
             '''
         )
+
+        
         # SLIDE :  ===========================================================
         # 
         self.next_slide(
@@ -676,9 +771,228 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         # SLIDE :  ===========================================================
+        # Y = FWI CODE LINE APPEARS
+        self.next_slide(
+            notes=
+            '''And similarly, for FWI which becomes y.
+            '''
+        )
+        self.play(LR_example_code.TypeLetterbyLetter(lines=[2]))
+
+        # SLIDE 00:  ===========================================================
+        # LINEAR REGRESSION FUNCTION CALL LINE IS WRITTEN
+        self.next_slide(
+            notes=
+            '''These two arrays are passed as inputs to our linear_regression
+            function. The function returns two outputs, which we store in two
+            separate variables. Please note that the order of these variables
+            must match the order specified in the return statement of the
+            function. [CLICK]
+            '''
+        )
+        self.play(LR_example_code.TypeLetterbyLetter(lines=[4]))
+
+        # SLIDE :  ===========================================================
+        # PRINT LINES ARE WRITTEN
+        self.next_slide(
+            notes=
+            '''Finally, we print the results: the regression coefficients m and q. 
+            '''
+        )
+        self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
+        # SLIDE 00:  ===========================================================
+        # 'f' F-STRINGS HIGHLIGHTED
+        self.next_slide(
+            notes=
+            '''By putting the letter f in front of a string, you allow Python to
+            interpret variables inside curly braces directly within the string.
+            [CLICK]
+            '''
+        )
+        # SLIDE 00:  ===========================================================
+        # ':.4f' F-STRINGS HIGHLIGHTED
+        self.next_slide(
+            notes=
+            '''While the syntax .4f means we are formatting the output to
+            display four decimal places. [CLICK]
+            '''
+        )
+        # SLIDE :  ===========================================================
+        # INTO COLAB
+        # CELL IS RESULT, RESULT OUTPUT APPEARS
+        self.next_slide(
+            notes=
+            '''Running this cell in the notebook, we see the results printed on the screen.
+            '''
+        )
+        cl_env.clear()
+        LR_example_code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(LR_example_code.IntoColab(cl_env))
+        cl_env.cells[0].add_output(
+            'Linear model results:\n'
+            'Slope (m): 1.4220\n'
+            'Y-intercept (q): -36.2192'
+        )
+
+        # SLIDE :  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''
+            '''Let's now visualize the datapoints together with the regression line. By using the module matplotlib imported as plt,  
             '''
         )
+        plotting_code = ColabCode(
+            r'''
+            # Plotting
+            plt.figure(figsize=(10, 16))
+            plt.scatter(x, y, color='blue', alpha=0.5, label='Data points')
+            plt.plot(x, m*x+q, color='red', label='Regression line')
+
+            plt.xlabel('Temperature')
+            plt.ylabel('FWI')
+            plt.title('Linear Regression: FWI vs Temperature')
+            plt.grid(True)
+            plt.legend()
+            '''
+        ).center()
+        plotting_code.save_state()
+        DSS.reset()
+        self.play(FadeIn(DSS))
+        self.remove(cl_env)
+        self.play(plotting_code.TypeLetterbyLetter(lines=[0]))
+
+        # SLIDE :  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''We create a new figure, and we use the function [CLICK] ...
+            '''
+        )
+        self.play(plotting_code.TypeLetterbyLetter(lines=[1]))
+
+        # SLIDE :  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''... scatter to plot the datapoints as small blue circles in the x-y plane. [CLICK]
+            '''
+        )
+        self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
+
+        # SLIDE 00:  ===========================================================
+        # PLOT LINE APPEARS
+        self.next_slide(
+            notes=
+            '''Then, we use the function "plot" to display the regression line
+            in red. Finally, we can enhance the plot's readability by adding: 
+            [CLICK]
+            '''
+        )
+        self.play(plotting_code.TypeLetterbyLetter(lines=[3]))
+
+        # SLIDE :  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''axis labels [CLICK]
+            '''
+        )
+        self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
+
+        # SLIDE :  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''a title, a grid and a legend. Please notice that the "legend"
+            function leverages the [CLICK]
+            '''
+        )
+        self.play(plotting_code.TypeLetterbyLetter(lines=[7, 8, 9]))
+
+        # SLIDE 00:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''... argument "label" which we previously specified when plotting
+            the data points and the regression line, to identify them in the
+            plot. [CLICK]
+            '''
+        )
+        plot_label_highlights = [
+            HighlightRectangle(plotting_code[2][55:60]),
+            HighlightRectangle(plotting_code[3][44:49])
+        ]
+        self.play(*[Create(highlight) for highlight in plot_label_highlights])
+
+        # SLIDE 00:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''Running this cell, the plot is shown in the notebook.
+            '''
+        )
+        self.play(FadeOut(*plot_label_highlights))
+        cl_env.clear()
+        plotting_code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(plotting_code.IntoColab(cl_env))
+        temp_fwi_plot = ImageMobject(r'Assets\W2\temp_fwi_plot.png')
+        cl_env.cells[0].add_output(temp_fwi_plot)
+        self.play(cl_env.cells[0].Run())
+        
+        # SLIDE 00:  ===========================================================
+        # FOCUS ON PLOT
+        self.next_slide(
+            notes=
+            '''The slope is positive, indicating that an increase in the
+            temperature corresponds to a higher overall risk of forest fires.
+            '''
+        )
+        self.play(cl_env.cells[0].animate.focus_output(scale=0.7))
+
+        # SLIDE 00:  ===========================================================
+        # PLOT CODE COMES BACK IN
+        # 'TEMOERATURE' IS REPLACED WITH 'RH' IN THE CODE
+        self.next_slide(
+            notes=
+            '''Now, let's repeat the above procedure using the relative humidity
+            instead of the temperature. To do that, just replace the string
+            'Temperature' with 'RH' in the previous lines of code. [CLICK]
+            '''
+        )
+        DSS.reset()
+        plotting_code.restore()
+        self.play(FadeIn(DSS, plotting_code))
+        # self.play
+        self.wait(1)
+        cl_env.clear()
+        plotting_code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(plotting_code.IntoColab(cl_env))
+        rh_fwi_plot = ImageMobject(r'Assets\W2\rh_fwi_plot.png')
+        cl_env.cells[0].add_output(rh_fwi_plot)
+        self.play(cl_env.cells[0].Run())
+
+        # SLIDE 00:  ===========================================================
+        # FOCUS ON PLOT
+        self.next_slide(
+            notes=
+            '''From the plot it can be seen an opposite trend with respect to
+            the previous case: this means that an increase in relative humidity
+            decreases the overall risk of forest fire.
+            '''
+        )
+        self.play(cl_env.cells[0].animate.focus_output(scale=0.7))
+
+        # SLIDE 00:  ===========================================================
+        # THE TWO PLOTS APPEAR SIDE BY SIDE
+        self.next_slide(
+            notes=
+            '''Having in mind the initial question from the policymaker, we can
+            conclude that temperature and humidity play opposing roles in
+            determining fire risk, and understanding their relationship is
+            crucial for effective fire risk management. In general, linear
+            regression helps us to extract valuable insights from the data,
+            enabling us to quantify the relationships between variables. [END]
+            '''
+        )
+        self.play(rh_fwi_plot.animate.scale(0.8).move_to(HALF_SCREEN_LEFT))
+        self.play(FadeIn(temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_RIGHT)))
