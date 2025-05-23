@@ -1,7 +1,7 @@
 from manim import *
 
 class RegressionLine(VGroup):
-    def __init__(self, m: float, q: float, axes: Axes, dash_length = 0.5, dashed_ratio = 0.5, **kwargs):
+    def __init__(self, m: float, q: float, axes: Axes, color=BLUE, dash_length = 0.5, dashed_ratio = 0.5, **kwargs):
         super().__init__()
         self.ax=axes
         axes.p2c
@@ -10,7 +10,8 @@ class RegressionLine(VGroup):
         self.slope = ValueTracker(m)
         self.intercept = ValueTracker(q)
         self.line = DashedLine(self.eval_to_point(self.X1), 
-                         self.eval_to_point(self.X2), 
+                         self.eval_to_point(self.X2),
+                         color=color,
                          dash_length=dash_length, dashed_ratio=dashed_ratio, **kwargs)
         self.line.add_updater(
             lambda l: l.put_start_and_end_on(self.eval_to_point(self.X1), self.eval_to_point(self.X2))
@@ -25,17 +26,22 @@ class RegressionLine(VGroup):
     def eval_to_point(self, x):
         return self.ax.c2p(x, self.eval(x), 0)
 
-    def add_data_point(self, point: Dot):
+    def add_data_point(
+        self,
+        point: Dot,
+        point_config: dict = {'color':TEAL},
+        line_config: dict = {'color': TEAL_D}
+    ):
         point_coords = self.ax.p2c(point.get_center())
         x = point_coords[0]
-        proj_point = Dot(self.eval_to_point(x))
+        proj_point = Dot(self.eval_to_point(x), **point_config)
         proj_point.add_updater(
             lambda p: p.move_to(self.eval_to_point(x))
         )
         self.proj_points.append(proj_point)
         self.add(proj_point)
 
-        proj_line = Line(point, proj_point)
+        proj_line = Line(point, proj_point, **line_config)
         proj_line.add_updater(
             lambda line: line.put_start_and_end_on(point.get_center(), proj_point.get_center())
         )
@@ -67,21 +73,21 @@ class ECounter(Variable):
             )
         )
 
-def GenerateDataset(
+def generate_regression_dataset(
+    func: callable,
     n: int,
-    m: float,
-    q: float,
     sigma: float = 1,
     seed: int = 0
 ) -> np.ndarray:
     RNG= np.random.default_rng(seed)
     x = RNG.uniform(0,1, size=n)
-    y = m*x + q + RNG.normal(0, sigma, size=n)
+    x = np.sort(x) # random, but in increasing order for convenience
+    y = func(x) + RNG.normal(0, sigma, size=n)
     return np.column_stack((x,y))
 
 
-def PointsFromData(data: np.ndarray, ax: Axes, **kwargs):
-    return [Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data))]
+def points_from_data(data: np.ndarray, ax: Axes, **kwargs):
+    return VGroup(Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data)))
 
 class LinearRegressionEquations(VMobject):
     def __init__(self, x_i_color = BLUE, y_i_color=ORANGE):

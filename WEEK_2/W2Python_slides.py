@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-# from manim_slides import Slide
+from manim_slides import Slide
 from Generic_mooc_utils import *
 from colab_utils import *
 from W2Anim import LinearRegressionEquations
@@ -16,10 +16,10 @@ config.pixel_height=720
 print('HELLOOOOO qulcosa da RICORDARSO')
 
 
-class W2Python_slides(Scene):
-    def next_slide(self, notes):
-        pass
+class W2Python_slides(Slide):
     def construct(self):
+        self.wait_time_between_slides = 0.05
+        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # AXIS WITH DATA POINTS APPEAR
         # REGRESSION LINE IS DRAWN
@@ -294,7 +294,7 @@ class W2Python_slides(Scene):
         self.wait(0.1)
 
         # SLIDE 15:  ===========================================================
-        # 
+        # FOCUS ON THE TABLE
         self.next_slide(
             notes=
             '''In the table, each row represents a different fire event, while
@@ -305,7 +305,7 @@ class W2Python_slides(Scene):
         self.play(cl_env.cells[-1].animate.focus_output(scale=0.5, alignment=LEFT))
 
         # SLIDE 16:  ===========================================================
-        # HIGHLIGHT TEMPERATURE
+        # HIGHLIGHT TEMPERATURE COLUMN
         self.next_slide(
             notes=
             '''the Temperature: expressed in Celsius degrees; [CLICK]
@@ -314,7 +314,7 @@ class W2Python_slides(Scene):
         highlight_colors = [BLUE, TEAL, ORANGE, PINK]
         full_labels = VGroup(Text(label, font=CODE_FONT, color=BLACK) for label in
                        ['Temperature', 'Relative Humidity', 'Build-Up Index', 'Fire Weather Index'])
-        full_labels.scale(0.75).arrange_in_grid(4,1, cell_alignment=LEFT).next_to(head_table, RIGHT).shift(RIGHT)
+        full_labels.scale(0.7).arrange_in_grid(4,1, cell_alignment=LEFT).next_to(head_table, RIGHT).shift(RIGHT)
         colored_dots = VGroup(Dot(color=highlight_colors[i], radius=0.15, fill_opacity=0.4, stroke_width=0).next_to(full_labels[i], LEFT) for i in range(4))
         column_highlights = VGroup(HighlightRectangle(head_table.get_columns()[i+1][1:], color = highlight_colors[i]) for i in range(4))
 
@@ -325,7 +325,7 @@ class W2Python_slides(Scene):
         )
 
         # SLIDE 17:  ===========================================================
-        # HIGHLIGHT RELATIVE HUMIDITY
+        # HIGHLIGHT RELATIVE HUMIDITY COLUMN
         self.next_slide(
             notes=
             '''the Relative Humidity: expressed as a percentage; [CLICK]
@@ -337,7 +337,7 @@ class W2Python_slides(Scene):
             AddTextLetterByLetter(full_labels[1], rate_func=linear, time_per_char=0.01)
         )
         # SLIDE 18:  ===========================================================
-        # HIGHLIGHT BUILD-UP INDEX
+        # HIGHLIGHT BUILD-UP INDEX COLUMN
         self.next_slide(
             notes=
             '''the Build-Up Index, which represents the total quantity of
@@ -350,7 +350,7 @@ class W2Python_slides(Scene):
             AddTextLetterByLetter(full_labels[2], rate_func=linear, time_per_char=0.01)
         )
         # SLIDE 19:  ===========================================================
-        # HIGHLIGHT FIRE WEATHER INDEX
+        # HIGHLIGHT FIRE WEATHER INDEX COLUMN
         self.next_slide(
             notes=
             '''the Fire Weather Index, which evaluates the overall risk of
@@ -363,7 +363,7 @@ class W2Python_slides(Scene):
             AddTextLetterByLetter(full_labels[3], rate_func=linear, time_per_char=0.01)
         )
         # SLIDE 20:  ===========================================================
-        # 
+        # BRACES UNDER COLUMNS APPEAR WITH x_i, y_i labels
         self.next_slide(
             notes=
             '''In our context, temperature, relative humidity, and Build-up
@@ -371,6 +371,23 @@ class W2Python_slides(Scene):
             weather index plays the role of variable Y.
             '''
         )
+        # moving_brace = Brace(column_highlights[0], DOWN, color=BLACK)
+        # brace_x_label = MathTex('x_i', color=BLACK).scale(0.75)
+        # moving_brace.put_at_tip(brace_x_label)
+        # x_brace = VGroup(moving_brace, brace_x_label)
+        # second_brace = moving_brace.copy().next_to(column_highlights[3], DOWN).align_to(moving_brace, UP)
+        # brace_y_label = MathTex('y_i', color=BLACK).scale(0.75)
+        # second_brace.put_at_tip(brace_y_label)
+        # y_brace = VGroup(brace_y_label, brace_y_label)
+
+        # self.play(Create(x_brace))
+        # self.wait(0.5)
+        # self.play(x_brace.animate.match_x(column_highlights[1]))
+        # self.wait(0.5)
+        # self.play(x_brace.animate.match_x(column_highlights[2]))
+        # self.wait(0.5)
+        # self.play(Create(y_brace))
+
         # SLIDE 21:  ===========================================================
         # NEW EMPTY EMPTY SCREEN FADES IN
         self.next_slide(
@@ -396,9 +413,10 @@ class W2Python_slides(Scene):
                 return m, q
             '''
         ).center()
+        self.play(FadeOut(cl_env, full_labels, colored_dots, column_highlights))
+        cl_env.clear()
         DSS.reset()
         self.play(FadeIn(DSS))
-        self.remove(cl_env)
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[0]))
 
         # SLIDE 22:  ===========================================================
@@ -408,8 +426,11 @@ class W2Python_slides(Scene):
             '''We are going to write a function that [CLICK] takes as inputs the datapoints, organized in two lists.
             '''
         )
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[1]))
+        DSS.add_main_obj(linear_regression_code[:2])
         DSS.add_side_obj(Text('Lorem Ipsum', color=BLACK))
         self.play(DSS.bringIn())
+        linear_regression_code.move_to(DSS.get_final_mainObj_pos())
         """
         # SLIDE 23:  ===========================================================
         # 
@@ -621,6 +642,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[7, 8]))
+
         # SLIDE 42:  ===========================================================
         # 
         self.next_slide(
@@ -659,6 +681,9 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''Great! We have completed all the necessary steps for the implementation of our function. Let us quickly revise it.
             '''
         )
+        DSS.add_main_obj(linear_regression_code)
+        self.play(DSS.bringOut())
+
         # SLIDE 46:  ===========================================================
         # 
         self.next_slide(
@@ -742,7 +767,9 @@ We can take advantage of this, and compute these terms once and reuse the result
         LR_example_code.center()
         DSS.reset()
         self.play(FadeIn(DSS))
-        self.remove(cl_env)
+        # empty a bit of memory to speed up
+        self.clear()
+        self.add(DSS)
         self.play(LR_example_code.TypeLetterbyLetter(lines=[0]))
 
         # SLIDE :  ===========================================================
@@ -800,6 +827,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
+
         # SLIDE 00:  ===========================================================
         # 'f' F-STRINGS HIGHLIGHTED
         self.next_slide(
@@ -833,6 +861,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             'Slope (m): 1.4220\n'
             'Y-intercept (q): -36.2192'
         )
+        self.play(cl_env.cells[0].Run())
 
         # SLIDE :  ===========================================================
         # 
@@ -855,10 +884,10 @@ We can take advantage of this, and compute these terms once and reuse the result
             plt.legend()
             '''
         ).center()
-        plotting_code.save_state()
+        plotting_code.code.save_state()
         DSS.reset()
         self.play(FadeIn(DSS))
-        self.remove(cl_env)
+        self.add(cl_env); self.remove(cl_env)
         self.play(plotting_code.TypeLetterbyLetter(lines=[0]))
 
         # SLIDE :  ===========================================================
@@ -933,6 +962,7 @@ We can take advantage of this, and compute these terms once and reuse the result
         )
         self.play(FadeOut(*plot_label_highlights))
         cl_env.clear()
+        self.add(cl_env); self.remove(cl_env); cl_env.clear()
         plotting_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(plotting_code.IntoColab(cl_env))
         temp_fwi_plot = ImageMobject(r'Assets\W2\temp_fwi_plot.png')
@@ -960,11 +990,11 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         DSS.reset()
-        plotting_code.restore()
-        self.play(FadeIn(DSS, plotting_code))
-        # self.play
+        plotting_code.code.restore()
+        self.play(FadeIn(DSS, plotting_code.code))
+        self.add(cl_env); self.remove(cl_env); cl_env.clear()
+        # self.play(replace)
         self.wait(1)
-        cl_env.clear()
         plotting_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(plotting_code.IntoColab(cl_env))
         rh_fwi_plot = ImageMobject(r'Assets\W2\rh_fwi_plot.png')
@@ -994,5 +1024,37 @@ We can take advantage of this, and compute these terms once and reuse the result
             enabling us to quantify the relationships between variables. [END]
             '''
         )
-        self.play(rh_fwi_plot.animate.scale(0.8).move_to(HALF_SCREEN_LEFT))
-        self.play(FadeIn(temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_RIGHT)))
+        self.play(rh_fwi_plot.animate.scale(0.65).move_to(HALF_SCREEN_LEFT))
+        temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_RIGHT)
+        self.play(FadeIn(temp_fwi_plot, shift=FRAME_WIDTH/4))
+
+
+class Test(Scene):
+    def construct(self):
+        cl_env = ColabEnv(r'Assets\W2\colabSLR.png')
+        self.add(cl_env)
+        # print('1: ',self.mobjects)
+        # self.wait(0.5)
+        # cl_env.add_cell(ColabCodeBlock('lorem ipsum'))
+        # print('2: ',self.mobjects)
+        # cursor = Cursor()
+        # cl_env.add(cursor)
+        # self.wait(0.5)
+        # print('3: ',self.mobjects)
+        # self.remove(cl_env)
+        # print('4: ',self.mobjects)
+        # self.play(FadeIn(self.mobjects[0]))
+        # print('5: ',self.mobjects)
+        # print(cursor in self.mobjects)
+        # self.wait(0.5)
+        cursor = Cursor()
+        cl_env.add(cursor)
+        print('1: ',self.mobjects)
+        self.play(Succession(cursor.Click()))
+        print('2: ', self.mobjects)
+        self.add(cl_env)
+        print('3: ', self.mobjects)
+        self.wait()
+        self.remove(cl_env)
+        print('4: ', self.mobjects)
+        self.wait(0.5)

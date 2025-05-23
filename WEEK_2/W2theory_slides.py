@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from manim_slides import Slide
 from W2Anim import *
-
+LABELS_SIZE=0.75
 class W2Theory_slides(Slide):
     def construct(self):
         # SLIDE 01:  ===========================================================
@@ -18,16 +18,31 @@ class W2Theory_slides(Slide):
             causes is crucial for prevention and mitigation. [CLICK]
             '''
         )
+        ax = Axes(
+            x_range=[-4,1,1],
+            y_range=[-1.7,2.7,1],
+            x_length=9,
+            y_length=9*(5-0.6)/5,
+            x_axis_config={'stroke_color':BLACK, 'include_ticks':False},
+            y_axis_config={'stroke_color':BLACK, 'include_ticks':False}
+        ).center()
+        ax.set_z_index(-1)
+        ax_labels = ax.get_axis_labels(
+            MathTex("x", color=BLACK).scale(LABELS_SIZE), MathTex("y", color=BLACK).scale(LABELS_SIZE)
+        )
         # SLIDE 02:  ===========================================================
-        # AXIS GRAPH WITH NEGATIVE CORRELATION APPEARS
+        # HUMIDITY AND FIRE RISK ICONS
+        # GRAPH WITH NEGATIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''For example, we might expect that, the higher the humidity in the
             air, the lower the fire risk on that day. [CLICK]
             '''
         )
+
         # SLIDE 03:  ===========================================================
-        # AXIS GRAPH WITH POSITIVE CORRELATION APPEARS
+        # TEMPERATURE ICON REPLACES HUMIDITY ONE
+        # GRAPH WITH POSITIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''Similarly, we expect that high temperature increases the risk of
@@ -35,7 +50,7 @@ class W2Theory_slides(Slide):
             '''
         )
         # SLIDE 04:  ===========================================================
-        # 
+        # DATA POINTS APPEAR
         self.next_slide(
             notes=
             '''To answer this question quantitatively, we use real-world data
@@ -43,6 +58,10 @@ class W2Theory_slides(Slide):
             humidity, and wildfire occurrence. [CLICK] 
             '''
         )
+        dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.5, n=20, sigma=0.5)
+        dataset_points = points_from_data(dataset, ax=ax, color=PURPLE_A)
+        self.play(GrowFromCenter(dataset_points, run_time=2, lag_ratio=0.5))
+
         # SLIDE 04:  ===========================================================
         # SOME NON LINEAR MODELS APPEAR
         self.next_slide(
@@ -53,6 +72,7 @@ class W2Theory_slides(Slide):
             fire risk based on temperature and humidity.
             '''
         )
+
         # SLIDE 05:  ===========================================================
         # REGRESSED LINE APPEARS
         # LINEAR REGRESSION TITLE APPEARS
@@ -65,6 +85,7 @@ class W2Theory_slides(Slide):
             The key question is: "How can I construct this line mathematically?"
             '''
         )
+        LR_title = Text('Linear Regression', color=BLACK, font=, font_size=)
         # SLIDE 06:  ===========================================================
         # Y=F(X) APPEARS
         # EMPTY AXIS APPEARS
