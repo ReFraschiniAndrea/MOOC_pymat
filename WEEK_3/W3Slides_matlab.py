@@ -18,6 +18,8 @@ config.pixel_height=1080
 
 class W3Slides_matlab(Slide):
     def construct(self):
+        self.wait_time_between_slides = 0.05
+        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # COVER: MATLAB ENVIRONMENT APPEARS, PSEUDO CODE FADES IN ON TOP
         self.next_slide(
@@ -86,10 +88,9 @@ class W3Slides_matlab(Slide):
         self.play(hand_cursor.Click())
         mat_env.set_image(r'Assets\W3\matlab_save_prompt_gd.png'),
         self.wait(0.25)
-        self.play(hand_cursor.animate.move_to(mat_env._pixel2p(874, 888)))  # 'save' button in prompt window
+        self.play(hand_cursor.animate.move_to(mat_env.SAVE_PROMPT_BUTTON_))  # 'save' button in prompt window
         self.play(hand_cursor.Click())
         mat_env.set_image(r'Assets\W3\matlab_saved_gd.png'),
-        self.wait(0.1)
 
         # SLIDE 05:  ===========================================================
         # HAND CURSOR FADES OUT
@@ -139,7 +140,6 @@ class W3Slides_matlab(Slide):
         import_code.save_state()
         import_code.shift(DOWN)
         self.play(init_code.TypeLetterbyLetter(lines=[0]))
-        self.wait(0.1)
 
         # SLIDE 07:  ===========================================================
         # PSEUDO CODE APPEARS, 
@@ -259,6 +259,7 @@ class W3Slides_matlab(Slide):
             input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height)
         )
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
+        self.play(mat_env.Run())
 
         # SLIDE 14:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
@@ -267,9 +268,6 @@ class W3Slides_matlab(Slide):
             '''Now we want to compute the position of the robot according to 
             this formulas. To that end we define [CLICK]...
             '''
-        )
-        self.play(
-            FadeOut(mat_env)
         )
         kinematics_eq = VGroup(
             MathTex(r"x(\theta_1, \theta_2) = L_1 \cos(\theta_1) + L_2 \cos(\theta_2)", color=BLACK),
@@ -292,11 +290,16 @@ class W3Slides_matlab(Slide):
         DSS.reset()
         DSS.add_side_obj(kinematics_eq)
         kinematics_code.move_to(DSS.mainRect)
+        self.play(FadeIn(DSS.mainRect))
         self.play(
-            DSS.bringIn(),
-            kinematics_code.TypeLetterbyLetter(lines=[0])
+            AnimationGroup(
+                DSS.bringIn(),
+                kinematics_code.TypeLetterbyLetter(lines=[0])
+            )
         )
-        
+        self.add(mat_env); self.remove(mat_env)  # Add so that remove is in self.mobjects, so that remove actually works.
+        mat_env.remove(mat_env.cursor)
+
         # SLIDE 16:  ===========================================================
         # NEW BLOCK APPEARS, FUNCTION DEFINITION IS WRITTEN
         self.next_slide(
@@ -306,9 +309,7 @@ class W3Slides_matlab(Slide):
             Let us print the coordinates [CLICK] ...
             '''
         )
-        self.play(
-            kinematics_code.TypeLetterbyLetter(lines=range(1,5))
-        )
+        self.play(kinematics_code.TypeLetterbyLetter(lines=range(1,5)))
         
         # SLIDE 17:  ===========================================================
         # PRINT LINES ARE WRITTEN.
@@ -319,15 +320,13 @@ class W3Slides_matlab(Slide):
             visualize the corresponding robot position [CLICK]...
             '''
         )
-        self.play(
-            kinematics_code.TypeLetterbyLetter(lines=range(6, 10))
-        )
+        self.play(kinematics_code.TypeLetterbyLetter(lines=range(6, 10)))
         self.wait(0.2)
         kinematics_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(
             kinematics_code.IntoMatlab(mat_env),
             DSS.bringOut()
-            )
+        )
         
         # SLIDE 17:  ===========================================================
         # RUN BUTTON IS CLICKED, OUTPUT APPEARS.
@@ -351,9 +350,10 @@ class W3Slides_matlab(Slide):
             '''
         )
         self.play(FadeOut(mat_env))
+        self.clear()
         self.play(FadeIn(pc.restore().scale_to_fit_width(FRAME_WIDTH*0.9).center()))
         self.wait(0.3)
-        self.play(Circumscribe(pc[2:], run_time=3, color=BLUE))
+        self.play(Circumscribe(pc[2:], run_time=2.5, color=BLUE))
        
         # SLIDE 19:  ===========================================================
         # HIGHLIGHT J AND NABLA J IN PSEUDO CODE.
@@ -424,8 +424,8 @@ class W3Slides_matlab(Slide):
             AnimationGroup(
                 AnimationGroup(
                     FadeOut(nabla_J_eq),
-                    ReplacementTransform(J_eq, DSS.secondaryObj),
-                    FadeIn(DSS.mainRect, DSS.secondaryRect)
+                    FadeIn(DSS.mainRect, DSS.secondaryRect),
+                    ReplacementTransform(J_eq, DSS.secondaryObj)
                 ),
                 J_code.TypeLetterbyLetter(lines=[0]),
                 lag_ratio=1
@@ -483,17 +483,17 @@ class W3Slides_matlab(Slide):
             end
             '''
         )
-        self.play(FadeOut(mat_env))
         DSS.reset()
         DSS.add_side_obj(nabla_J_eq.scale(0.6))
         nabla_J_code.move_to(DSS.get_final_mainObj_pos())
-        self.play(AnimationGroup(
-            FadeIn(DSS.mainRect),
+        self.play(FadeIn(DSS.mainRect))
+        self.add(mat_env) ; self.remove(mat_env)  # remove mat_env from behind
+        self.play(
             AnimationGroup(
                 DSS.bringIn(),
                 nabla_J_code.TypeLetterbyLetter(lines=[0])
             )
-        ))
+        )
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(1, 3)))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(4, 8), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(9, 11), lag_ratio=0))
@@ -593,7 +593,7 @@ class W3Slides_matlab(Slide):
             '''
         )
         DSS.reset()
-        DSS.add_side_obj(pc[2:].copy().scale(0.4))
+        DSS.add_side_obj(pc[2:].copy().set_z_index(1).scale(0.4))
         DSS.bring_in()
         GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN*0.5)
         self.play(
@@ -601,8 +601,8 @@ class W3Slides_matlab(Slide):
                 AnimationGroup(
                     FadeOut(pc[:2]),
                     AnimationGroup(
-                        ReplacementTransform(pc[2:], DSS.secondaryObj),
-                        FadeIn(DSS.mainRect, DSS.secondaryRect)
+                        FadeIn(DSS.mainRect, DSS.secondaryRect),
+                        ReplacementTransform(pc[2:], DSS.secondaryObj)
                     ),
                     lag_ratio=0.5
                 ),
@@ -708,7 +708,7 @@ class W3Slides_matlab(Slide):
             '''and comment the outputs: [CLICK]
             '''
         )
-        self.play(mat_env.animate.focus_output(scale = 0.8))
+        self.play(mat_env.focus_output(scale = 0.8))
 
         # SLIDE 32:  ===========================================================
         # HIGLIGHT FIRST LINE
@@ -717,7 +717,6 @@ class W3Slides_matlab(Slide):
             '''1 - the method converges in 38 iterations [CLICK]
             '''
         )
-        final_output_text.set_z_index(1)
         output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
         self.play(Create(output_highlights[0]))
 
@@ -759,14 +758,14 @@ class W3Slides_matlab(Slide):
             x_axis_config={'stroke_color':BLACK, 'include_ticks':False, 'include_tip':False, 'stroke_width':0.5},
             y_axis_config={'stroke_color':BLACK, 'include_ticks':False, 'include_tip':False, 'stroke_width':0.5},
             background_line_style={'stroke_color':BLACK, 'stroke_width':0.5}
-        ).scale(1).move_to(mat_env.output_image).shift(RIGHT*3).set_z(0)
+        ).scale(1).move_to(mat_env.output.image).shift(RIGHT*3).set_z(0)
         T1, T2 = 0.6293184, 4.6875734
         robot_arm=NewDB(ax, 1, 1.5,  T1, T2)
         robot_arm.suspend_updating()
         target = Star(color=ORANGE, fill_opacity=1).scale(0.1).move_to(
             ax.c2p(0.75, -1, 0))
         end = VGroup(ax, robot_arm, target)
-        start = end.copy().scale_to_fit_height(mat_env.output_image.height).scale(0.8*0.66).move_to(mat_env.output_image).set_opacity(0).set_z(0)
+        start = end.copy().scale_to_fit_height(mat_env.output.image.height).scale(0.8*0.66).move_to(mat_env.output.image).set_opacity(0).set_z(0)
         sub_false = DashedLine(robot_arm.foot.get_center(), robot_arm.foot.get_center()+RIGHT, stroke_color=BLACK, stroke_width=0.3)
         subline = DashedLine(robot_arm.joint.get_center(), robot_arm.joint.get_center()+RIGHT*0.3, stroke_color=BLACK, stroke_width=0.3)
         angle1 = Angle(sub_false, robot_arm.arm1, color=BLUE_B, radius=0.25)
@@ -775,7 +774,7 @@ class W3Slides_matlab(Slide):
         t2_label = Variable(var=T2, label=MathTex(r'\theta_2')).set_color(BLACK).scale(0.75).next_to(angle2, UP*0.25).suspend_updating()
 
         self.play(
-            Group(mat_env.plot_window, mat_env.output_image).animate.shift(LEFT*3),
+            Group(mat_env.output.plot_window, mat_env.output.image).animate.shift(LEFT*3),
             Transform(start, end)
         )
         self.play(
@@ -783,3 +782,63 @@ class W3Slides_matlab(Slide):
             ReplacementTransform(final_output_text[1][22:31].copy(), t1_label.value),
             ReplacementTransform(final_output_text[1][31:].copy(), t2_label.value)
         )
+
+
+class Test(Scene):
+    def construct(self):
+        cl_env = MatlabEnv(r'Assets\W3\colabGD.png')
+        DSS = DynamicSplitScreen(RED)
+        code = MatlabCode('Hello from the other side')
+        self.add(DSS, code)
+        code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(code.IntoMatlab(cl_env))
+        self.wait(0.5)
+        final_output_text = MatlabOutputText(
+            'Converged after 38 iterations.\n'
+            'Final angle combination:  0.6293184 4.6875734 \n'
+            'Final distance:  0.0083814'
+        )
+        cl_env.add_output(
+            output_text=final_output_text,
+            output_image=r'Assets\W3\RobotArmEnd_mat.png'
+        )
+        print(cl_env.output.outputWindow.z_index)
+        print(cl_env.cursor.z_index)
+        print(self.mobjects)
+        
+        self.play(cl_env.Run())
+        print(cl_env.output.outputWindow.z_index)
+        print(cl_env.cursor.z_index)
+        print(self.mobjects)
+        
+        self.play(cl_env.focus_output(scale = 0.8))
+        print(cl_env.output.outputWindow.z_index)
+        print(cl_env.cursor.z_index)
+        print(self.mobjects)
+        # # self.output_text.scale_to_fit_width(FRAME_WIDTH*scale)
+        # self.play(
+        #     # Group(cl_env.output_image, cl_env.plot_window).animate.next_to(cl_env.output_text, DOWN)
+        #     cl_env.output.animate.center(),
+        #     cl_env.outputWindow.animate.become(
+        #             Rectangle(
+        #             color=GREEN,
+        #             height=FRAME_HEIGHT,
+        #             width=FRAME_WIDTH,
+        #             fill_opacity=1)
+        #         )
+
+        # )
+            
+
+
+        output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
+        # self.add(*output_highlights)
+        self.play(Create(output_highlights[0]))
+
+        self.play(ReplacementTransform(output_highlights[0], output_highlights[1]))
+
+
+
+        self.play(ReplacementTransform(output_highlights[1], output_highlights[2]))
+
+        self.play(FadeOut(output_highlights[2]))

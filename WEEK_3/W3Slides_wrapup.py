@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from manim_slides import ThreeDSlide
-from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, HighlightRectangle, CustomDecimalNumber
+from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, CODE_FONT, HighlightRectangle, CustomDecimalNumber
 from matlab_utils import MatlabCodeWithLogo
 from colab_utils import ColabCodeWithLogo, ColabCode
 from W3Anim import double_arm_kinematics, NewDB, RobotGradientDescent
@@ -20,6 +20,8 @@ LBELS_SIZE_3D = 1.5
 
 class W3WrapUp_GradientDescent(ThreeDSlide):
     def construct(self):
+        self.wait_time_between_slides = 0.05
+        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # REFERENCE AXES AND ROBOT ARM APPEAR
         # LABELS AND DISTANCE ARROWS APPEAR
@@ -212,8 +214,8 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         # PYTHON AND MATLAB SCRIPTS FOR GD APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
-            '''We implemented this alogrithm either in Python and in Matlab, by
-            using the following scripts. [CLICK]
+            '''We implemented this alogrithm in both Python and Matlab, by using
+            the following scripts. [CLICK]
             '''
         )
         self.play(FadeOut(pc, obj_surf, ref_sys, 
@@ -277,27 +279,27 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         # PROBLEM DATA APPEARS WITH FINAL CONFIGURATION PLOT
         self.next_slide(
             notes=
-            '''We use the gradient descent method to find a final configuration
+            '''We used the gradient descent method to find a final configuration
             for these problem's data. [CLICK]
             '''
         )
         self.play(FadeOut(GD_codesnipd_py, GD_codesnipd_mat))
-        Everything.remove(dist_label, distance_arrow, L1_label, L2_label, t1_label, t2_label, angle1, angle2, subline)
-        ax_2d.become(
-            Axes(
+        self.clear()
+
+        result_ax = Axes(
             x_range=[-3,2,1],
             y_range=[-2,3,1],
             x_length=7,
             y_length=7,
             x_axis_config={'stroke_color':BLACK, 'include_ticks':False},
             y_axis_config={'stroke_color':BLACK, 'include_ticks':False}
-            )
-        )
-        ax_2d_labels.become(ax_2d.get_axis_labels(
+            ).center().to_edge(RIGHT)
+        result_ax_labels = result_ax.get_axis_labels(
             MathTex("x", color=BLACK).scale(0.75), MathTex("y", color=BLACK).scale(0.75)
-        ))
-        Everything.center().to_edge(RIGHT)
-        target.move_to(ax_2d.c2p(0.75, -1, 0))
+        )
+        result_db = NewDB(result_ax, 1, 1.5, T1, T2)
+        hand_coord.clear_updaters().add_updater(lambda mob: mob.next_to(result_db.hand, UP))
+        target.move_to(result_ax.c2p(0.75, -1, 0))
         
         problem_data = ColabCode(
             r'''
@@ -315,9 +317,9 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         problem_data.add_background_window()
         problem_data.to_edge(LEFT)
 
-        self.play(FadeIn(Everything, problem_data))
+        self.play(FadeIn(result_ax, result_ax_labels, target, target_coord, result_db, hand_coord, problem_data))
         self.wait(0.5)
-        self.play(robot_arm.MoveToAngles(0.6293184, 4.6875734, run_time=2))
+        self.play(result_db.MoveToAngles(0.6293184, 4.6875734, run_time=2))
 
         # SLIDE 06:  ===========================================================
         # SHOW CODE SNIPPETS FOR IMPORTING FUNCTIONS
@@ -326,7 +328,8 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             '''We learnt how to import/use external functions.
             '''
         )
-        self.play(FadeOut(Everything, problem_data))
+        self.play(FadeOut(result_ax, result_ax_labels, target, target_coord, result_db, hand_coord, problem_data))
+        self.clear()
         
         import_codesnip_py = ColabCodeWithLogo(
             r'''from my_functions import plot_robot_arm''',
@@ -340,13 +343,13 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         ).next_to(import_codesnip_py, DOWN).align_to(import_codesnip_py, LEFT)
         
         self.play(FadeIn(Group(import_codesnip_py, import_codesnip_mat).center()))
-        self.wait(0.1)
 
         # SLIDE 07:  ===========================================================
         # CODE TRANSFORMS INTO CODE FOR WHILE/BREAK
         self.next_slide(
             notes=
-            '''Moreover we use the while loop and break instruction to code the algorithm.
+            '''Moreover, we used the while loop and break instruction to code
+            the algorithm. [CLICK]
             '''
         )
         break_codesnip_py = ColabCodeWithLogo(
@@ -381,7 +384,6 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
 
         self.play(Transform(import_codesnip_py, break_codesnip_py), 
                   Transform(import_codesnip_mat, break_codesnip_mat))
-        self.wait(0.1)
 
         # SLIDE 08:  ===========================================================
         # NEW AXES APPEAR WITH ROBOT ARM
@@ -390,23 +392,12 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
         # ITERATION NUMBER AND OBJECTIVE FUNCTION VALUE
         self.next_slide(
             notes=
-            '''With the code we can perform different simulations by changing the initial conditions and fixing the target.
+            '''With the code we wrote, we can perform different simulations by
+            changing the initial conditions while keeping the target fixed.
+            [CLICK]
             '''
         )
         self.play(FadeOut(import_codesnip_py, import_codesnip_mat))
-
-        # new trajectories
-        L1, L2 = 1, 1.5
-        startig_points = [
-            [2.5, 2.7],
-            [0, 0.5],
-            [2.7, 3.14],
-        ]
-        common_target = [0.75, -1]
-        gd_2 = RobotGradientDescent(L1, L2, target=common_target)
-        gd_traj1 = gd_2.run(startig_points[0], learning_rate=0.1, tol=0.01)
-        gd_traj2 = gd_2.run(startig_points[1], learning_rate=0.1, tol=0.01)
-        gd_traj3 = gd_2.run(startig_points[2], learning_rate=0.1, tol=0.01)
 
         ax_2d_new = Axes(
             x_range=[-4, 4],
@@ -416,83 +407,97 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             x_axis_config={'stroke_color':BLACK, 'include_ticks':True},
             y_axis_config={'stroke_color':BLACK, 'include_ticks':True}
         )
-
-        db1 = NewDB(ax_2d_new, L1, L2, *startig_points[0], BLUE, z_index=3)
-        db2 = NewDB(ax_2d_new, L1, L2, *startig_points[0], ORANGE, z_index=2)
-        db3 = NewDB(ax_2d_new, L1, L2, *startig_points[0], GREEN, z_index=1)
+        # new trajectories
+        L1, L2 = 1, 1.5
+        TOL = 0.01
+        arm_colors = [BLUE, ORANGE, GREEN]
+        startig_points = [
+            [2.5, 2.7],
+            [0, 0.5],
+            [2.7, 3.14],
+        ]
+        common_target = [0.75, -1]
+        gd_2 = RobotGradientDescent(L1, L2, target=common_target)
+        gd_trajectories = [gd_2.run(startig_points[i], learning_rate=0.1, tol=TOL) for i in range(3)]
+        robot_arms = [NewDB(ax_2d_new, L1, L2, *startig_points[0], arm_colors[i], z_index=3-i) for i in range(3)]
 
         def my_counter(text, color, **kwargs):
-            label = Text(text, color=color, font='Aptos Mono')
-            label.add(Text('=', color=color, font='Aptos Mono').next_to(label, RIGHT))
-            counter =  CustomDecimalNumber(font='Aptos Mono', color=color, mob_class = Text, **kwargs).next_to(label, RIGHT)
+            label = Text(text, color=color, font=CODE_FONT)
+            label.add(Text('=', color=color, font=CODE_FONT).next_to(label, RIGHT))
+            counter =  CustomDecimalNumber(font=CODE_FONT, color=color, mob_class = Text, **kwargs).next_to(label, RIGHT)
             return VGroup(label, counter)
-
-        iter_1 = my_counter('iter', num_decimal_places=0, color=BLUE)
-        iter_2 = my_counter('iter', num_decimal_places=0, color=ORANGE)
-        iter_3 = my_counter('iter', num_decimal_places=0, color=GREEN)
-
-        J_1 = my_counter('J', num_decimal_places=4, color=BLUE)
-        J_2 = my_counter('J', num_decimal_places=4, color=ORANGE)
-        J_3 = my_counter('J', num_decimal_places=4, color=GREEN)
-
-        counter1 = VGroup(iter_1, J_1).arrange_in_grid(2, 1, cell_alignment=LEFT).to_corner(UR, buff = 1)
-        counter2 = VGroup(iter_2, J_2).arrange_in_grid(2, 1, cell_alignment=LEFT).center().to_edge(RIGHT, buff = 1)
-        counter3 = VGroup(iter_3, J_3).arrange_in_grid(2, 1, cell_alignment=LEFT).to_corner(DR, buff = 1)
+        
+        counters = [
+            VGroup(
+                my_counter('iter', num_decimal_places=0, color=arm_colors[i]),
+                my_counter('J', num_decimal_places=4, color=arm_colors[i])
+            ).arrange_in_grid(2, 1, cell_alignment=LEFT)
+            for i in range(3)
+        ]
+        counters[0].to_corner(UR, buff = 1)
+        counters[1].center().to_edge(RIGHT, buff = 1)
+        counters[2].to_corner(DR, buff = 1)
         
         common_target = Star(color=RED,fill_opacity=1).scale(0.1).move_to( ax_2d_new.c2p(*common_target, 0))
 
-        self.play(FadeIn(ax_2d_new, db1, db2, db3, common_target))
-        # self.play(GrowFromCenter(common_target))
+        self.play(FadeIn(ax_2d_new, *robot_arms, common_target))
         self.play(
-            db2.MoveToAngles(*startig_points[1]),
-            db3.MoveToAngles(*startig_points[2])
+            robot_arms[1].MoveToAngles(*startig_points[1]),
+            robot_arms[2].MoveToAngles(*startig_points[2])
         )
         self.play(
             AnimationGroup(
                 VGroup(ax_2d_new, common_target).animate(run_time=0.5).to_edge(LEFT), 
-                FadeIn(counter1, counter2, counter3, run_time=0.5),
+                FadeIn(*counters, run_time=0.5),
                 lag_ratio=0.75
             ))
-
+        
+        arms_animations = []
         for i in range(100):
-            anim = []
-            run_time = 0.2* np.exp(-i/20)
+            arms_moving, counters_update = [], []
+            run_time = max(0.2* np.exp(-i/20), 1/30)
             rf = linear if i>1 else rate_functions.ease_in_sine
-            if i<len(gd_traj1): 
-                anim.append(db1.MoveToAngles(gd_traj1[i, 0], gd_traj1[i, 1], rate_func=rf, run_time=run_time))
-                iter_1[1].set_value(i)
-                J_1[1].set_value(gd_traj1[i, 2])
-            if i<len(gd_traj2): 
-                anim.append(db2.MoveToAngles(gd_traj2[i, 0], gd_traj2[i, 1], rate_func=rf, run_time=run_time)); 
-                iter_2[1].set_value(i); 
-                J_2[1].set_value(gd_traj2[i, 2])
-            if i<len(gd_traj3): 
-                anim.append(db3.MoveToAngles(gd_traj3[i, 0], gd_traj3[i, 1], rate_func=rf, run_time=run_time)); 
-                iter_3[1].set_value(i); 
-                J_3[1].set_value(gd_traj3[i, 2])
-
-            if anim:
-                self.play(*anim)
+            for j in range(3):
+                if i < len(gd_trajectories[j]): 
+                    arms_moving.append(
+                        robot_arms[j].MoveToAngles(gd_trajectories[j][i, 0], gd_trajectories[j][i, 1],
+                                                   rate_func=rf, run_time=run_time))
+                    counters_update.extend((
+                        # jth arm, 0-> iter, 1->J value; 
+                        counters[j][0][1].animate(run_time=0).set_value(i),
+                        counters[j][1][1].animate(run_time=0).set_value(gd_trajectories[j][i, 2])
+                    ))    
+            if arms_moving:
+                arms_animations.append(
+                    Succession(
+                        AnimationGroup(*arms_moving),
+                        AnimationGroup(*counters_update)
+                    )
+                )
+    
+        self.play(Succession(*arms_animations))
 
         # SLIDE 09:  ===========================================================
         # EMPTY AXES WITH LABELS TO HINT AT THE SOLUTION
+        # GRAPH IS PLOTTED WHILE ARM MOVES
         self.next_slide(
             notes=
             '''Now it's your turn.
-            Try collecting computed distances in a vector and plot them as a
-            function of  iteration. [CLICK]
+            Try collecting the distances over time in a vector and plot them as
+            a function of  iteration. [CLICK]
             '''
         )
-        self.play(FadeOut(db1, db2, db3, ax_2d_new, counter1, counter2, counter3, common_target))
+        self.play(FadeOut(*robot_arms, ax_2d_new, *counters, common_target))
+        self.clear()
 
         plane = NumberPlane(
             x_range=[0, 45, 5],
-            y_range=[-2, 2, 1] ,
+            y_range=[-3, 2, 1] ,
             x_length=9,
             y_length=9,
             x_axis_config={'stroke_color': BLACK, 'include_ticks': False, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
             y_axis_config={'stroke_color': BLACK, 'include_ticks': False, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex,
-                           'scaling': LogBase(custom_labels=True), 'numbers_to_include':[-2, -1, 0, 1]},
+                           'scaling': LogBase(custom_labels=True), 'numbers_to_include':[-3, -2, -1, 0, 1]},
             background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
         ).scale(0.65).move_to(HALF_SCREEN_LEFT)
         plane.x_axis.numbers.set_color(BLACK)
@@ -501,18 +506,21 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             Text('iter', color=BLACK, font='Aptos Mono').scale(LABELS_SIZE),  #, font='Aptos'
             Text('J', color=BLACK, font='Aptos Mono').scale(LABELS_SIZE)
         )
-        dots = [Dot(plane.c2p(i, gd_traj1[i, 2], 0), color=RED, radius=0.8*DEFAULT_DOT_RADIUS) for i in range(len(gd_traj1))]
-        lines = [Line(dots[i].get_center(), dots[i+1].get_center(), color=RED, stroke_width=2) for i in range(len(gd_traj1)-1)]
+        gd_traj = gd_trajectories[0]
+        dots = [Dot(plane.c2p(i, gd_traj[i, 2], 0), color=RED, radius=0.8*DEFAULT_DOT_RADIUS) for i in range(len(gd_traj))]
+        lines = [Line(dots[i].get_center(), dots[i+1].get_center(), color=RED, stroke_width=2) for i in range(len(gd_traj)-1)]
+        tol_line = DashedLine(plane.c2p(0, TOL, 0), plane.c2p(45, TOL, 0), color=BLACK, dash_length=0.25, dashed_ratio=0.66)
+        tol_label = Text('tol', font='Aptos Mono', color=BLACK).scale(LABELS_SIZE*0.8).next_to(tol_line, UP, buff=0.1).align_to(tol_line, RIGHT)
 
         iter_c = my_counter('iter', color=BLACK, num_decimal_places=0)
         J_c = my_counter('J', color=BLACK, num_decimal_places=4).next_to(iter_c, DOWN)
         iter_c[1].set_value(0)
-        J_c[1].set_value(gd_traj1[0, 2])
+        J_c[1].set_value(gd_traj[0, 2])
         counterc = VGroup(iter_c, J_c).arrange_in_grid(2,1, cell_alignment=LEFT).to_edge(UP).shift(UP)
 
         ax_2d_new.scale(0.65).move_to(HALF_SCREEN_RIGHT)
         common_target.move_to(ax_2d_new.c2p(0.75, -1, 0)).set_color(ORANGE)
-        final_robot_arm = NewDB(ax_2d_new, 1 , 1.5, gd_traj1[0,0], gd_traj1[0,1], color=BLUE)
+        final_robot_arm = NewDB(ax_2d_new, 1 , 1.5, gd_traj[0,0], gd_traj[0,1], color=BLUE)
         distance_arrow = DoubleArrow(
             final_robot_arm.hand, common_target, 
             buff=0.1,
@@ -520,7 +528,8 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             stroke_width=2,
             max_tip_length_to_length_ratio=0.05)
 
-        self.play(FadeIn(ax_2d_new, final_robot_arm , common_target, distance_arrow, plane, plane_labels, counterc, dots[0]))
+        self.play(FadeIn(ax_2d_new, final_robot_arm , common_target, distance_arrow,
+                         plane, plane_labels, tol_line, tol_label, counterc, dots[0]))
         distance_arrow.add_updater(
             lambda m: m.become(DoubleArrow(
             final_robot_arm.hand, common_target, 
@@ -529,30 +538,38 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
             stroke_width=2,
             max_tip_length_to_length_ratio=0.05))
         )
+
         self.wait(0.5)
-        # self.play(GrowFromCenter(dots[0], run_time=0.1))
-        for i in range(1,len(dots)):
-            dt = 0.1/(1+ i/10)
-            self.play(AnimationGroup(
-                final_robot_arm.MoveToAngles(gd_traj1[i, 0], gd_traj1[i, 1], rate_func=smooth, run_time=dt),
-                GrowFromCenter(dots[i], run_time=dt),
-                Create(lines[i-1], run_time=dt)
-            ))
-            iter_c[1].set_value(i)
-            J_c[1].set_value(gd_traj1[i, 2])
-        self.wait(0.05)
+        self.play(
+            Succession(
+                Succession(
+                    AnimationGroup(
+                        final_robot_arm.MoveToAngles(gd_traj[i, 0], gd_traj[i, 1], rate_func=smooth),
+                        GrowFromCenter(dots[i]),
+                        Create(lines[i-1]),
+                        run_time=max(0.1/(1+ i/10), 1/30)
+                    ),
+                    AnimationGroup(
+                        iter_c[1].animate.set_value(i),
+                        J_c[1].animate.set_value(gd_traj[i, 2]),
+                        run_time=0
+                    )
+                )
+                for i in range(1,len(dots))
+            )
+        )
 
         # SLIDE 10:  ===========================================================
         # ROBOT ARM WITH CIRCLE TO SHOW REACH APPEARS
         self.next_slide(
             notes=
-            '''Also, think about what happens when the target is not reachable
-            by the robot. [END]
+            '''Also, try to think about what happens when the target is not
+            reachable by the robot. [END]
             '''
         )
         self.play(
             AnimationGroup(
-                FadeOut(plane, *dots, *lines, plane_labels, distance_arrow, counterc),
+                FadeOut(plane, *dots, *lines, plane_labels, tol_line, tol_label, distance_arrow, counterc),
                 VGroup(ax_2d_new, common_target).animate.center().scale(1.4),
                 lag_ratio=0.75   
             )
@@ -562,4 +579,4 @@ class W3WrapUp_GradientDescent(ThreeDSlide):
                               color=RED, fill_opacity=0, stroke_width=2).move_to(ax_2d_new.c2p(0,0,0))
         self.play(FadeIn(robot_radius))
         self.play(final_robot_arm.MoveToAngles(PI/4, PI/4))
-        self.wait(0.2)
+        self.wait(0.1)

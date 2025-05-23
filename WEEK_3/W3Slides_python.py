@@ -17,6 +17,8 @@ config.pixel_height=1080
 
 class W3Slides_python(Slide):
     def construct(self):
+        self.wait_time_between_slides = 0.05
+        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # COVER: TRANSLATE PSEUDO CODE INTO PYTHON CODE
         self.next_slide(
@@ -72,7 +74,6 @@ class W3Slides_python(Slide):
         self.play(hand_cursor.animate.move_to(cl_env.MENU_))
         self.play(hand_cursor.Click())
         cl_env.set_image(r'Assets\W3\colabGD_sidemenu.png')
-        self.wait(0.1)
         
         # SLIDE 04:  ===========================================================
         # CLICK ON UPLOAD BUTTON AND NEW SIDE MENU APPEARS
@@ -84,8 +85,7 @@ class W3Slides_python(Slide):
         )
         self.play(hand_cursor.animate.move_to(cl_env.UPLOAD_))
         self.play(hand_cursor.Click())
-        cl_env.set_image(r'Assets\W3\colabGD_uploaded.png'),
-        self.wait(0.1)
+        cl_env.set_image(r'Assets\W3\colabGD_uploaded.png')
 
         # SLIDE 05:  ===========================================================
         # CLICK ON + CODE
@@ -103,7 +103,6 @@ class W3Slides_python(Slide):
         empty_cell = ColabCodeBlock(code='')
         self.play(hand_cursor.Click())
         cl_env.set_image(r'Assets\W3\colabGD.png')
-        # self.add(cl_env)  # update change of background
         cl_env.add_cell(empty_cell)
         self.wait(0.8)
         self.play(cl_env.OutofColab(empty_cell), FadeOut(hand_cursor))
@@ -131,11 +130,10 @@ class W3Slides_python(Slide):
         RequireLine = pc[1]
         DSS.add_side_obj(RequireLine)
         init_code.move_to(DSS.get_final_mainObj_pos())
-        import_code = init_code[0]
+        import_code = init_code[:3]
         import_code.save_state()
         import_code.shift(DOWN*1.5)
         self.play(init_code.TypeLetterbyLetter(lines=[0]))
-        self.wait(0.1)
 
         # SLIDE 06:  ===========================================================
         #  NEXT CODE LINES ARE WRITTEN
@@ -146,7 +144,6 @@ class W3Slides_python(Slide):
             '''
         )
         self.play(init_code.TypeLetterbyLetter(lines=[1]))
-        self.wait(0.05)
 
         # SLIDE 07:  ===========================================================
         #  NEXT CODE LINES ARE WRITTEN
@@ -156,7 +153,6 @@ class W3Slides_python(Slide):
             '''
         )
         self.play(init_code.TypeLetterbyLetter(lines=[2]))
-        self.wait(0.05)
 
         # SLIDE 08:  ===========================================================
         # PSEUDO CODE APPEARS, NEW CODE BLOCK WITH #DATA REPLACES OLD ONE
@@ -168,8 +164,6 @@ class W3Slides_python(Slide):
         )
         self.play(DSS.bringIn(), import_code.animate.restore())
         self.wait(0.5)
-        init_code.next_to(import_code, DOWN)
-        init_code.align_to(import_code, LEFT)
         self.play(init_code.TypeLetterbyLetter(lines=[4]))
 
         # SLIDE 09:  ===========================================================
@@ -277,7 +271,8 @@ class W3Slides_python(Slide):
             input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height)
         )
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
-
+        self.play(cl_env.Run(cell=0))
+    
         # SLIDE 15:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
         self.next_slide(
@@ -285,9 +280,6 @@ class W3Slides_python(Slide):
             '''Now we want to compute the position of the robot according to 
             this formulas. To that end we define [CLICK]...
             '''
-        )
-        self.play(
-            FadeOut(cl_env)
         )
         kinematics_eq = VGroup(
             MathTex(r"x(\theta_1, \theta_2) = L_1 \cos(\theta_1) + L_2 \cos(\theta_2)", color=BLACK),
@@ -310,10 +302,14 @@ class W3Slides_python(Slide):
         DSS.reset()
         DSS.add_side_obj(kinematics_eq)
         kinematics_code.move_to(DSS.mainRect)
+        self.play(FadeIn(DSS.mainRect))
         self.play(
-            DSS.bringIn(),
-            kinematics_code.TypeLetterbyLetter(lines=[0])
-        )
+            AnimationGroup(
+                DSS.bringIn(),
+                kinematics_code.TypeLetterbyLetter(lines=[0])
+            ))
+        self.add(cl_env); self.remove(cl_env)  # Add so that remove is in self.mobjects, so that remove actually works.
+        cl_env.cells[0].remove(cl_env.cursor)
         
         # SLIDE 16:  ===========================================================
         # NEW BLOCK APPEARS, FUNCTION DEFINITION IS WRITTEN
@@ -324,9 +320,7 @@ class W3Slides_python(Slide):
             Let us print the coordinates [CLICK] ...
             '''
         )
-        self.play(
-            kinematics_code.TypeLetterbyLetter(lines=range(1,6))
-        )
+        self.play(kinematics_code.TypeLetterbyLetter(lines=range(1,6)))
         
         # SLIDE 17:  ===========================================================
         # PRINT LINES ARE WRITTEN.
@@ -338,9 +332,7 @@ class W3Slides_python(Slide):
             imported. [CLICK]
             '''
         )
-        self.play(
-            kinematics_code.TypeLetterbyLetter(lines=[7,8,9])
-        )
+        self.play(kinematics_code.TypeLetterbyLetter(lines=[7,8,9]))
         self.wait(0.2)
         kinematics_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(
@@ -358,7 +350,7 @@ class W3Slides_python(Slide):
         starting_output_text = ColabBlockOutputText( '[-2.1572518285725253, 1.2395419644547012] '  )
         starting_output_img = ImageMobject(r'Assets\W3\RobotArmStart_py.png').scale(0.7).next_to(starting_output_text, DOWN).align_to(starting_output_text, LEFT)
         cl_env.cells[-1].add_output(Group(starting_output_text, starting_output_img))
-        self.play(cl_env.cells[-1].Run())
+        self.play(cl_env.Run(cell=1))
         
         # SLIDE 18:  ===========================================================
         # COLAB ENV FADES OUT
@@ -371,7 +363,7 @@ class W3Slides_python(Slide):
         self.play(FadeOut(cl_env))
         self.play(FadeIn(pc.restore().scale_to_fit_width(FRAME_WIDTH*0.9).center()))
         self.wait(0.3)
-        self.play(Circumscribe(pc[2:], run_time=3, color=BLUE))
+        self.play(Circumscribe(pc[2:], run_time=2.5, color=BLUE))
 
         # SLIDE 19:  ===========================================================
         # HIGHLIGHT J AND NABLA J IN PSEUDO CODE.
@@ -440,8 +432,8 @@ class W3Slides_python(Slide):
             AnimationGroup(
                 AnimationGroup(
                     FadeOut(nabla_J_eq),
-                    ReplacementTransform(J_eq, DSS.secondaryObj),
-                    FadeIn(DSS.mainRect, DSS.secondaryRect)
+                    FadeIn(DSS.mainRect, DSS.secondaryRect),
+                    ReplacementTransform(J_eq, DSS.secondaryObj)
                 ),
                 J_code.TypeLetterbyLetter(lines=[0]),
                 lag_ratio=1
@@ -466,8 +458,8 @@ class W3Slides_python(Slide):
             DSS.bringOut()
         )
         
-        cl_env.cells[-1].add_output(output = '13.467661405291913' )
-        self.play(cl_env.cells[-1].Run())
+        cl_env.cells[0].add_output(output = '13.467661405291913' )
+        self.play(cl_env.Run(cell=0))
         
         # SLIDE 21:  ===========================================================
         # WRITE FIRST LINES OF FUNCION GRAD_J
@@ -500,17 +492,17 @@ class W3Slides_python(Slide):
                 return [DJ_dt1, DJ_dt2]
             '''
         )
-        self.play(FadeOut(cl_env))
         DSS.reset()
         DSS.add_side_obj(nabla_J_eq.scale(0.6))
         nabla_J_code.move_to(DSS.get_final_mainObj_pos())
-        self.play(AnimationGroup(
-            FadeIn(DSS.mainRect),
+        self.play(FadeIn(DSS.mainRect))
+        self.add(cl_env) ; self.remove(cl_env)
+        self.play(
             AnimationGroup(
                 DSS.bringIn(),
                 nabla_J_code.TypeLetterbyLetter(lines=[0])
             )
-        ))
+        )
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(1, 3)))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(4, 8), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(9, 11), lag_ratio=0))
@@ -561,7 +553,6 @@ class W3Slides_python(Slide):
         )
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(12, 14), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=[15]))
-        self.wait(0.1)
 
         # SLIDE 23:  ===========================================================
         # PSEUDO CODE FADES BACK IN CENTERED
@@ -597,7 +588,8 @@ class W3Slides_python(Slide):
             print("Final angle combination:", theta) 
             print("Final distance:", Jval) 
             plot_robot_arm(angles, xp, [L1, L2])
-            ''')
+            '''
+        )
 
         # SLIDE 24:  ===========================================================
         # WHILE LOOP MOVES TO TOP
@@ -610,7 +602,7 @@ class W3Slides_python(Slide):
             '''
         )
         DSS.reset()
-        DSS.add_side_obj(pc[2:].copy().scale(0.4))
+        DSS.add_side_obj(pc[2:].copy().set_z_index(1).scale(0.4))
         DSS.bring_in()
         GD_code.scale(0.85).move_to(DSS.get_final_mainObj_pos()).shift(DOWN*0.5)
         self.play(
@@ -618,8 +610,8 @@ class W3Slides_python(Slide):
                 AnimationGroup(
                     FadeOut(pc[:2]),
                     AnimationGroup(
-                        ReplacementTransform(pc[2:], DSS.secondaryObj),
-                        FadeIn(DSS.mainRect, DSS.secondaryRect)
+                        FadeIn(DSS.mainRect, DSS.secondaryRect),
+                        ReplacementTransform(pc[2:], DSS.secondaryObj)
                     ),
                     lag_ratio=0.5
                 ),
@@ -742,7 +734,7 @@ class W3Slides_python(Slide):
         cl_env.cells[-1].add_output(
             Group(final_output_text, final_output_img)
         )
-        self.play(cl_env.cells[-1].Run())
+        self.play(cl_env.Run(cell=0))
 
         # SLIDE 35:  ===========================================================
         # 
@@ -760,7 +752,6 @@ class W3Slides_python(Slide):
             '''1 - the method converges in 38 iterations [CLICK]
             '''
         )
-        final_output_text.set_z_index(1)
         output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
         self.play(Create(output_highlights[0]))
 
