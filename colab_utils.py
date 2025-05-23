@@ -13,7 +13,7 @@ __all__ = [
 from manim import *
 from Generic_mooc_utils import *
 from custom_code import CustomCode, CodeWithLogo
-from typing import Any
+from typing import Any, List
 
 # import custom lexer and style for Colab-like python code listings
 # Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
@@ -44,7 +44,7 @@ _COLAB_BUTTON_RADIUS = (23/1080*FRAME_HEIGHT)/2
 _COLAB_SURROUND_CODE_BUFF = 17/1080*FRAME_HEIGHT
 _COLAB_GUTTER_TO_TEXT_BUFF = 10/1440 * FRAME_WIDTH
 _PYTHON_LOGO = r'Assets\python_logo.png'
-
+_COLAB_CELLS_Z_INDEX = -1.5
 
 class ColabCode(CustomCode):
     # override default options
@@ -124,7 +124,8 @@ class ColabCodeBlock(Mobject):
         button = Circle(
             color=COLAB_DARKGRAY, 
             radius=_COLAB_BUTTON_RADIUS,
-            fill_opacity=1)
+            fill_opacity=1,
+            stroke_width=0)
         tri = Triangle(
             color=COLAB_LIGHTGRAY,
             radius=_COLAB_BUTTON_RADIUS*0.7,
@@ -154,25 +155,11 @@ class ColabCodeBlock(Mobject):
             stroke_width=0,
         )
         self.output.move_to(self.outputWindow)
-        Group(self.outputWindow, self.output).next_to(VGroup(self.colabCode.window, self.gutter), DOWN, buff=0)
+        Group(self.outputWindow, self.output).next_to(VGroup(self.colabCode.window, self.gutter), DOWN, buff=0).set_z_index(_COLAB_CELLS_Z_INDEX)
         self.output.align_to(self.colabCode.code, LEFT)
 
         self.add(self.outputWindow)
         self.add(self.output)
-
-    def Run(self):
-        self.cursor = Cursor().move_to(self.playButton)
-        self.add(self.cursor)
-        # add again the output so it is above everything else
-        self.add(self.outputWindow, self.output)
-        return Succession(
-            GrowFromCenter(self.cursor),
-            AnimationGroup(
-                self.cursor.Click(),
-                FadeIn(self.outputWindow, self.output, run_time=0),
-                lag_ratio=0.5),
-            lag_ratio=1
-        )
     
     def focus_output(self, scale=0.75):
         '''Can be used with animate keyword'''
@@ -203,7 +190,8 @@ class ColabEnv(Mobject):
         self.PLUS_CODE_ = pixel2p(210, 105)
         self.env_image = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-2)
         self.add(self.env_image)
-        self.cells = []
+        self.cells : List[ColabCodeBlock] = []
+        self.cursor = Cursor().set_z_index(_COLAB_CELLS_Z_INDEX)
 
     def set_image(self, image_path: str):
         self.env_image.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-2)
@@ -213,6 +201,7 @@ class ColabEnv(Mobject):
             cell.move_to(self.TOP_LEFT_CORNER_, aligned_edge=UL)
         else:
             cell.next_to(self.cells[-1], DOWN, buff=_COLAB_SURROUND_CODE_BUFF)
+        cell.set_z_index(_COLAB_CELLS_Z_INDEX)
         self.cells.append(cell)
         self.add(cell)
 
@@ -223,6 +212,7 @@ class ColabEnv(Mobject):
     def clear(self):
         while len(self.cells) > 0:
             self.remove_cell()
+        self.cursor.move_to([-10,-10, 0])
 
     def OutofColab(self, cell: ColabCodeBlock, fullscreen=True, **kwargs):
         target = ColabCode(cell.colabCode.code_string)
@@ -238,6 +228,25 @@ class ColabEnv(Mobject):
             Transform(cell.colabCode, target),
             FadeOut(self.env_image, cell.gutter, cell.playButton)
         )
+    
+    def Run(self, cell: int = 0):
+        if cell > len(self.cells):
+            raise IndexError('Cell index out of range')
+        cell_to_run = self.cells[cell]
+        self.cursor.move_to(cell_to_run.playButton)
+        self.remove(self.cursor)
+        cell_to_run.add(self.cursor)
+        if cell_to_run.output is not None:
+            # add again the output so it is above everything else
+            cell_to_run.add(cell_to_run.outputWindow, cell_to_run.output)
+            return Succession(
+                GrowFromCenter(self.cursor),
+                self.cursor.Click(),
+                FadeIn(cell_to_run.outputWindow, cell_to_run.output, run_time=0),
+                Wait(0.1)
+            )
+        else:
+            return Succession(GrowFromCenter(self.cursor), self.cursor.Click())
 
 class ColabCodeWithLogo(CodeWithLogo):
     def __init__(

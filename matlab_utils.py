@@ -105,31 +105,31 @@ class MatlabCodeBlock(MatlabCode):
 
 
 class MatlabEnv(Mobject):
-    def __init__(self, background=None):
-        super().__init__()
-        self.TOP_LEFT_CORNER_ = self._pixel2p(155, 241)
-        self.TOP_LEFT_CORNER_UNSAVED_ = self._pixel2p(128, 218)
-        self.OUTPUT_TOP_LEFT_CORNER_ = self._pixel2p(80, 783)
-        self.NEW_SCRIPT_ = self._pixel2p(25, 107)
-        self.SAVE_ = self._pixel2p(123, 71)
-        self.RUN_BUTTON_ = self._pixel2p(1070, 67)
-        
-        self.env_image = ImageMobject(background).scale_to_fit_width(FRAME_WIDTH).center().set_z_index(-2)
-        self.add(self.env_image)
-        self.cells = []
-        self.output_text=None  # Text in the command window
-        self.outputWindow=None # Background of the command window
-        self.output_image=None # A plot
-        self.plot_window=None  # Wndow that contains the plot
-        self.output=Group()
-
-    def _pixel2p(self, px, py):
+    def _pixel2p(px, py):
         '''Converts pixel coordinates (1080 x 1440) into manim units.'''
         return [
              (px/1400 - 0.5)*FRAME_WIDTH,
             -(py/1050 - 0.5)*FRAME_HEIGHT,
             0
         ]
+    
+    TOP_LEFT_CORNER_ = _pixel2p(155, 241)
+    TOP_LEFT_CORNER_UNSAVED_ = _pixel2p(128, 218)
+    OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 783)
+    NEW_SCRIPT_ = _pixel2p(25, 107)
+    SAVE_ = _pixel2p(123, 71)
+    SAVE_PROMPT_BUTTON_ = _pixel2p(874, 888)
+    RUN_BUTTON_ = _pixel2p(1070, 67)
+
+    def __init__(self, background=None):
+        super().__init__()
+        
+        self.env_image = ImageMobject(background).scale_to_fit_width(FRAME_WIDTH).center().set_z_index(-2)
+        self.add(self.env_image)
+        self.cells = []
+        self.output : MatlabOutput  | None = None
+        self.cursor : Cursor = Cursor().set_z_index(-1.5)
+
 
     def set_image(self, image_path: str):
         self.env_image.become(ImageMobject(image_path).scale_to_fit_width(FRAME_WIDTH)).center().set_z_index(-2)
@@ -150,8 +150,9 @@ class MatlabEnv(Mobject):
     def clear(self):
         while len(self.cells) > 0:
             self.remove_cell()
-        self.remove(self.output)
-        self.output = Group()
+        if self.output is not None:
+            self.remove(self.output)
+            self.output = None
 
     def OutofMatlab(self, cell: MatlabCodeBlock, fullscreen=True, **kwargs):
         target = MatlabCode(cell.code_string)
@@ -174,41 +175,80 @@ class MatlabEnv(Mobject):
         output_image: str | Mobject = None
     ):
         # clear previous output
-        self.remove(self.output)
-        self.output = Group()
+        if self.output is not None:
+            self.remove(self.output)
+        self.output = MatlabOutput(output_text, output_image).set_z_index(-1.5)
+        self.add(self.output)
+        
+    def Run(self):
+        self.cursor.move_to(self.RUN_BUTTON_)
+        self.add(self.cursor)
+        if self.output is not None:
+        # add again the output so it is above everything else
+            # self.remove(self.output)
+            # self.add(self.output)
+            return Succession(
+                GrowFromCenter(self.cursor),
+                self.cursor.Click(),
+                FadeIn(self.output, run_time=0),
+                Wait(0.1)
+            )
+        else:
+            return Succession(GrowFromCenter(self.cursor), self.cursor.Click())
 
+    def focus_output(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2, **kwargs):
+        if self.output is None:
+            raise ValueError("Matlab environment has no output")
+        self.output.set_z_index(0)  # any negative z_index will not work
+        return self.output.animate(**kwargs).focus(scale, buff)
+
+
+class MatlabOutputText(Paragraph):
+    def __init__(self, text, **kwargs):
+        super().__init__(text, font_size=COLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
+                        line_spacing=0.5, **kwargs)
+        
+class MatlabOutput(Mobject):
+    def __init__(
+        self,
+        output_text: str | Mobject = None,
+        output_image: str | Mobject = None
+    ):
+        super().__init__()
         # add output text
-        if output_text is not None:
+        if output_text is None:
+            self.text = None
+        else:
             if isinstance(output_text, str):
-                self.output_text = MatlabOutputText(output_text)
+                self.text = MatlabOutputText(output_text)
             else:
-                self.output_text=output_text
-            self.output_text.move_to(self.OUTPUT_TOP_LEFT_CORNER_, aligned_edge=UL)
+                self.text=output_text
+            self.text.move_to(MatlabEnv.OUTPUT_TOP_LEFT_CORNER_, aligned_edge=UL)
             # add background output window
-            self.outputWindow = SurroundingRectangle(self.output_text, color=WHITE, corner_radius=0, fill_opacity=1, buff=0)
-            self.output.add(self.outputWindow, self.output_text)
+            self.outputWindow = SurroundingRectangle(self.text, color=WHITE, corner_radius=0, fill_opacity=1, buff=0)
+            self.add(self.outputWindow, self.text)
 
         # add output image
-        if output_image is not None:
+        if output_image is None:
+            self.image = None
+        else:
             if isinstance(output_image, str):
-                self.output_image = ImageMobject(output_image)
+                self.image = ImageMobject(output_image)
             else:
-                self.output_image = output_image
-            self.output_image.scale_to_fit_width(MATLAB_PLOT_WIDTH).center()
-            self.plot_window = SurroundingRectangle(self.output_image, color="#f0f0f0", 
+                self.image = output_image
+            self.image.scale_to_fit_width(MATLAB_PLOT_WIDTH).center()
+            self.plot_window = SurroundingRectangle(self.image, color="#f0f0f0", 
                                                     buff=0.1, corner_radius=0.1,
                                                     fill_opacity=1,
                                                     stroke_width=0.5, stroke_color=BLACK)
-            self.output.add(self.plot_window, self.output_image)
-        # update output
-        self.add(self.output)
+            self.add(self.plot_window, self.image)
 
-    def focus_output(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2):
-        
-        self.output_text.scale_to_fit_width(FRAME_WIDTH*scale)
-        if self.output_image is not None:
-            Group(self.output_image, self.plot_window).next_to(self.output_text, DOWN, buff=buff)
-        self.output.center()
+    def focus(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2):
+        """To be used with animate syntax"""
+        self.text.scale_to_fit_width(FRAME_WIDTH*scale)
+        if self.image is not None:
+            Group(self.image, self.plot_window).next_to(self.text, DOWN, buff=buff)
+        self.center()
         if self.outputWindow is not None:
             self.outputWindow.become(
                     Rectangle(
@@ -217,26 +257,6 @@ class MatlabEnv(Mobject):
                     width=FRAME_WIDTH,
                     fill_opacity=1)
                 )
-
-
-    def Run(self):
-        self.cursor = Cursor().move_to(self.RUN_BUTTON_)
-        self.add(self.cursor)
-        # add again the output so it is above everything else
-        self.add(self.output)
-        return Succession(
-            GrowFromCenter(self.cursor),
-            AnimationGroup(
-                self.cursor.Click(),
-                FadeIn(self.output, run_time=0),
-                lag_ratio=0.5),
-            lag_ratio=1
-        )
-
-class MatlabOutputText(Paragraph):
-    def __init__(self, text, **kwargs):
-        super().__init__(text, font_size=COLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
-                        line_spacing=0.5, **kwargs)
 
 class MatlabCodeWithLogo(CodeWithLogo):
     def __init__(
