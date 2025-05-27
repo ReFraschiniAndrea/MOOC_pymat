@@ -237,6 +237,7 @@ class ColabEnv(Mobject):
             raise IndexError('Cell index out of range')
         cell_to_run = self.cells[cell]
         self.cursor.move_to(cell_to_run.playButton)
+        # NOTE: cursor ownership is moved to the cell so avoid z_index problems
         self.remove(self.cursor)
         cell_to_run.add(self.cursor)
         if cell_to_run.output is not None:
