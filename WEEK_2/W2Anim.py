@@ -1,12 +1,21 @@
 from manim import *
 
 class RegressionLine(VGroup):
-    def __init__(self, m: float, q: float, axes: Axes, color=BLUE, dash_length = 0.5, dashed_ratio = 0.5, **kwargs):
+    def __init__(
+        self,
+        m: float,
+        q: float,
+        axes: Axes,
+        x_range: tuple[float, float] = (0, 1),
+        color=BLUE,
+        dash_length = 0.5,
+        dashed_ratio = 0.5,
+        **kwargs
+    ):
         super().__init__()
         self.ax=axes
-        axes.p2c
-        self.X1 = 0
-        self.X2 = 1
+        self.X1 = x_range[0]
+        self.X2 = x_range[1]
         self.slope = ValueTracker(m)
         self.intercept = ValueTracker(q)
         self.line = DashedLine(self.eval_to_point(self.X1), 
@@ -66,6 +75,7 @@ class ECounter(Variable):
             E(regression_line.slope.get_value(), regression_line.intercept.get_value(), data),
             'E',
             num_decimal_places,
+            color=BLACK,
             **kwargs)
         self.tracker.add_updater(
             lambda tracker: tracker.set_value(
@@ -76,11 +86,12 @@ class ECounter(Variable):
 def generate_regression_dataset(
     func: callable,
     n: int,
+    x_range = (0,1),
     sigma: float = 1,
     seed: int = 0
 ) -> np.ndarray:
     RNG= np.random.default_rng(seed)
-    x = RNG.uniform(0,1, size=n)
+    x = RNG.uniform(*x_range, size=n)
     x = np.sort(x) # random, but in increasing order for convenience
     y = func(x) + RNG.normal(0, sigma, size=n)
     return np.column_stack((x,y))
