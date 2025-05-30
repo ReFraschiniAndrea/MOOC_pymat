@@ -29,10 +29,10 @@ class W2Theory_slides(Slide):
         )
         X_RANGE = (0, 1.5)
         ax = Axes(
-            x_range=[X_RANGE[0], X_RANGE[1], 1],
+            x_range=[X_RANGE[0], X_RANGE[1]+0.1, 1],
             y_range=[0, 1.2, 1],
             x_length=9,
-            y_length=9*1.2/1.5,
+            y_length=9*1.2/(X_RANGE[1]+0.1),
             x_axis_config={'stroke_color':BLACK, 'include_ticks':False},
             y_axis_config={'stroke_color':BLACK, 'include_ticks':False}
         ).center()
@@ -52,7 +52,7 @@ class W2Theory_slides(Slide):
             '''
         )
         t = ValueTracker(X_RANGE[0]+0.1)
-        negative_corr_func = lambda t: 0.1*1/(t + 0.1)
+        negative_corr_func = lambda t: 0.1*1/(t + 0.1) + 0.2
         tracing_dot = Dot(color=BLUE).add_updater(
             lambda m: m.move_to(ax.c2p(t.get_value(), negative_corr_func(t.get_value()), 0))
         )
@@ -83,7 +83,7 @@ class W2Theory_slides(Slide):
             # )
         )
 
-        positive_corr_func = lambda t: 0.2*t**2
+        positive_corr_func = lambda t: 0.4*t**2 +0.2
         tracing_dot.clear_updaters().add_updater(
             lambda m: m.move_to(ax.c2p(t.get_value(), positive_corr_func(t.get_value()), 0))
         )
@@ -106,9 +106,13 @@ class W2Theory_slides(Slide):
             '''
         )
         self.play(FadeOut(trace2, tracing_dot))
-        dataset = generate_regression_dataset(func= lambda x: 0.2*x+0.5, x_range=(0.1, 1.4), n=20, sigma=0.25)
-        dataset_points = points_from_data(dataset, ax=ax, color=PURPLE_A)
-        self.play(GrowFromCenter(dataset_points, run_time=2, lag_ratio=0.5))
+        dataset = generate_regression_dataset(func= lambda x: 1.5*(0.4*x-0.75)**3 + 0.5, x_range=(0.1, 1.5), n=20, sigma=0.15, seed=0)
+        dataset_points = points_from_data(dataset, ax=ax, color=PURPLE_A).set_z_index(1)
+        self.play(
+            AnimationGroup(
+                *[GrowFromCenter(p) for p in dataset_points],
+                run_time=2, lag_ratio=0.5)
+        )
 
         # SLIDE 04:  ===========================================================
         # SOME NON LINEAR MODELS APPEAR
@@ -125,17 +129,17 @@ class W2Theory_slides(Slide):
         linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
         quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
         cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
-        exp_fit = np.polynomial.polynomial.Polynomial.fit(x, np.log(y), 1).convert().coef
+        log_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
 
-        quadratic_plot = ax.plot(lambda t: np.polyval(quadratic_fit, t), x_range=X_RANGE, color=BLUE)
-        cubic_plot = ax.plot(lambda t: np.polyval(cubic_fit, t), x_range=X_RANGE, color=BLUE)
-        exp_plot = ax.plot(lambda t: exp_fit[1]*np.exp(exp_fit[0]*t), x_range=X_RANGE)
+        quadratic_plot = ax.plot(lambda t: np.polynomial.polynomial.polyval(t, quadratic_fit), x_range=X_RANGE, color=BLUE)
+        cubic_plot = ax.plot(lambda t: np.polynomial.polynomial.polyval(t, cubic_fit), x_range=X_RANGE, color=BLUE)
+        log_plot = ax.plot(lambda t: log_fit[0]+ log_fit[1]*np.log(t), x_range=(X_RANGE[0]+0.01, X_RANGE[1]), color=BLUE, use_smoothing=False)
 
         self.play(Create(quadratic_plot))
         self.wait(1)
-        self.play(ReplacementTransform(quadratic_plot, exp_plot))
+        self.play(ReplacementTransform(quadratic_plot, cubic_plot))
         self.wait(1)
-        self.play(ReplacementTransform(exp_plot, cubic_plot))
+        self.play(ReplacementTransform(cubic_plot, log_plot))
 
         # SLIDE 05:  ===========================================================
         # REGRESSED LINE APPEARS
@@ -149,9 +153,10 @@ class W2Theory_slides(Slide):
             The key question is: "How can I construct this line mathematically?"
             '''
         )
-        reg_line = RegressionLine(*linear_fit, ax, x_range=X_RANGE)
-        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP)
-        self.play(ReplacementTransform(cubic_plot, reg_line))
+        reg_line = RegressionLine(linear_fit[1], linear_fit[0], ax, x_range=X_RANGE)
+        reg_line.suspend_updating()
+        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        self.play(ReplacementTransform(log_plot, reg_line))
         self.play(
             AnimationGroup(
                 VGroup(ax, reg_line, dataset_points).animate.shift(DOWN),
@@ -199,7 +204,7 @@ class W2Theory_slides(Slide):
             value when x equals 0.
             '''
         )
-        intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()))
+        intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
         intercept_label = Text('q', color=BLACK).scale(LABELS_SIZE).next_to(intercept_dot, LEFT)
 
         self.play(
@@ -268,7 +273,7 @@ class W2Theory_slides(Slide):
             '''
         )
         self.play(FadeOut(reg_line, rise_over_run, ror_brace_x, ror_brace_y, ror_x_lab, ror_y_lab,
-                          slope_label, intercept_label, intercept_dot))
+                          slope_label, intercept_label, intercept_dot, dataset_points))
 
         # SLIDE 12:  ===========================================================
         # AXES WITH TWO LONE POINTS APPEARS
@@ -279,8 +284,9 @@ class W2Theory_slides(Slide):
             that passes through them. [CLICK]
             '''
         )
-        passing_line = Line(dataset_points[5].get_center(), dataset_points[15].get_center(),
-                            color=BLUE).set_length(5)
+        passing_line = RegressionLine(
+            *mq_throgh_points(dataset[5], dataset[15]),
+            axes=ax, x_range=X_RANGE, color=BLUE).set_length(5)
         self.play(GrowFromCenter(dataset_points[5]), GrowFromCenter(dataset_points[15]))
         self.wait(1)
         self.play(Create(passing_line))
@@ -293,7 +299,12 @@ class W2Theory_slides(Slide):
             '''
         )
         self.play(FadeOut(passing_line))
-        self.play(GrowFromCenter(dataset_points, lag_ratio=0.2))
+        self.play(
+            AnimationGroup(
+                *[GrowFromCenter(p) for p in dataset_points-VGroup(dataset_points[5], dataset_points[15])],
+                run_time=2, lag_ratio=0.5)
+        )
+
 
         # SLIDE 14:  ===========================================================
         # MANY CANDIDATE LINES APPEAR
@@ -305,9 +316,12 @@ class W2Theory_slides(Slide):
             do we define which line is the "best" among them? [CLICK]
             '''
         )
+        RNG = np.random.default_rng(seed=0)
+        perturbed_mg = [(linear_fit[1], linear_fit[0])+RNG.normal(0 , scale=linear_fit[1]/2, size=2) for _ in range(5)]
         lines = VGroup(
-            RegressionLine(m,q, ax) for m,q in [(0.5, 0.5), (1, 0.2), (0.75, 0.3), (0.6, 0.45), (0.3, 0.87)]
+            RegressionLine(m,q, ax, x_range=X_RANGE) for m,q in perturbed_mg
         )
+        lines.add(reg_line)
         self.play(Create(lines, lag_ratio=0.2))
 
         # SLIDE 15:  ===========================================================
@@ -318,8 +332,7 @@ class W2Theory_slides(Slide):
             mean by "best". [CLICK]
             '''
         )
-        self.play(FadeOut(lines[1:]))
-        expl_line = lines[0]
+        self.play(FadeOut(lines[:-1], lag_ratio=0.2))
 
         # SLIDE 16:  ===========================================================
         # LABELS FOR P1, P2, Pi APPEAR IN SUCCESSION
@@ -350,7 +363,17 @@ class W2Theory_slides(Slide):
             '''
         )
         self.play(FadeOut(lines_p1, lines_p2))
-        # predicted_point = Dot(expl_line.eval_to_point(ax.p2c(pi.get_))) 
+        ax.get_x_axis()
+        predicted_point = Dot(reg_line.eval_to_point(ax.p2c(pi.get_center()[0])))
+        prediction_eq = Text(r'\hat{y_i} =m x_i + q').move_to(LR_title)
+        prediction_label = Text(r'\hat{y_i}', color=BLACK).scale(LABELS_SIZE).next_to(predicted_point, UP)
+
+        self.play(FadeOut(LR_title))
+        self.play(FadeIn(prediction_eq))
+        self.play(
+            GrowFromCenter(predicted_point),
+            ReplacementTransform(prediction_eq, prediction_label)
+        )
 
         # SLIDE 18:  ===========================================================
         # RESIDUAL BRACE WITH LABEL APPEARS
@@ -359,6 +382,15 @@ class W2Theory_slides(Slide):
             '''The difference y_i - y^_i is called the residual, and it measures
             the error between the actual and predicted values. [CLICK]
             '''
+        )
+        residual_brace = BraceBetweenPoints(predicted_point.get_center(), pi.get_center, LEFT, color=BLACK)
+        residual_label = Text(r'r_i', color=BLACK).scale(LABELS_SIZE)
+        residual_brace.put_at_tip(residual_label)
+        
+        self.play(ReplacementTransform())
+        self.play(
+            FadeIn(residual_brace),
+            ReplacementTransform()
         )
 
         # SLIDE 19:  ===========================================================
@@ -383,6 +415,8 @@ class W2Theory_slides(Slide):
             predicted data.
             '''
         )
+        E_formula = MathTex(r'E = \sum_{i=1}^n r_i^2 = \sum_{i=1}^n (y_i - \hat{y_i})^2', color=BLACK).scale(LABELS_SIZE)
+
         # SLIDE 21:  ===========================================================
         # COUNTERS FOR 'm' AND 'q' APPEAR
         # 'm' AND 'q' VARY, CHANGING THE LINE
@@ -398,18 +432,18 @@ class W2Theory_slides(Slide):
         # q_counter = Variable(expl_line.intercept.get_value(), label='q', num_decimal_places=2).set_color(BLACK)
         # q_counter.tracker = expl_line.intercept
         # VGroup(m_counter, q_counter).arrange(RIGHT, buff=1).next_to(ax)
-        expl_line.save_state()
+        reg_line.save_state()
 
         # self.play(FadeIn(m_counter, q_counter))
         self.play(
-            expl_line.slope.animate.set_value(1),
-            expl_line.intercept.animate.set_value(0.25)
+            reg_line.slope.animate.set_value(1),
+            reg_line.intercept.animate.set_value(0.25)
         )
         self.play(
-            expl_line.slope.animate.set_value(0.33),
-            expl_line.intercept.animate.set_value(0.75)
+            reg_line.slope.animate.set_value(0.33),
+            reg_line.intercept.animate.set_value(0.75)
         )
-        self.play(expl_line.animate.restore())
+        self.play(reg_line.animate.restore())
 
         # SLIDE 22:  ===========================================================
         # E COUNTER APPEARS
@@ -419,7 +453,7 @@ class W2Theory_slides(Slide):
             '''
         )
         # E_counter = ECounter(expl_line, dataset, num_decimal_places=2).to_edge(UP)
-        # self.play(FadeIn(E_counter))
+        # self.play(ReplacementTransform(E_formula, E_counter))
 
         # SLIDE 23:  ===========================================================
         # LINE CHANGES AGAIN WITH m AND q, DISPLAYING THE CORRESPONDING E VALUE
@@ -431,16 +465,16 @@ class W2Theory_slides(Slide):
             '''
         )
         self.play(
-            expl_line.slope.animate.set_value(1),
-            expl_line.intercept.animate.set_value(0.25)
+            reg_line.slope.animate.set_value(1),
+            reg_line.intercept.animate.set_value(0.25)
         )
         self.play(
-            expl_line.slope.animate.set_value(0.33),
-            expl_line.intercept.animate.set_value(0.75)
+            reg_line.slope.animate.set_value(0.33),
+            reg_line.intercept.animate.set_value(0.75)
         )
         self.play(
-            expl_line.slope.animate.set_value(linear_fit[1]),
-            expl_line.intercept.animate.set_value(linear_fit[0])
+            reg_line.slope.animate.set_value(linear_fit[1]),
+            reg_line.intercept.animate.set_value(linear_fit[0])
         )
 
         # SLIDE 24:  ===========================================================

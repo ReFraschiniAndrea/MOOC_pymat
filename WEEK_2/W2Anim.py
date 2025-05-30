@@ -18,10 +18,11 @@ class RegressionLine(VGroup):
         self.X2 = x_range[1]
         self.slope = ValueTracker(m)
         self.intercept = ValueTracker(q)
-        self.line = DashedLine(self.eval_to_point(self.X1), 
+        self.line = Line(self.eval_to_point(self.X1), 
                          self.eval_to_point(self.X2),
                          color=color,
-                         dash_length=dash_length, dashed_ratio=dashed_ratio, **kwargs)
+                        #  dash_length=dash_length, dashed_ratio=dashed_ratio,
+                         **kwargs)
         self.line.add_updater(
             lambda l: l.put_start_and_end_on(self.eval_to_point(self.X1), self.eval_to_point(self.X2))
         )
@@ -83,6 +84,7 @@ class ECounter(Variable):
             )
         )
 
+import numpy as np
 def generate_regression_dataset(
     func: callable,
     n: int,
@@ -137,36 +139,28 @@ class LinearRegressionEquations(VMobject):
         self.q_sum_x = self.q_eq[0][13:20]
         self.q_sum_y = self.q_eq[0][3:10]
 
-
-config.background_color = WHITE
-config.pixel_width=960
-config.pixel_height=720
-class Test(Scene):
-    def construct(self):
-        # ax = Axes(
-        #     x_range=[0,2,0.5],
-        #     y_range=[0,2,0.5],
-        #     x_length=8,
-        #     y_length=8,
-        #     x_axis_config={'stroke_color':WHITE, 'include_ticks':True},
-        #     y_axis_config={'stroke_color':WHITE, 'include_ticks':True}
-        # )
-        # m, q = 1, 0.5
-        # data = GenerateDataset(20, m, q, sigma=0.25)
-        # points = PointsFromData(data, ax, color=RED)
-        # self.add(ax, *points)
-        # l = RegressionLine(m,q, ax, color=GREEN, dash_length=0.25, dashed_ratio=0.25)
-        # self.add(l)
-        # l.add_dataset(points)
-        # self.wait()
-        # self.play(l.slope.animate.set_value(0), l.intercept.animate.set_value(0))
-        # self.wait()
-        # ecounter = ECounter(l, data).to_edge(UP)
-        # self.add(ecounter)
-
-        a =  LinearRegressionEquations()
-        self.add(a)#, index_labels(m[0]), index_labels(q[0]))
-        self.play(Indicate(a.m_eq.sum_x_sq))
-        # a= MathTex(r'\sum_{i=1}^n x_i', color=BLACK)
-        # self.add(a)
+def mq_throgh_points(p1, p2):
+    m = (p2[1]-p1[1])/(p2[0]-p1[0])
+    q = p1[1] -m*p1[0]
+    return m, q
+# import matplotlib.pyplot as plt
+# if __name__ == '__main__':
+#     dataset = generate_regression_dataset(func= lambda x: 0.5*(0.4*x-0.75)**3 + 0.25, x_range=(0.1, 1.5), n=20, sigma=0.10, seed=0)
+#     # dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.2, x_range=(0.1, 1.5), n=20, sigma=0.05)
+#     x, y = dataset[:, 0], dataset[:, 1]
+#     linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
+#     quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
+#     cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
+#     exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
+#     plt.figure()
+#     plt.scatter(x, y, label='data')
+#     xx = np.linspace(0.,1.5,100)
+#     # plt.plot(xx, np.polyval(linear_fit, xx), label='linear')
+#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, linear_fit), label='linear')
+#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, quadratic_fit), label='quad')
+#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, cubic_fit), label='cubic')
+#     plt.plot(xx, exp_fit[0]+ exp_fit[1]*np.log(xx), label='exp')
+#     plt.grid(True)
+#     plt.legend()
+#     plt.show()
 
