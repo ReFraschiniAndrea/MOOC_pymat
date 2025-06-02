@@ -8,8 +8,6 @@ class RegressionLine(VGroup):
         axes: Axes,
         x_range: tuple[float, float] = (0, 1),
         color=BLUE,
-        dash_length = 0.5,
-        dashed_ratio = 0.5,
         **kwargs
     ):
         super().__init__()
@@ -21,14 +19,13 @@ class RegressionLine(VGroup):
         self.line = Line(self.eval_to_point(self.X1), 
                          self.eval_to_point(self.X2),
                          color=color,
-                        #  dash_length=dash_length, dashed_ratio=dashed_ratio,
                          **kwargs)
         self.line.add_updater(
             lambda l: l.put_start_and_end_on(self.eval_to_point(self.X1), self.eval_to_point(self.X2))
         )
         self.add(self.line)
-        self.proj_points = []
-        self.proj_lines = []
+        self.proj_points = VGroup()
+        self.proj_lines = VGroup()
     
     def eval(self, x):
         return self.slope.get_value()*x +self.intercept.get_value()
@@ -48,15 +45,17 @@ class RegressionLine(VGroup):
         proj_point.add_updater(
             lambda p: p.move_to(self.eval_to_point(x))
         )
-        self.proj_points.append(proj_point)
-        self.add(proj_point)
+        self.proj_points.add(proj_point)
+        # self.add(proj_point)
 
         proj_line = Line(point, proj_point, **line_config)
         proj_line.add_updater(
-            lambda line: line.put_start_and_end_on(point.get_center(), proj_point.get_center())
+            lambda line: line.put_start_and_end_on(
+                point.get_center(),
+                self.eval_to_point(x))
         )
-        self.proj_lines.append(proj_line)
-        self.add(proj_line)
+        self.proj_lines.add(proj_line)
+        # self.add(proj_line)
 
     def add_dataset(self, points):
         for point in points:
@@ -75,16 +74,15 @@ class ECounter(Variable):
         super().__init__(
             E(regression_line.slope.get_value(), regression_line.intercept.get_value(), data),
             'E',
-            num_decimal_places,
+            num_decimal_places=num_decimal_places,
             color=BLACK,
             **kwargs)
-        self.tracker.add_updater(
-            lambda tracker: tracker.set_value(
+        self.value.add_updater(
+            lambda v: v.set_value(
                 E(regression_line.slope.get_value(), regression_line.intercept.get_value(), data)
             )
         )
 
-import numpy as np
 def generate_regression_dataset(
     func: callable,
     n: int,
@@ -143,24 +141,25 @@ def mq_throgh_points(p1, p2):
     m = (p2[1]-p1[1])/(p2[0]-p1[0])
     q = p1[1] -m*p1[0]
     return m, q
-# import matplotlib.pyplot as plt
-# if __name__ == '__main__':
-#     dataset = generate_regression_dataset(func= lambda x: 0.5*(0.4*x-0.75)**3 + 0.25, x_range=(0.1, 1.5), n=20, sigma=0.10, seed=0)
-#     # dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.2, x_range=(0.1, 1.5), n=20, sigma=0.05)
-#     x, y = dataset[:, 0], dataset[:, 1]
-#     linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
-#     quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
-#     cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
-#     exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
-#     plt.figure()
-#     plt.scatter(x, y, label='data')
-#     xx = np.linspace(0.,1.5,100)
-#     # plt.plot(xx, np.polyval(linear_fit, xx), label='linear')
-#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, linear_fit), label='linear')
-#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, quadratic_fit), label='quad')
-#     plt.plot(xx, np.polynomial.polynomial.polyval(xx, cubic_fit), label='cubic')
-#     plt.plot(xx, exp_fit[0]+ exp_fit[1]*np.log(xx), label='exp')
-#     plt.grid(True)
-#     plt.legend()
-#     plt.show()
 
+
+if __name__ == '__main__':
+    pass
+    #dataset = generate_regression_dataset(func= lambda x: 0.5*(0.4*x-0.75)**3 + 0.25, x_range=(0.1, 1.5), n=20, sigma=0.10, seed=0)
+    # dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.2, x_range=(0.1, 1.5), n=20, sigma=0.05)
+    # x, y = dataset[:, 0], dataset[:, 1]
+    # linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
+    # quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
+    # cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
+    # exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
+
+class Test(Scene):
+    def construct(self):
+        # generic_relation = MathTex(r'y = {{f(x)}}', color=WHITE,
+        #                            tex_to_color_map={'x':BLUE, 'y':ORANGE})
+        # a = index_labels(generic_relation)
+        linear_relation = MathTex(r'y = {{m x}} + {{q}}', color=WHITE,
+                                  tex_to_color_map={'x':BLUE, 'y':ORANGE})
+        a = index_labels(linear_relation)
+       
+        self.add(linear_relation, a)
