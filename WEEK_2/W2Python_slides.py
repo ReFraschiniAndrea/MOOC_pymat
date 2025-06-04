@@ -542,17 +542,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''We are going to write now a python code that computes these four terms.
             '''
         )
-        sum_terms = VGroup(LR_equations.m_sum_x.copy(), LR_equations.m_sum_y.copy(), LR_equations.m_sum_x_y.copy(), LR_equations.m_sum_x_sq.copy())
-        sum_terms.arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
-        self.play(
-            ReplacementTransform(LR_equations.m_sum_x[0], sum_terms[0]),
-            ReplacementTransform(LR_equations.m_sum_x[1], sum_terms[0]),
-            ReplacementTransform(LR_equations.q_sum_x, sum_terms[0]),
-            ReplacementTransform(LR_equations.m_sum_y, sum_terms[1]),
-            ReplacementTransform(LR_equations.q_sum_y, sum_terms[1]),
-            ReplacementTransform(LR_equations.m_sum_x_y, sum_terms[2]),
-            ReplacementTransform(LR_equations.m_sum_x_sq, sum_terms[3]),
-        )
+        sum_terms = LR_equations.get_sums_without_repetition().arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
+        self.play(LR_equations.ExtractSumTerms(target=sum_terms))
 
         # SLIDE 32:  ===========================================================
         # 
