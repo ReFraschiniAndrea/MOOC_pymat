@@ -256,7 +256,7 @@ class W3Slides_python(Slide):
             init_code.TypeLetterbyLetter(lines=[11])
         )
         
-        # SLIDE 14:  ===========================================================
+        # SLIDE 15:  ===========================================================
         # ZOOM OUT TO COLAB, CELL IS RUN
         self.next_slide(
             notes=
@@ -273,7 +273,7 @@ class W3Slides_python(Slide):
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
         self.play(cl_env.Run(cell=0))
     
-        # SLIDE 15:  ===========================================================
+        # SLIDE 16:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
         self.next_slide(
             notes=
@@ -311,7 +311,7 @@ class W3Slides_python(Slide):
         self.add(cl_env); self.remove(cl_env)  # Add so that remove is in self.mobjects, so that remove actually works.
         cl_env.cells[0].remove(cl_env.cursor)
         
-        # SLIDE 16:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # NEW BLOCK APPEARS, FUNCTION DEFINITION IS WRITTEN
         self.next_slide(
             notes=
@@ -322,7 +322,7 @@ class W3Slides_python(Slide):
         )
         self.play(kinematics_code.TypeLetterbyLetter(lines=range(1,6)))
         
-        # SLIDE 17:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # PRINT LINES ARE WRITTEN.
         # CAMERA ZOOMS OUT TO REVEAL COLAB ENVIRONMENT
         self.next_slide(
@@ -340,7 +340,7 @@ class W3Slides_python(Slide):
             DSS.bringOut()
         )
 
-        # SLIDE 17:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # RUN BUTTON IS CLICKED, OUTPUT APPEARS.
         self.next_slide(
             notes=
@@ -352,7 +352,7 @@ class W3Slides_python(Slide):
         cl_env.cells[-1].add_output(Group(starting_output_text, starting_output_img))
         self.play(cl_env.Run(cell=1))
         
-        # SLIDE 18:  ===========================================================
+        # SLIDE 20:  ===========================================================
         # COLAB ENV FADES OUT
         # PSEUDO CODE FADES IN, WHILE LOOP HIGHLIGHTED.
         self.next_slide(
@@ -365,7 +365,7 @@ class W3Slides_python(Slide):
         self.wait(0.3)
         self.play(Circumscribe(pc[2:], run_time=2.5, color=BLUE))
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 21:  ===========================================================
         # HIGHLIGHT J AND NABLA J IN PSEUDO CODE.
         # FOURMULAS FOR J ABD NABLA J APPEAR
         self.next_slide(
@@ -403,7 +403,7 @@ class W3Slides_python(Slide):
         ))
         self.remove(J_pc, nabla_J_pc)    
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # SCREEN SPLIT BETWEEN FORMULAS AND CODE
         # DEFINITION OF J IS WRITTEN
         self.next_slide(
@@ -441,7 +441,7 @@ class W3Slides_python(Slide):
         )
         self.play(J_code.TypeLetterbyLetter(lines=range(1,5)))
         
-        # SLIDE 20:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # PRINT CODE IS WRITTEN
         # INTO COLAB AND RUN CELL
         self.next_slide(
@@ -461,7 +461,7 @@ class W3Slides_python(Slide):
         cl_env.cells[0].add_output(output = '13.467661405291913' )
         self.play(cl_env.Run(cell=0))
         
-        # SLIDE 21:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # WRITE FIRST LINES OF FUNCION GRAD_J
         self.next_slide(
             notes=
@@ -507,7 +507,7 @@ class W3Slides_python(Slide):
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(4, 8), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(9, 11), lag_ratio=0))
     
-        # SLIDE 22:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # PART OF NABLA J FORMULA AND CORRESPONDING CODE IS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -534,7 +534,7 @@ class W3Slides_python(Slide):
             Create(nabla_J_rectangle_highlights[1])
         )
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # PART OF NABLA J FORMULA AND CORRESPONDING CODE IS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -543,7 +543,7 @@ class W3Slides_python(Slide):
         )
         self.play(AnimationGroup(*[Create(r) for r in nabla_J_rectangle_highlights[2:]]))
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # OTHER PARTS OF NABLA J FORMULA AND CORRESPONDING CODE ARE HIGHLIGHTED
         self.next_slide(
             notes=
@@ -554,7 +554,7 @@ class W3Slides_python(Slide):
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(12, 14), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=[15]))
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # PSEUDO CODE FADES BACK IN CENTERED
         self.next_slide(
             notes=
@@ -591,7 +591,7 @@ class W3Slides_python(Slide):
             '''
         )
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # WHILE LOOP MOVES TO TOP
         # FIRST LINE 0F PSEUDO CODE WRITTEN
         # HIGLIGHT WHILE INSTRUCTION IN PSEUDO CODE AND CODE
@@ -632,7 +632,7 @@ class W3Slides_python(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[1,2]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(3)]))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # HIGLIGHT NABLA J COMPUTATION (CODE AND PSEUDO-CODE)
         self.next_slide(
             notes=
@@ -643,7 +643,7 @@ class W3Slides_python(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[3,4]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(3, 5)]))
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # HIGLIGHT ANGLES UPDATE (CODE AND PSEUDO-CODE)
         self.next_slide(
             notes=
@@ -654,7 +654,7 @@ class W3Slides_python(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[6,7,8]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(5,7)]))
 
-        # SLIDE 28:  ===========================================================
+        # SLIDE 32:  ===========================================================
         # TRANSFORM CORRESPONDING LINES IN EXTENDED FORM AND BACK
         self.next_slide(
             notes=
@@ -678,7 +678,7 @@ class W3Slides_python(Slide):
             highlight_rect_2[6].animate(run_time=0.3).become(target_high_rect)
             ))
         self.wait(0.2)
-        # SLIDE 29:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # HIGHLIGHT STOPPING CRITERION (CODE AND PSEUDO-CODE)
         self.next_slide(
             notes=
@@ -691,7 +691,7 @@ class W3Slides_python(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=range(10,19)))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in [7,8,9]]))
 
-        # SLIDE 30:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # CODE SCROLLS UP, PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
@@ -703,7 +703,7 @@ class W3Slides_python(Slide):
         GD_code.code[19:].shift(UP*0.5)
         self.play(GD_code.TypeLetterbyLetter(lines=[20,21,22], lag_ratio=0))
 
-        # SLIDE 31:  ===========================================================
+        # SLIDE 35:  ===========================================================
         # INTO COLAB, PRESS RUN, OUTPUT APPEARS
         self.next_slide(
             notes=
@@ -718,7 +718,7 @@ class W3Slides_python(Slide):
             DSS.bringOut()
         )
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # 
         self.next_slide(
             notes=
@@ -736,7 +736,7 @@ class W3Slides_python(Slide):
         )
         self.play(cl_env.Run(cell=0))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # 
         self.next_slide(
             notes=
@@ -745,7 +745,7 @@ class W3Slides_python(Slide):
         )
         self.play(cl_env.cells[-1].animate.focus_output(scale = 0.8))
 
-        # SLIDE 32:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # HIGLIGHT FIRST LINE
         self.next_slide(
             notes=
@@ -755,7 +755,7 @@ class W3Slides_python(Slide):
         output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
         self.play(Create(output_highlights[0]))
 
-        # SLIDE 33:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # HIGLIGHT SECOND LINE
         self.next_slide(
             notes=
@@ -764,7 +764,7 @@ class W3Slides_python(Slide):
         )
         self.play(ReplacementTransform(output_highlights[0], output_highlights[1]))
 
-        # SLIDE 34:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # HIGLIGHT THIRD LINE
         self.next_slide(
             notes=
@@ -775,7 +775,7 @@ class W3Slides_python(Slide):
         )
         self.play(ReplacementTransform(output_highlights[1], output_highlights[2]))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 41:  ===========================================================
         # PYTHON PLOT TRANSFORMS INTO ROBOT ARM GRAPHIC WITH ANGLES TO BE CLEARER
         self.next_slide(
             notes=
