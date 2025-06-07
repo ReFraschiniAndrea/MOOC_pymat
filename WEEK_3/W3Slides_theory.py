@@ -696,7 +696,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             '''
         )
         GD_update_eq = MathTex(
-            r"\boldsymbol{\theta}^n = \boldsymbol{\theta}^{n-1} -{{\alpha}} \nabla J (\boldsymbol{\theta}^{n-1})",
+            r"\boldsymbol{\theta}^i = \boldsymbol{\theta}^{i-1} -{{\alpha}} \nabla J (\boldsymbol{\theta}^{i-1})",
             color=BLACK).shift(DOWN)
         self.play(Write(GD_update_eq))
         

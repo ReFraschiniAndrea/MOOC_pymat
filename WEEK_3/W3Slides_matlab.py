@@ -244,7 +244,7 @@ class W3Slides_matlab(Slide):
             init_code.TypeLetterbyLetter(lines=[9])
         )
         
-        # SLIDE 13:  ===========================================================
+        # SLIDE 14:  ===========================================================
         # ZOOM OUT TO MATLAB
         self.next_slide(
             notes=
@@ -260,7 +260,7 @@ class W3Slides_matlab(Slide):
         )
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
 
-        # SLIDE 14:  ===========================================================
+        # SLIDE 15:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
         self.next_slide(
             notes=
@@ -326,7 +326,7 @@ class W3Slides_matlab(Slide):
             DSS.bringOut()
         )
         
-        # SLIDE 17:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # RUN BUTTON IS CLICKED, OUTPUT APPEARS.
         self.next_slide(
             notes=
@@ -339,7 +339,7 @@ class W3Slides_matlab(Slide):
         )
         self.play(mat_env.Run())
         
-        # SLIDE 18:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # MATLAB ENV FADES OUT
         # PSEUDO CODE FADES IN, WHILE LOOP HIGHLIGHTED.
         self.next_slide(
@@ -353,7 +353,7 @@ class W3Slides_matlab(Slide):
         self.wait(0.3)
         self.play(Circumscribe(pc[2:], run_time=2.5, color=BLUE))
        
-        # SLIDE 19:  ===========================================================
+        # SLIDE 20:  ===========================================================
         # HIGHLIGHT J AND NABLA J IN PSEUDO CODE.
         # FOURMULAS FOR J ABD NABLA J APPEAR
         self.next_slide(
@@ -391,7 +391,7 @@ class W3Slides_matlab(Slide):
         ))
         self.remove(J_pc, nabla_J_pc)   
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 21:  ===========================================================
         # SCREEN SPLIT BETWEEN FORMULAS AND CODE
         # DEFINITION OF J IS WRITTEN
         self.next_slide(
@@ -429,9 +429,20 @@ class W3Slides_matlab(Slide):
                 lag_ratio=1
             )
         )
-        self.play(J_code.TypeLetterbyLetter(lines=range(1,5)))
+        self.play(J_code.TypeLetterbyLetter(lines=[1, 2]))
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 22:  ===========================================================
+        # PRINT CODE IS WRITTEN
+        # INTO MATLAB AND RUN CODE
+        self.next_slide(
+            notes=
+            '''... the value of J providing the initial guess for the target.
+            [CLICK]
+            '''
+        )
+        self.play(J_code.TypeLetterbyLetter(lines=[3, 4]))
+
+        # SLIDE 22:  ===========================================================
         # PRINT CODE IS WRITTEN
         # INTO MATLAB AND RUN CODE
         self.next_slide(
@@ -450,7 +461,7 @@ class W3Slides_matlab(Slide):
         mat_env.add_output(output_text = '13.467661405291913' )
         self.play(mat_env.Run())
         
-        # SLIDE 21:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # WRITE FIRST LINES OF FUNCION GRAD_J
         self.next_slide(
             notes=
@@ -496,7 +507,7 @@ class W3Slides_matlab(Slide):
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(4, 8), lag_ratio=0))
         self.play(nabla_J_code.TypeLetterbyLetter(lines=range(9, 11), lag_ratio=0))
     
-        # SLIDE 22:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # PART OF NABLA J FORMULA AND CORRESPONDING CODE IS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -523,7 +534,7 @@ class W3Slides_matlab(Slide):
             Create(nabla_J_rectangle_highlights[1])
         )
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # PART OF NABLA J FORMULA AND CORRESPONDING CODE IS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -532,7 +543,7 @@ class W3Slides_matlab(Slide):
         )
         self.play(AnimationGroup(*[Create(r) for r in nabla_J_rectangle_highlights[2:]]))
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # OTHER PARTS OF NABLA J FORMULA AND CORRESPONDING CODE ARE HIGHLIGHTED
         self.next_slide(
             notes=
@@ -544,7 +555,7 @@ class W3Slides_matlab(Slide):
         self.play(nabla_J_code.TypeLetterbyLetter(lines=[14, 15]))
         self.wait(0.1)
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # PSEUDO CODE FADES BACK IN CENTERED
         self.next_slide(
             notes=
@@ -580,7 +591,7 @@ class W3Slides_matlab(Slide):
             plot_robot_arm(theta, xp, [L1, L2]);
             ''')
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # WHILE LOOP MOVES TO TOP
         # FIRST LINE 0F PSEUDO CODE WRITTEN
         # HIGLIGHT WHILE INSTRUCTION IN PSEUDO CODE AND CODE
@@ -621,7 +632,7 @@ class W3Slides_matlab(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[1,2]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(3)]))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # HIGLIGHT NABLA J COMPUTATION
         self.next_slide(
             notes=
@@ -632,7 +643,7 @@ class W3Slides_matlab(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[3,4]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(3, 5)]))
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # HIGLIGHT ANGLES UPDATE
         self.next_slide(
             notes=
@@ -642,7 +653,7 @@ class W3Slides_matlab(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=[6,7]))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in range(5,7)]))
 
-        # SLIDE 29:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # HIGLIGHT STOPPING CRITERION
         self.next_slide(
             notes=
@@ -654,7 +665,7 @@ class W3Slides_matlab(Slide):
         self.play(GD_code.TypeLetterbyLetter(lines=range(9, 19)))
         self.play(AnimationGroup(*[Create(highlight_rect_2[i]) for i in [7,8,9]]))
 
-        # SLIDE 30:  ===========================================================
+        # SLIDE 32:  ===========================================================
         # CODE SCROLLS UP, PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
@@ -666,7 +677,7 @@ class W3Slides_matlab(Slide):
         GD_code.code[19:].shift(UP*0.5)
         self.play(GD_code.TypeLetterbyLetter(lines=[20,21,22], lag_ratio=0))
 
-        # SLIDE 31:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # ZOOM OUT TO MATLAB
         self.next_slide(
             notes=
@@ -681,7 +692,7 @@ class W3Slides_matlab(Slide):
             DSS.bringOut()
         )
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # PRESS RUN, OUTPUT APPEARS
         self.next_slide(
             notes=
@@ -708,7 +719,7 @@ class W3Slides_matlab(Slide):
         )
         self.play(mat_env.focus_output(scale = 0.8))
 
-        # SLIDE 32:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # HIGLIGHT FIRST LINE
         self.next_slide(
             notes=
@@ -718,7 +729,7 @@ class W3Slides_matlab(Slide):
         output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
         self.play(Create(output_highlights[0]))
 
-        # SLIDE 33:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # HIGLIGHT SECOND LINE
         self.next_slide(
             notes=
@@ -727,7 +738,7 @@ class W3Slides_matlab(Slide):
         )
         self.play(ReplacementTransform(output_highlights[0], output_highlights[1]))
 
-        # SLIDE 34:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # HIGLIGHT THIRD LINE
         self.next_slide(
             notes=
@@ -738,7 +749,7 @@ class W3Slides_matlab(Slide):
         )
         self.play(ReplacementTransform(output_highlights[1], output_highlights[2]))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # PYTHON PLOT TRANSFORMS INTO ROBOT ARM GRAPHIC WITH ANGLES TO BE CLEARER
         self.next_slide(
             notes=
@@ -780,63 +791,3 @@ class W3Slides_matlab(Slide):
             ReplacementTransform(final_output_text[1][22:31].copy(), t1_label.value),
             ReplacementTransform(final_output_text[1][31:].copy(), t2_label.value)
         )
-
-
-class Test(Scene):
-    def construct(self):
-        cl_env = MatlabEnv(r'Assets\W3\colabGD.png')
-        DSS = DynamicSplitScreen(RED)
-        code = MatlabCode('Hello from the other side')
-        self.add(DSS, code)
-        code.add_background_window(DSS.mainRect.suspend_updating())
-        self.play(code.IntoMatlab(cl_env))
-        self.wait(0.5)
-        final_output_text = MatlabOutputText(
-            'Converged after 38 iterations.\n'
-            'Final angle combination:  0.6293184 4.6875734 \n'
-            'Final distance:  0.0083814'
-        )
-        cl_env.add_output(
-            output_text=final_output_text,
-            output_image=r'Assets\W3\RobotArmEnd_mat.png'
-        )
-        print(cl_env.output.outputWindow.z_index)
-        print(cl_env.cursor.z_index)
-        print(self.mobjects)
-        
-        self.play(cl_env.Run())
-        print(cl_env.output.outputWindow.z_index)
-        print(cl_env.cursor.z_index)
-        print(self.mobjects)
-        
-        self.play(cl_env.focus_output(scale = 0.8))
-        print(cl_env.output.outputWindow.z_index)
-        print(cl_env.cursor.z_index)
-        print(self.mobjects)
-        # # self.output_text.scale_to_fit_width(FRAME_WIDTH*scale)
-        # self.play(
-        #     # Group(cl_env.output_image, cl_env.plot_window).animate.next_to(cl_env.output_text, DOWN)
-        #     cl_env.output.animate.center(),
-        #     cl_env.outputWindow.animate.become(
-        #             Rectangle(
-        #             color=GREEN,
-        #             height=FRAME_HEIGHT,
-        #             width=FRAME_WIDTH,
-        #             fill_opacity=1)
-        #         )
-
-        # )
-            
-
-
-        output_highlights = [HighlightRectangle(final_output_text[i]) for i in range(3)]
-        # self.add(*output_highlights)
-        self.play(Create(output_highlights[0]))
-
-        self.play(ReplacementTransform(output_highlights[0], output_highlights[1]))
-
-
-
-        self.play(ReplacementTransform(output_highlights[1], output_highlights[2]))
-
-        self.play(FadeOut(output_highlights[2]))
