@@ -144,8 +144,9 @@ class LinearRegressionEquations(VMobject):
             ).copy().arrange(RIGHT).center()
     
     def _get_sums(self):
-        return self.m_sum_x + VGroup(
-            self.m_sum_y, self.m_sum_x_y, self.m_sum_x_sq, self.q_sum_x, self.q_sum_y
+        return VGroup(
+            *self.m_sum_x, self.m_sum_y, self.m_sum_x_y, self.m_sum_x_sq,
+            self.q_sum_x, self.q_sum_y
         ) 
 
     def ExtractSumTerms(self, target: VGroup) -> Succession:
@@ -180,57 +181,34 @@ if __name__ == '__main__':
     # cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
     # exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
 
-config.renderer='cairo'
 
+config.background_color = WHITE
+from Generic_mooc_utils import HighlightRectangle
 class Test(ThreeDScene):
-    # def construct(self):
-    #     a = Text('hello big world')
-    #     target = a[5:8].copy().shift(DOWN)
-    #     self.add(a)
-    #     self.wait(0.5)
-    #     self.play(
-    #         Succession(
-    #             a[5:8].animate(run_time=0).set_opacity(0),
-    #             AnimationGroup(
-    #                 FadeOut(a),
-    #                 ReplacementTransform(a[5:8].copy(), target),
-    #             )
-    #         )
-    #     )
-
     def construct(self):
-        algerian_dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
-        temperature = algerian_dataset[1:, 0]
-        RH = algerian_dataset[1:, 1]
-        FWI = algerian_dataset[1:, -1]
+        # linear_relation = MathTex(r'y = f(x) = {{mx+q}}',
+        #                           color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE})
+        # ind = index_labels(linear_relation)
+        multiple_linear_relation = MathTex(
+            r'y= f(x_1, x_2, \dots, \x_p) = {{m_1 x_1 + m_2 x_2 + \dots + m_p x_p + q}}',
+            color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE})
+        ind2 = index_labels(multiple_linear_relation)
+        self.add(multiple_linear_relation, ind2)
 
-        ax = ThreeDAxes(x_range=(temperature.min(), temperature.max()),
-                        y_range=(RH.min(), RH.max()),
-                        z_range=(FWI.min(), FWI.max()),
-                        ).center()
-        ax.x_axis.rotate(PI/2, X_AXIS)
-        ax.y_axis.rotate(PI/2, Y_AXIS)
-        self.add(ax)
-        self.set_camera_orientation(phi=90 * DEGREES, theta=-90 * DEGREES, gamma=0*DEGREES, zoom=0.5)
-        self.set_camera_orientation(zoom=0.5)
-        point_config = {'color': PURPLE_A, 'radius': DEFAULT_DOT_RADIUS}
-        dataset_2d = VGroup(
-            Dot(ax.c2p(t, RH.min(), fwi), **point_config).rotate(PI/2, X_AXIS) for t, rh, fwi in zip(temperature, RH, FWI)
+        m_i_highlights = VGroup(
+            HighlightRectangle(multiple_linear_relation[8]),
+            HighlightRectangle(multiple_linear_relation[10]),
+            HighlightRectangle(multiple_linear_relation[12][-2:]),
         )
-        temp_dataset = VGroup(
-            Dot3D(ax.c2p(t, rh, fwi), **point_config) for t, rh, fwi in zip(temperature, RH, FWI)
-        )
-        self.add(dataset_2d)
-        phi, theta, _, _, zoom = self.camera.get_value_trackers()
-        self.play(
-            phi.animate.set_value(80*DEGREES),
-            theta.animate.set_value(-45*DEGREES),
-            ReplacementTransform(dataset_2d, temp_dataset)
-            # AnimationGroup(
-            #     dataset_2d[i].animate.move_to(ax.c2p(temperature[i], RH[i], FWI[i])) for i in range(len(dataset_2d))
-            # )
-        )
+        self.add(m_i_highlights)
 
+        # self.play(
+        #     ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
+        #     ReplacementTransform(linear_relation[2], multiple_linear_relation[2:7]), # f argument
+        #     ReplacementTransform(linear_relation[3], multiple_linear_relation[7]), # )=
+        #     ReplacementTransform(linear_relation[4:6], multiple_linear_relation[8:14]), # m*x
+        #     ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
+        # )
 
 
 
