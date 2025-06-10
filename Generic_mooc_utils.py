@@ -4,7 +4,7 @@ __all__ = [
     "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO", "CODE_FONT",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
     "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle",
-    "CustomDecimalNumber"
+    "CustomDecimalNumber", "custom_get_axis_labels"
 ]
 
 from manim import *
@@ -33,6 +33,16 @@ def pixel2p(x, y):
         -(y - 540)/1080 *FRAME_HEIGHT,
         0
     ]
+
+def custom_get_axis_labels(
+    ax: Axes,
+    x_label: Mobject,
+    y_label: Mobject
+):
+    return VGroup(
+        x_label.next_to(ax.get_axis(0).get_corner(UR), UP),
+        y_label.next_to(ax.get_axis(1).get_corner(UR), RIGHT),
+    )
 
 
 class HighlightRectangle(BackgroundRectangle):

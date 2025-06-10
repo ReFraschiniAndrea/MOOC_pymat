@@ -2,29 +2,19 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-# from manim_slides import Slide
-from config import MOOCSlide
+from config import *
 from W2Anim import *
 from Generic_mooc_utils import *
 from colab_utils import ColabCodeWithLogo, COLAB_LIGHTGRAY
 from matlab_utils import MatlabCodeWithLogo
 
-# import os 
-# env = os.environ
-# env["PATH"] = r"C:\Users\andrea.refraschini\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
-
-config.renderer='cairo'
-config.background_color = WHITE
-config.pixel_width=960
-config.pixel_height=720
+config.update(TEST_CONFIG)
 
 LABELS_SIZE=0.75
 ICONS_HEIGHT = 0.6
 
-class W2Theory_slides(MOOCSlide):
+class W2Theory_slides(ThreeDMOOCSlide):
     def construct(self):
-        # self.wait_time_between_slides = 0.05
-        # self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # AXES WITH FIRE INDEX AND TEMPERATURE ICONS APPEAR
         # DATASET POINTS AND REGRESSION LINE APPEAR
@@ -45,7 +35,7 @@ class W2Theory_slides(MOOCSlide):
             y_axis_config={'stroke_color':BLACK, 'include_ticks':False}
         ).center()
         ax.set_z_index(-1)
-        variable_ax_lab = ax.get_axis_labels(
+        variable_ax_lab = custom_get_axis_labels(ax,
             Text('Temperature' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
             Text('Fire risk', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2)
         )
@@ -274,18 +264,20 @@ class W2Theory_slides(MOOCSlide):
         algerian_dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
         row_labels = [Text(str(i), color=BLACK, font=CODE_FONT, weight=ULTRAHEAVY) for i in range(5)]
         col_labels = [Text(label,  color=BLACK, font=CODE_FONT, weight=ULTRAHEAVY) for label in ['Temperature', 'RH', 'BUI', 'FWI']]
-        head_table = Table(algerian_dataset[1:6], row_labels=row_labels, col_labels=col_labels,
-                          add_background_rectangles_to_entries=False,
-                          element_to_mobject=CustomDecimalNumber,
-                          element_to_mobject_config={'font':CODE_FONT,'color': BLACK, 'mob_class': Text, 'num_decimal_places':1},
-                          line_config={'stroke_width':0},
-                          arrange_in_grid_config={'cell_alignment': ORIGIN})
+        head_table = Table(
+            algerian_dataset[1:6], row_labels=row_labels, col_labels=col_labels,
+            add_background_rectangles_to_entries=False,
+            element_to_mobject=CustomDecimalNumber,
+            element_to_mobject_config={'font':CODE_FONT,'color': BLACK, 'mob_class': Text, 'num_decimal_places':1},
+            line_config={'stroke_width':0},
+            arrange_in_grid_config={'cell_alignment': ORIGIN}
+        ).scale(0.75).center()
         for i in range(6):
             for j in range(5):
                 color = WHITE if i % 2 ==0 else COLAB_LIGHTGRAY
                 head_table.add_highlighted_cell((i+1,j+1),color=color)
                 # color in table constructor does not work 
-                head_table.get_entries((i+1, j+1)).set_color(BLACK)       
+                head_table.get_entries((i+1, j+1)).set_color(BLACK)
 
         self.play(FadeOut(python_function_code, matlab_function_code, mat_func_highlights))
         self.play(FadeIn(head_table))
@@ -299,19 +291,40 @@ class W2Theory_slides(MOOCSlide):
             in temperature raises the likelihood of wildfires. [CLICK]
             '''
         )
-        # point_config = {'color': PURPLE_A, 'radius': DEFAULT_DOT_RADIUS*0.6}
-        # temperature = algerian_dataset[1:, 0]
-        # RH = algerian_dataset[1:, 1]
-        # FWI = algerian_dataset[1:, -1]
-        # temp_dataset = points_from_data(
-        #     np.column_stack((temperature, FWI)),
-        #     ax, **point_config)
-        # temp_fit = np.polynomial.polynomial.Polynomial.fit(temperature, FWI, 1).convert().coef
-        # temp_reg_line = RegressionLine(temp_fit[1], temp_fit[0], ax)
+        self.play(FadeOut(head_table))
+
+        algerian_dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
+        temperature = algerian_dataset[1:, 0]
+        RH = algerian_dataset[1:, 1]
+        FWI = algerian_dataset[1:, -1]
+        t_range = (26, 38)   # temperature
+        rh_range = (45, 85)  # relative humidity
+        fwi_range = (0, 32)  # fire weather index
+
+        # display first dataset
+        ax_temp = NumberPlane(
+            x_range=(*t_range, 2),
+            y_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=9,
+            x_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
+            y_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex},
+            background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
+        ).center()
+        ax_temp.x_axis.numbers.set_color(BLACK)
+        ax_temp.y_axis.numbers.set_color(BLACK)
+        temp_labels =custom_get_axis_labels(ax_temp,
+            Text('Temperature' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
+            Text('FWI', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
+        )
+
+        point_config = {'color': PURPLE_A, 'radius': DEFAULT_DOT_RADIUS}
+        temp_dataset = points_from_data(np.column_stack((temperature, FWI)), ax_temp, **point_config)
+        _temp_fit = np.polynomial.polynomial.Polynomial.fit(temperature, FWI, 1).convert().coef
+        temp_reg_line = RegressionLine(_temp_fit[1], _temp_fit[0], ax_temp, x_range=t_range)
         
-        # self.play(FadeOut(head_table))
-        # self.play(FadeIn(ax, temp_dataset))
-        # self.play(Create(temp_reg_line))
+        self.play(FadeIn(ax_temp, temp_labels, temp_dataset))
+        self.play(Create(temp_reg_line))
 
         # SLIDE 12:  ===========================================================
         # PLOT OF LINEAR REGRESSION (HUMIDITY. VS FWI) REPLACES FIRST ONE
@@ -322,15 +335,47 @@ class W2Theory_slides(MOOCSlide):
             But what happens if we consider both temperature and humidity? [CLICK]
             '''
         )
-        # rh_dataset = points_from_data(
-        #     np.column_stack((RH, FWI)),
-        #     ax, **point_config)
-        # rh_fit = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
-        # rh_reg_line = RegressionLine(rh_fit[1], rh_fit[0], ax)
+        ax_3d = ThreeDAxes(
+            x_range=(*rh_range, 5),
+            y_range=(*t_range, 2),
+            z_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=12,
+            z_length=9,
+        ).set_color(BLACK).center()
+        ax_3d.x_axis.rotate(PI/2, X_AXIS)
+        ax_3d.y_axis.rotate(PI/2, Y_AXIS)
+        threeD_labels = VGroup(
+            Text('RH' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, X_AXIS).next_to(ax_3d.get_axis(0).get_corner(OUT+RIGHT), OUT),
+            Text('Temperature' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, X_AXIS).next_to(ax_3d.get_axis(1).get_corner(OUT+UP), OUT),
+            Text('FWI', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, RIGHT).next_to(ax_3d.get_axis(2).get_corner(OUT+RIGHT), RIGHT),
+        )
+
+        ax_rh = NumberPlane(
+            x_range=(*rh_range, 5),
+            y_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=9,
+            x_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
+            y_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex},
+            background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
+        )
+        ax_rh.x_axis.numbers.set_color(BLACK)
+        ax_rh.y_axis.numbers.set_color(BLACK)
+        ax_rh.rotate(PI/2, X_AXIS)
+        ax_rh.scale(ax_3d.x_axis.width/ax_rh.x_axis.width*1.01)
+        ax_rh.shift(ax_3d.c2p(rh_range[0], t_range[0], fwi_range[0])-ax_rh.c2p(rh_range[0], fwi_range[0]))
         
-        # self.play(FadeOut(temp_dataset, temp_reg_line))
-        # self.play(FadeIn(rh_dataset))
-        # self.play(Create(rh_reg_line))
+        dataset_3d = VGroup(
+            Dot(ax_3d.c2p(rh, t_range[0], fwi), **point_config).rotate(PI/2, X_AXIS) for rh, fwi in zip(RH, FWI)
+        )
+        _rh_fit = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
+        rh_reg_line = RegressionLine(_rh_fit[1], _rh_fit[0], ax_rh, x_range=rh_range)
+
+        self.set_camera_orientation(phi=90 * DEGREES, theta=-90 * DEGREES, gamma=0*DEGREES, zoom=0.7)
+        self.play(FadeIn(ax_3d.x_axis, ax_3d.z_axis, ax_rh.background_lines, ax_rh.x_axis.numbers, ax_rh.y_axis.numbers, dataset_3d,
+                         threeD_labels[0], threeD_labels[2]))
+        self.play(Create(rh_reg_line))
 
         # SLIDE 12:  ===========================================================
         # PLOT OF DATASET BECOMES 3D
@@ -339,6 +384,28 @@ class W2Theory_slides(MOOCSlide):
             '''But what happens if we consider both temperature and humidity?
             [CLICK]
             '''
+        )
+        dxs = np.linspace(rh_range[0], rh_range[1], 17)
+        dys = np.linspace(t_range[0], t_range[1], 17)
+        plane = VGroup( l for x, y in zip(dxs, dys) for l in(
+            Line(ax_3d.c2p(x, t_range[0], fwi_range[0]), ax_3d.c2p(x, t_range[1], fwi_range[0]), stroke_color=BLACK, stroke_width=0.2),
+            Line(ax_3d.c2p(rh_range[0], y, fwi_range[0]), ax_3d.c2p(rh_range[1], y, fwi_range[0]), stroke_color=BLACK, stroke_width=0.2)
+            ) 
+        )
+        CAMERA_ROTATION_ANGLE = 40*DEGREES
+        phi, theta, _, _, zoom = self.camera.get_value_trackers()
+        self.play(FadeOut(ax_rh.background_lines, ax_rh.x_axis.numbers, ax_rh.y_axis.numbers, rh_reg_line))
+        self.play(
+            phi.animate.set_value(80*DEGREES),
+            theta.animate.set_value(-90*DEGREES + CAMERA_ROTATION_ANGLE),
+            zoom.animate.set_value(0.5),
+            Create(ax_3d.y_axis), Create(plane),
+            threeD_labels[0].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
+            threeD_labels[2].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
+            FadeIn(threeD_labels[1].rotate(CAMERA_ROTATION_ANGLE, Z_AXIS)),
+            AnimationGroup(
+                dataset_3d[i].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS).move_to(ax_3d.c2p(RH[i], temperature[i], FWI[i])) for i in range(len(RH))
+            ),
         )
 
         # SLIDE 13:  ===========================================================
@@ -352,7 +419,10 @@ class W2Theory_slides(MOOCSlide):
         linear_relation = MathTex(
             r'y = f(x) = {{mx+q}}',
             color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE}
-        ).to_edge(UP).shift(UP)
+        )
+        self.add_fixed_in_frame_mobjects(linear_relation)
+        linear_relation.to_edge(UP).shift(UP)
+        self.play(FadeIn(linear_relation))
 
         # SLIDE 14:  ===========================================================
         # MULTIPLE LINEAR REGRESSION REPLACES SIMPLE ONE
@@ -369,6 +439,15 @@ class W2Theory_slides(MOOCSlide):
             color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE}
         ).move_to(linear_relation)
 
+        # regression plane
+        X = np.column_stack((RH, temperature))
+        X = np.c_[X, np.ones(X.shape[0])]  # add bias term
+        beta_hat = np.linalg.lstsq(X, FWI, rcond=None)[0]
+        reg_plane = lambda x, y: beta_hat[0]*x + beta_hat[1]*y +beta_hat[2]
+        reg_plane_plot = ax_3d.plot_surface(reg_plane,
+                                            u_range=rh_range, v_range=t_range,
+                                            checkerboard_colors=(BLUE, BLUE), fill_opacity=0.7, resolution=16)
+
         self.play(
             ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
             ReplacementTransform(linear_relation[2], multiple_linear_relation[2:7]), # f argument
@@ -376,6 +455,9 @@ class W2Theory_slides(MOOCSlide):
             ReplacementTransform(linear_relation[4:6], multiple_linear_relation[8:14]), # m*x
             ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
         )
+        self.begin_ambient_camera_rotation(rate=0)  # so that manim checks z-depth every frame
+        self.play(Create(reg_plane_plot))
+        self.wait(0.5)
         
         # SLIDE 15:  ===========================================================
         # HIGHLIGHT 'm_i' COEFFICIENTS
@@ -391,6 +473,16 @@ class W2Theory_slides(MOOCSlide):
         )
 
         self.play(Create(m_i_highlights))
+        # SLIDE 15:  ===========================================================
+        # HIGHLIGHT 'q'
+        self.next_slide(
+            notes=
+            '''along with an intercept q. [CLICK]
+            '''
+        )
+        q_highlight = HighlightRectangle(multiple_linear_relation[-1][-1])
+
+        self.play(Create(q_highlight))
 
         # SLIDE 16:  ===========================================================
         # FORMULA FOR Y HAT PREDICTION APPEARS
@@ -402,13 +494,35 @@ class W2Theory_slides(MOOCSlide):
             the i-th data point. [CLICK]
             '''
         )
+        prediction_eq = MathTex(r'{{\hat{y_i}}} = m_1 (x_1)_i + \dots + m_p (x_p)_i',
+                                color=BLACK, tex_to_color_map={'(x_1)_i':BLUE, '(x_p)_i':BLUE}
+                                ).next_to(multiple_linear_relation, DOWN)
+        prediction_eq[0].set_color(ORANGE)
+        predictions = reg_plane(temperature, RH)
+        prediction_dots = VGroup(Dot(ax_3d.c2p(t, rh, pred), color=TEAL).rotate(PI/2, X_AXIS).rotate(-40*DEGREES, Z_AXIS)
+                                  for t, rh, pred in zip(temperature, RH, predictions))
+        residual_lines = VGroup(Line3D(data.get_center(), pred.get_center(), color=TEAL) for data, pred in zip(dataset_3d, prediction_dots))
+
+        self.play(FadeOut(m_i_highlights, q_highlight))
+        self.play(FadeIn(prediction_eq))
+        self.play(
+            AnimationGroup(
+                *[Succession(
+                    Create(l), GrowFromCenter(p),
+                    lag_ratio=0.5
+                )
+                for l, p in zip(residual_lines, prediction_dots)],
+                lag_ratio=0.2,
+                run_time=2
+            )
+        )
+        self.stop_ambient_camera_rotation()
 
         # SLIDE 17:  ===========================================================
         # FORMULA FOR E APPEARS
-        # PLANE GIGGLES A BIT?
         self.next_slide(
             notes=
-            '''And again, the “best” fitting model is the one that minimizes the
+            '''And again, the "best" fitting model is the one that minimizes the
             sum of the squares of the residuals, just as we defined before.
             Solving this minimization problem involves solving a linear system
             of equations. [CLICK]
@@ -417,6 +531,7 @@ class W2Theory_slides(MOOCSlide):
             further, in its extended form known as "multiple linear regression".
             '''
         )
+        minim_problem = MathTex(r'\hat{m_1}, \dots, \hat{m_p} = \argmin_{m_1,\dots, m_p} \sum_{i=1}^n (r_i)^2', color=BLACK).move_to(prediction_eq)
 
         # SLIDE 18:  ===========================================================
         # RETURN TO SIMPLE LINEAR REGRESSION PLOT
@@ -428,6 +543,12 @@ class W2Theory_slides(MOOCSlide):
             relationship between x and y? [CLICK]
             '''
         )
+        linear_dataset_1 = generate_regression_dataset()
+        linear_dataset_2 = generate_regression_dataset()
+        _tight_fit = np.polynomial
+
+
+
         # SLIDE 19:  ===========================================================
         # TWO LINEAR REGRESSION PLOTS SIDE BY SIDE
         self.next_slide(
@@ -438,6 +559,7 @@ class W2Theory_slides(MOOCSlide):
             And now, it's your turn. [CLICK]
             '''
         )
+        
 
 class Test(ThreeDScene):
     def construct(self):
@@ -445,64 +567,121 @@ class Test(ThreeDScene):
         temperature = algerian_dataset[1:, 0]
         RH = algerian_dataset[1:, 1]
         FWI = algerian_dataset[1:, -1]
-        x_range = (25, 38)
-        y_range = (45, 85)
-        z_range = (0, 32)
-        ax_3d = ThreeDAxes(
-            x_range=(*x_range, 2),
-            y_range=(*y_range, 5),
-            z_range=(*z_range, 5),
-                        ).set_color(BLACK).center()
-        ax_3d.x_axis.rotate(PI/2, X_AXIS)
-        ax_3d.y_axis.rotate(PI/2, Y_AXIS)
-        plane = VGroup()
-        for i in range(17):
-            dx, dy = i/16*(x_range[1]-x_range[0]), i/16*(y_range[1]-y_range[0])
-            plane.add(
-                Line(ax_3d.c2p(x_range[0]+dx, y_range[0], z_range[0]), ax_3d.c2p(x_range[0]+dx, y_range[1], z_range[0]), stroke_color=BLACK, stroke_width=0.2),
-                Line(ax_3d.c2p(x_range[0], y_range[0]+dy, z_range[0]), ax_3d.c2p(x_range[1], y_range[0]+dy, z_range[0]), stroke_color=BLACK, stroke_width=0.2),
-            )
-        self.set_camera_orientation(phi=90 * DEGREES, theta=-90 * DEGREES, gamma=0*DEGREES, zoom=0.5)
-        point_config = {'color': PURPLE_A, 'radius': DEFAULT_DOT_RADIUS}
-        
-        dataset_2d = VGroup(
-            Dot(ax_3d.c2p(t, RH.min(), fwi), **point_config).rotate(PI/2, X_AXIS) for t, rh, fwi in zip(temperature, RH, FWI)
-        )
-        # temp_dataset = VGroup(
-            # Dot3D(ax.c2p(t, rh, fwi), **point_config) for t, rh, fwi in zip(temperature, RH, FWI)
-        # )
-        self.add(ax_3d.x_axis, ax_3d.z_axis, dataset_2d)
-        phi, theta, _, _, _ = self.camera.get_value_trackers()
-        self.play(
-            phi.animate.set_value(80*DEGREES),
-            theta.animate.set_value(-130*DEGREES),
-            # ReplacementTransform(dataset_2d, temp_dataset),
-            Create(ax_3d.y_axis), Create(plane),
-            AnimationGroup(
-                dataset_2d[i].animate.rotate(-40*DEGREES, Z_AXIS).move_to(ax_3d.c2p(temperature[i], RH[i], FWI[i])) for i in range(len(dataset_2d))
-            )
+        t_range = (26, 38)   # temperature
+        rh_range = (45, 85)  # relative humidity
+        fwi_range = (0, 32)  # fire weather index
+
+        # display first dataset
+        ax_temp = NumberPlane(
+            x_range=(*t_range, 2),
+            y_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=9,
+            x_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
+            y_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex},
+            background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
+        ).center()
+        ax_temp.x_axis.numbers.set_color(BLACK)
+        ax_temp.y_axis.numbers.set_color(BLACK)
+        temp_labels =custom_get_axis_labels(ax_temp,
+            Text('Temperature' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
+            Text('FWI', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
         )
 
-        X = np.column_stack((temperature, RH))
+        point_config = {'color': PURPLE_A, 'radius': DEFAULT_DOT_RADIUS}
+        temp_dataset = points_from_data(np.column_stack((temperature, FWI)), ax_temp, **point_config)
+        _temp_fit = np.polynomial.polynomial.Polynomial.fit(temperature, FWI, 1).convert().coef
+        temp_reg_line = RegressionLine(_temp_fit[1], _temp_fit[0], ax_temp, x_range=t_range)
+        self.add(ax_temp, temp_labels, temp_dataset)
+        self.play(Create(temp_reg_line))
+
+        self.wait() 
+        self.play(FadeOut(ax_temp, temp_labels, temp_dataset, temp_reg_line))
+        # display second one
+        ax_rh = NumberPlane(
+            x_range=(*rh_range, 5),
+            y_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=9,
+            x_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':DOWN, 'label_constructor':MathTex},
+            y_axis_config={'stroke_color': BLACK, 'include_ticks': True, 'include_tip':True, 'include_numbers': True, 'label_direction':LEFT, 'label_constructor':MathTex},
+            background_line_style={'stroke_color': BLACK, 'stroke_width': 0.5}
+        )
+        ax_rh.x_axis.numbers.set_color(BLACK)
+        ax_rh.y_axis.numbers.set_color(BLACK)
+        ax_rh.rotate(PI/2, X_AXIS)
+        
+        ax_3d = ThreeDAxes(
+            x_range=(*rh_range, 5),
+            y_range=(*t_range, 2),
+            z_range=(*fwi_range, 5),
+            x_length=12,
+            y_length=12,
+            z_length=9,
+        ).set_color(BLACK).center()
+        ax_3d.x_axis.rotate(PI/2, X_AXIS)
+        ax_3d.y_axis.rotate(PI/2, Y_AXIS)
+        self.set_camera_orientation(phi=90 * DEGREES, theta=-90 * DEGREES, gamma=0*DEGREES, zoom=0.7)
+        dataset_3d = VGroup(
+            Dot(ax_3d.c2p(rh, t_range[0], fwi), **point_config).rotate(PI/2, X_AXIS) for rh, fwi in zip(RH, FWI)
+        )
+        ax_rh.scale(ax_3d.x_axis.width/ax_rh.x_axis.width*1.01)
+        ax_rh.shift(ax_3d.c2p(rh_range[0], t_range[0], fwi_range[0])-ax_rh.c2p(rh_range[0], fwi_range[0]))
+        threeD_labels = VGroup(
+            Text('RH' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, X_AXIS).next_to(ax_3d.get_axis(0).get_corner(OUT+RIGHT), OUT),
+            Text('Temperature' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, X_AXIS).next_to(ax_3d.get_axis(1).get_corner(OUT+UP), OUT),
+            Text('FWI', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).rotate(PI/2, RIGHT).next_to(ax_3d.get_axis(2).get_corner(OUT+RIGHT), RIGHT),
+        )
+        _rh_fit = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
+        rh_reg_line = RegressionLine(_rh_fit[1], _rh_fit[0], ax_rh, x_range=rh_range)
+        self.play(FadeIn(ax_3d.x_axis, ax_3d.z_axis, ax_rh.background_lines, ax_rh.x_axis.numbers, ax_rh.y_axis.numbers, dataset_3d,
+                         threeD_labels[0], threeD_labels[2]))
+        self.play(Create(rh_reg_line))
+        self.wait()
+
+        # shift to 3d
+        dxs = np.linspace(rh_range[0], rh_range[1], 17)
+        dys = np.linspace(t_range[0], t_range[1], 17)
+        plane = VGroup( l for x, y in zip(dxs, dys) for l in(
+            Line(ax_3d.c2p(x, t_range[0], fwi_range[0]), ax_3d.c2p(x, t_range[1], fwi_range[0]), stroke_color=BLACK, stroke_width=0.2),
+            Line(ax_3d.c2p(rh_range[0], y, fwi_range[0]), ax_3d.c2p(rh_range[1], y, fwi_range[0]), stroke_color=BLACK, stroke_width=0.2)
+            ) 
+        )
+
+        phi, theta, _, _, zoom = self.camera.get_value_trackers()
+        CAMERA_ROTATION_ANGLE = 40*DEGREES
+        self.play(FadeOut(ax_rh.background_lines, rh_reg_line))
+        self.play(
+            phi.animate.set_value(80*DEGREES),
+            theta.animate.set_value(-90*DEGREES + CAMERA_ROTATION_ANGLE),
+            zoom.animate.set_value(0.5),
+            Create(ax_3d.y_axis), Create(plane),
+            threeD_labels[0].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
+            threeD_labels[2].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
+            FadeIn(threeD_labels[1].rotate(CAMERA_ROTATION_ANGLE, Z_AXIS)),
+            AnimationGroup(
+                dataset_3d[i].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS).move_to(ax_3d.c2p(RH[i], temperature[i], FWI[i])) for i in range(len(RH))
+            ),
+        )
+
+        # create regression plane
+        X = np.column_stack((RH, temperature))
         X = np.c_[X, np.ones(X.shape[0])]  # add bias term
         beta_hat = np.linalg.lstsq(X, FWI, rcond=None)[0]
         reg_plane = lambda x, y: beta_hat[0]*x + beta_hat[1]*y +beta_hat[2]
         reg_plane_plot = ax_3d.plot_surface(reg_plane,
-                                            u_range=x_range, v_range=y_range,
+                                            u_range=rh_range, v_range=t_range,
                                             checkerboard_colors=(BLUE, BLUE), fill_opacity=0.7, resolution=16)
 
-        self.remove(dataset_2d)
-        self.add(reg_plane_plot)
-        self.add(dataset_2d)
         self.begin_ambient_camera_rotation(rate=0)  # so that manim checks z-depth evry frame
         self.play(Create(reg_plane_plot))
         self.wait(0.5)
 
-        # add predictions
+        # add predictions and residual lines
         predictions = reg_plane(temperature, RH)
         prediction_dots = VGroup(Dot(ax_3d.c2p(t, rh, pred), color=TEAL).rotate(PI/2, X_AXIS).rotate(-40*DEGREES, Z_AXIS)
                                   for t, rh, pred in zip(temperature, RH, predictions))
-        residual_lines = VGroup(Line3D(data.get_center(), pred.get_center(), color=TEAL) for data, pred in zip(dataset_2d, prediction_dots))
+        residual_lines = VGroup(Line3D(data.get_center(), pred.get_center(), color=TEAL) for data, pred in zip(dataset_3d, prediction_dots))
 
         self.play(
             AnimationGroup(
@@ -516,5 +695,11 @@ class Test(ThreeDScene):
             )
         )
         self.stop_ambient_camera_rotation()
+
+        # 
+
+
+        
+        
 
 
