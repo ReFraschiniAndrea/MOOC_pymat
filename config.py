@@ -1,13 +1,13 @@
-from manim import Scene
+from manim import Scene, ThreeDScene
 from manim_slides.config import BaseSlideConfig
-from manim_slides import Slide
+from manim_slides.slide.manim import Slide
 from manim_slides.slide.base import BaseSlide
 from pydantic import model_validator
 from textwrap import dedent
 from typing import Any
 
 __all__ = [
-    "MOOCSlide"
+    "MOOCSlide", "ThreeDMOOCSlide"
 ]
 
 class MOOCSlideConfig(BaseSlideConfig):  # type: ignore
@@ -46,3 +46,6 @@ class MOOCSlide(Slide):
             self,
             base_slide_config=base_slide_config,
         )
+
+class ThreeDMOOCSlide(MOOCSlide, ThreeDScene):
+    pass

@@ -161,7 +161,7 @@ class ColabCodeBlock(Mobject):
         self.add(self.outputWindow)
         self.add(self.output)
     
-    def focus_output(self, scale=0.75):
+    def focus_output(self, scale=0.75, alignment=None):
         '''Can be used with animate keyword'''
         if self.outputWindow is None or self.output is None:
             raise ValueError('Cell does not have output.')
@@ -174,6 +174,8 @@ class ColabCodeBlock(Mobject):
                 fill_opacity=1)
             )
         self.output.scale_to_fit_width(FRAME_WIDTH*scale).center()
+        if alignment is not None:
+            self.output.to_edge(alignment)
 
 
 class ColabBlockOutputText(Paragraph):
@@ -224,9 +226,10 @@ class ColabEnv(Mobject):
                     fill_opacity=1,
                     height=FRAME_HEIGHT,
                     width=FRAME_WIDTH))
+        cells_to_fade = self.cells[:-1]
         return AnimationGroup(
             Transform(cell.colabCode, target),
-            FadeOut(self.env_image, cell.gutter, cell.playButton)
+            FadeOut(self.env_image, *cells_to_fade,cell.gutter, cell.playButton)
         )
     
     def Run(self, cell: int = 0):
@@ -234,6 +237,7 @@ class ColabEnv(Mobject):
             raise IndexError('Cell index out of range')
         cell_to_run = self.cells[cell]
         self.cursor.move_to(cell_to_run.playButton)
+        # NOTE: cursor ownership is moved to the cell so avoid z_index problems
         self.remove(self.cursor)
         cell_to_run.add(self.cursor)
         if cell_to_run.output is not None:

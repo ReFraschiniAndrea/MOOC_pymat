@@ -259,7 +259,6 @@ class W3Slides_matlab(Slide):
             input_data_high_rect['max_iter'].animate.shift(UP*DSS.secondaryRect.height)
         )
         self.remove(input_data_high_rect['max_iter'])  # take care of the last highlight
-        self.play(mat_env.Run())
 
         # SLIDE 15:  ===========================================================
         # KINEMATICS FORMULAS ARE WRITTEN
@@ -298,7 +297,6 @@ class W3Slides_matlab(Slide):
             )
         )
         self.add(mat_env); self.remove(mat_env)  # Add so that remove is in self.mobjects, so that remove actually works.
-        mat_env.remove(mat_env.cursor)
 
         # SLIDE 16:  ===========================================================
         # NEW BLOCK APPEARS, FUNCTION DEFINITION IS WRITTEN
