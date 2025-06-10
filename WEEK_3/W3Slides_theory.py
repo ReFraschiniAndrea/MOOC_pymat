@@ -7,8 +7,6 @@ from W3Anim import *
 from Generic_mooc_utils import *
 import skimage
 
-env = os.environ
-env["PATH"] = r"C:\Users\rfand\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
 
 config.background_color=WHITE
 config.renderer="cairo"
@@ -28,8 +26,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.next_slide(
             notes=
             '''Nowadays, seeing robotic arms performing work is the norm.
-            But how are they controlled from a mathematical standpoint? 
-            Let's figure it out together. [CLICK]
+            How can we control their position? We can write the problem using
+            mathematics. Let's figure it out together. [CLICK]
             '''
         )
         placeholder = Text('Placeholder robot_arm.mp4', color=BLACK)
@@ -43,7 +41,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             notes=
             '''As a simplified situation, let's consider a double-jointed
             mechanical arm moving in the x-y plane.
-            In particular, we want to guide [CLICK] ...
+            In particular, we want to position [CLICK] ...
             '''
         )
         ax_2d = Axes(
@@ -76,15 +74,13 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # HAND MOVES TO TARGET
         self.next_slide(
             notes=
-            '''... the end effector, the tip of the arm, to a reachable target
-            point. This requires to minimize the distance [CLICK] ...
+            '''... the end effector, the tip of the arm, on a target point.
+            In other words, we want to minimize the distance [CLICK] ...
             '''
         )
 
         t1, t2 = -PI/4, -PI*11/12  # target point angles
-        target = Star(color=ORANGE, fill_opacity=1).scale(0.1).move_to(
-            robot_arm._hand_coord(t1, t2)
-            )
+        target = Star(color=ORANGE, fill_opacity=1).scale(0.1).move_to(robot_arm._hand_coord(t1, t2))
 
         self.play(Indicate(robot_arm.hand, scale_factor=1.5, run_time=1.5))
         self.wait(0.3)
@@ -96,10 +92,10 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # ARM MOVES BACK AND DISTANCE ARROW APPEARS
         self.next_slide(
             notes=
-            '''... between the tip and the target point. From the mathematical 
+            '''... between the tip and the target point. From the mathematical
             point of view, this is a minimization problem. It consists in
             finding the smallest value of a given function, typically called cost
-            function, subjected to certain constraints. [CLICK]
+            function. [CLICK]
             '''
         )
         self.play(robot_arm.MoveToAngles(PI/3, PI/8, run_time = 1.5))
@@ -119,7 +115,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.next_slide(
             notes=
             '''As we said, we consider the mechanical arm moving in the plane,
-            with the foot fixed at the origin of the axis. [CLICK]
+            with the abse fixed at the origin of the axis. [CLICK]
             '''
         )
         self.play(FadeOut(distance_arrow))#, dist_label))
@@ -242,7 +238,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # COMBINE INTO FORMULA FOR X, Y AS A FUNCTION OF ANGLES
         self.next_slide(
             notes=
-            '''obtaining these expressions. [CLICK]
+            '''obtaining these expressions for the tip position. [CLICK]
             '''
         )
 
@@ -267,9 +263,9 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # FINAL DISTANCE FORMULA APPEARS
         self.next_slide(
             notes=
-            '''We express the distance between the tip (x,y) and the target
-            point (x_p, y_p) in terms of the angles theta_1 and theta_2. Now we
-            are ready to formulate the minimization problem. [CLICK]
+            '''Let us write the distance between the tip (x,y) and the target
+            point (x_p, y_p) in terms of the angles theta_1 and theta_2. We are
+            now ready to formulate the minimization problem. [CLICK]
             '''
         )
 
@@ -297,9 +293,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # MINMIMIZATION PROBLEM FORMULATION APPEARS
         self.next_slide(
             notes=
-            '''Then, our problem is finding the joint angles theta1 and theta2 
-            that minimize the distance d_p, positioning the tip closest to the
-            desired target. An equivalent and simpler problem is the following:
+            '''We want to find the joint angles theta1 and theta2 that minimize
+            the distance d_p positioning the tip closest to the desired target.
             [CLICK]
             '''
         )
@@ -313,13 +308,9 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # CHANGE TO SQUARED DISTANCE
         self.next_slide(
             notes=
-            '''find the angles theta1 and theta2 that minimize the cost function
-            J which is defined as [CLICK] ...
+            '''Equivalently, we can minimize the square of the distance, [CLICK]
             '''
         )
-        # minim_problem = MathTex(r'\min \ J(\theta_1, \theta_2), \text{with} \ J={{d_p^2}}',
-                                #  color=BLACK)
-        # minim_problem.shift(first_minim_problem[1].get_center() - minim_problem[1].get_center())
         d_p_squared = MathTex(r'd_p^2',color=BLACK).move_to(minim_problem[1])
     
         self.play(Transform(minim_problem[1], d_p_squared))
@@ -328,7 +319,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # HIGHLIGHT SQURED DISTANCE TERM
         self.next_slide(
             notes=
-            '''... the square of the distance. [CLICK]
+            '''... setting J equal to d_p^2. [CLICK]
             '''
         )
         d_p_highlight = HighlightRectangle(minim_problem[1])
@@ -339,7 +330,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.next_slide(
             notes=
             '''Before solving the problem, let's have a look at the function J.
-            It is a surface within the space R3. [CLICK]
+            It can be represented as a surface within the space R3. [CLICK]
             '''
         )
         self.play(FadeOut(robot_arm, every_minus_proj,
@@ -418,10 +409,10 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # CREATE TARGET STAR AND ADD ITS LABELS
         self.next_slide(
             notes=
-            '''Our goal is to identify the angles theta1* and theta2* that are
-            associated to the minimum point, the star! Those angles are the ones
-            that bring the tip closest to the target point. The question is: how
-            can we find them? [CLICK]
+            '''Our goal is to identify the angles theta1* and theta2* [CLICK]
+            that are associated to the minimum point, the star! Those angles are
+            the ones that bring the tip closest to the target point. The question
+            is: how can we find them? [CLICK]
             '''
         )
         angular_target = Star(color=ORANGE, fill_opacity=1).scale(0.2).move_to(ax_3d.c2p(T1_3d, T2_3d,0))
@@ -436,31 +427,59 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.play(Create(target_projline))
         self.play(Write(tstar_labels))
         self.wait(0.5)
-        # self.play(Indicate(tstar_labels[0], color=BLUE, rate_func=linear),
-                #   Indicate(tstar_labels[1], color=BLUE, rate_func=linear))
 
         # SLIDE 20:  ===========================================================
         # GRADIENT DESCENT TITLE IS WRITTEN
         self.next_slide(
             notes=
             '''We will use a popular numerical algorithm, the so-called Gradient
-            Descent method. Let us briefly explain how it works. [CLICK]
+            Descent method. Let us briefly explain how it works. Our goal is to
+            reach the lowest point [CLICK]
             '''
         )
-        # self.play(tstar_labels.animate.restore())
         GD_title = Text('Gradient Descent', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.75)
         self.add_fixed_in_frame_mobjects(GD_title)
         self.play(Write(GD_title))
 
         # SLIDE 21:  ===========================================================
+        # POINT TRAVELS DOWN THE SLOPE
+        self.next_slide(
+            notes=
+            '''Intuitively, The Gradient Descent starts from an initial guess,
+            and builds a sequence of solutions that gradually approaches the
+            minimum. [CLICK] We want to descend as fast as possible, how can we
+            choose the best directions?
+            '''
+        )
+        starting_gd_guess = [7/6*PI, 6/6*PI]
+        gd_point = Dot3D(ax_3d.c2p(starting_gd_guess[0], starting_gd_guess[1], gd.J(starting_gd_guess[0], starting_gd_guess[1])),
+                         color=GREEN, radius = 0.15)
+        GD_trajectory = gd.run(
+            starting_point=starting_gd_guess,
+            tol=1e-6
+        )
+        curve = VGroup().set_points_as_corners(ax_3d.c2p(GD_trajectory))
+        trace = TracedPath(gd_point.get_center, stroke_color=GREEN, stroke_width=3)
+        self.add(trace)
+
+        # start animation
+        self.begin_ambient_camera_rotation(rate=0.005)
+        self.wait(1)
+        self.play(FadeIn(gd_point))
+        self.wait(0.8)
+
+        self.play(MoveAlongPath(gd_point, curve), run_time=5)#, rate_func=linear
+        self.wait(1)
+        self.stop_ambient_camera_rotation()
+
+        # SLIDE 22:  ===========================================================
         # CONTOUR LINES APPEAR
         # SURFACE PLOT IS FLATTENED
         # CAMERA ANGLES GOES BACK TO 2D
         self.next_slide(
             notes=
-            '''The method is based on the gradient of a function. We recall that
-            a gradient of a function J(theta1, theta2) is defined by this [CLICK]
-            expression.
+            '''To answer, let us plot the level curves, connecting points at the
+            same "elevation". [CLICK]
             '''
         )
         # create contours
@@ -522,12 +541,14 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             Transform(tstar_labels, theta_star_labels),
         )
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # GRADIENT DEFINITION IS WRITTEN
         # GRADIENT VECTOR FIELD APPEARS
         self.next_slide(
             notes=
-            '''... by this expression. [CLICK]
+            '''And let us plot the gradient of the function, given by this
+            expression. As you can see, at each point it is a vector. The
+            opposite of these vectors guarantee the steepest descent.[CLICK]
             '''
         )
         gradient_def = VGroup(
@@ -558,11 +579,13 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             run_time=1, lag_ratio=0.05)
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # CHAIN RULE SUBSTITUTION IS APPLIED
         self.next_slide(
             notes=
-            '''In our case, using the chain rule (2) we get this [CLICK] formula, 
+            '''Now we need to do some computations: since J depends on x and y,
+            which depend on the angles, we use the chain rule to get this [CLICK]
+            formula,
             '''
         )
         gradient_with_chain_rule = VGroup(
@@ -577,12 +600,14 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
 
         self.play(ReplacementTransform(gradient_def, gradient_with_chain_rule))
         
-        # SLIDE 24:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # GRADIENT FORMULA SLIDES UP
         # CHAIN RULE COMPONENTS EVALUATIONS APPEAR
         self.next_slide(
             notes=
-            '''where the factors are given by these formulas. [CLICK]
+            '''where the factors are given by these expressions. Putting
+            everything together, we have the gradient, the main ingredient of
+            the method.
             '''
         )
         self.play(gradient_with_chain_rule.animate.shift(UP*1.5))
@@ -600,46 +625,6 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.play(FadeIn(*ch_eqs[:2]))
         self.play(FadeIn(*ch_eqs[2:]))
 
-        # SLIDE 25:  ===========================================================
-        # OBJECTIVE FUNCTION SURFACE FADES BACK IN
-        # POINT TRAVELS DOWN THE SLOPE
-        self.next_slide(
-            notes=
-            '''Intuitively, The Gradient Descent is an iterative algorithm that,
-            starting from an initial guess, follows the opposite of the gradient 
-            of J and builds a sequence of angles that gradually approaches 
-            the minimum. [CLICK]
-            '''
-        )
-        self.play(FadeOut(ch_eq_1,ch_eq_2, ch_eq_3,ch_eq_4,ch_eq_5,ch_eq_6,
-                          gradient_with_chain_rule,
-                          contours, ref_sys_2d, target_3d_plot,
-                          gradient_vector_field))
-        self.wait(0.2)
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-120 * DEGREES, zoom=0.75)
-        self.play(FadeIn(obj_surf.restore(), ref_sys.restore(), target_3d_plot.restore()))
-
-        starting_gd_guess = [7/6*PI, 6/6*PI]
-        gd_point = Dot3D(ax_3d.c2p(starting_gd_guess[0], starting_gd_guess[1], gd.J(starting_gd_guess[0], starting_gd_guess[1])),
-                         color=GREEN, radius = 0.15)
-        GD_trajectory = gd.run(
-            starting_point=starting_gd_guess,
-            tol=1e-6
-        )
-        curve = VGroup().set_points_as_corners(ax_3d.c2p(GD_trajectory))
-        trace = TracedPath(gd_point.get_center, stroke_color=GREEN, stroke_width=3)
-        self.add(trace)
-
-        # start animation
-        self.begin_ambient_camera_rotation(rate=0.005)
-        self.wait(1)
-        self.play(FadeIn(gd_point))
-        self.wait(0.8)
-
-        self.play(MoveAlongPath(gd_point, curve), run_time=5)#, rate_func=linear
-        self.wait(1)
-        self.stop_ambient_camera_rotation()
-
         # SLIDE 26:  ===========================================================
         # TITLE OF PSEUDO CODE IS WRITTEN
         self.next_slide(
@@ -647,11 +632,16 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             '''Here is how the algorithm looks like. [CLICK]
             '''
         )
-        self.play(FadeOut(obj_surf, ref_sys, 
-                          angular_target, target_projline, tstar_labels,
-                          GD_title,
-                          gd_point, trace))
-        self.set_camera_orientation(phi=0 , theta=-PI/2, zoom=1)
+        self.play(FadeOut(ch_eq_1,ch_eq_2, ch_eq_3,ch_eq_4,ch_eq_5,ch_eq_6,
+                          gradient_with_chain_rule,
+                          contours, ref_sys_2d, target_3d_plot,
+                          gradient_vector_field, GD_title))
+        self.wait(0.5)
+        # self.play(FadeOut(obj_surf, ref_sys, 
+        #                   angular_target, target_projline, tstar_labels,
+        #                   GD_title,
+        #                   gd_point, trace))
+        # self.set_camera_orientation(phi=0 , theta=-PI/2, zoom=1)
 
         pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
                  r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
@@ -682,7 +672,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # WHILE LOOP INSTRUCTIONS WRITTEN
         self.next_slide(
             notes=
-            ''' for an iteration index "i" that goes from 1 to N_iter, [CLICK]
+            '''... we perform iterations, counted with an index i, and at each
+            iteration [CLICK] ...
             '''
         )
         self.play(Write(pc[2]), Write(pc[3]))
@@ -691,8 +682,8 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # GRADIENT DESCENT ANGLES UPDATE EQUATION WRITTEN
         self.next_slide(
             notes=
-            ''' We build a sequence of angles with this formula, where alpha
-            [CLICK] ...
+            '''...we build a new approximation of the angles with [CLICK] this
+            formula,
             '''
         )
         GD_update_eq = MathTex(
@@ -704,7 +695,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         # HIGHLIGHT LEARNING RATE
         self.next_slide(
             notes=
-            '''.. is a positive number called learning rate or step
+            '''...where alpha  is a positive number called learning rate or step
             length, and it determines the size of the step [CLICK] ...
             '''
         )
@@ -722,27 +713,36 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.play(ReplacementTransform(GD_update_eq, pc[4]))
 
         # SLIDE 32:  ===========================================================
-        # TOLERANCE CHECK WRITTEN
+        # TOLERANCE CHECK AND BREAK LOOP INSTRUCTION WRITTEN
         self.next_slide(
             notes=
             '''We stop the computation when J is small enough, say it is less
             than a certain tolerance tol that we fixed in advance. This means
-            that the distance between the effector and the target point is small.
-            [CLICK]
+            that the distance between the effector and the target point is
+            small. [CLICK]
             '''
         )
         self.play(Write(pc[5]), Write(pc[6]))
         self.play(Write(pc[7]), Write(pc[8]))
 
         # SLIDE 33:  ===========================================================
-        # BREAK LOOP INSTRUCTION WRITTEN
+        # MAX ITERATION NUMBER CHECK HIGHLIGHTED
         self.next_slide(
             notes=
             '''Note that the iterations stop anyway if the maximum number of
-            iterations N_iter is exceeded. Now, we need a computer code to
-            perform these operations automatically. In the next videos we will
-            learn how to write the algorithm. [END]
+            iterations N_iter is exceeded. [CLICK]
             '''
         )
-        self.play(Circumscribe(pc[3], color=BLUE, run_time=3))
-        self.wait(1)
+        max_iter_highlight = HighlightRectangle(pc[3])
+        self.play(Create(max_iter_highlight))
+
+        # SLIDE 34:  ===========================================================
+        # LAST HIGHLIGHT FADES
+        self.next_slide(
+            notes=
+            '''Now, we need a computer code to perform these operations
+            automatically. In the next videos we will learn how to write the
+            algorithm. [END]
+            '''
+        )
+        self.play(FadeOut(max_iter_highlight))
