@@ -171,44 +171,40 @@ def mq_throgh_points(p1, p2):
     return m, q
 
 
-if __name__ == '__main__':
-    pass
-    #dataset = generate_regression_dataset(func= lambda x: 0.5*(0.4*x-0.75)**3 + 0.25, x_range=(0.1, 1.5), n=20, sigma=0.10, seed=0)
-    # dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.2, x_range=(0.1, 1.5), n=20, sigma=0.05)
-    # x, y = dataset[:, 0], dataset[:, 1]
-    # linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
-    # quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
-    # cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
-    # exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
-
-
 config.background_color = WHITE
-from Generic_mooc_utils import HighlightRectangle
 class Test(ThreeDScene):
     def construct(self):
-        # linear_relation = MathTex(r'y = f(x) = {{mx+q}}',
-        #                           color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE})
-        # ind = index_labels(linear_relation)
+        self.set_camera_orientation(phi=90 * DEGREES, theta=-90 * DEGREES, gamma=0*DEGREES, zoom=0.7)
+        linear_relation = MathTex(
+            r'y = f(x) = {{mx+q}}',
+            color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE}
+        ).to_edge(UP)
+
+        self.add_fixed_in_frame_mobjects(linear_relation)
+        self.play(FadeIn(linear_relation))
+
         multiple_linear_relation = MathTex(
-            r'y= f(x_1, x_2, \dots, \x_p) = {{m_1 x_1 + m_2 x_2 + \dots + m_p x_p + q}}',
-            color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE})
-        ind2 = index_labels(multiple_linear_relation)
-        self.add(multiple_linear_relation, ind2)
+            r'y= f(x_1, x_2, \dots, \x_p) = {{ m_1 x_1 + m_2 x_2 + \dots + m_p x_p + q}}',
+            color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE}
+        ).move_to(linear_relation)
 
-        m_i_highlights = VGroup(
-            HighlightRectangle(multiple_linear_relation[8]),
-            HighlightRectangle(multiple_linear_relation[10]),
-            HighlightRectangle(multiple_linear_relation[12][-2:]),
+        self.add_fixed_in_frame_mobjects(multiple_linear_relation)
+        self.remove(multiple_linear_relation)  # not very elegant, but otherwise the equation will be displayed early.
+        self.play(
+            AnimationGroup(
+                FadeOut(linear_relation[2], linear_relation[4:6]),
+                AnimationGroup(
+                    ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
+                    # ReplacementTransform(linear_relation[2], multiple_linear_relation[2:7]), # f argument
+                    ReplacementTransform(linear_relation[3], multiple_linear_relation[7]), # )=
+                    # ReplacementTransform(linear_relation[4:6], multiple_linear_relation[8:14]), # m*x
+                    ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
+                ),
+                FadeIn(multiple_linear_relation[2:7],  multiple_linear_relation[8:14]),
+                lag_ratio=0.5
+            )
         )
-        self.add(m_i_highlights)
-
-        # self.play(
-        #     ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
-        #     ReplacementTransform(linear_relation[2], multiple_linear_relation[2:7]), # f argument
-        #     ReplacementTransform(linear_relation[3], multiple_linear_relation[7]), # )=
-        #     ReplacementTransform(linear_relation[4:6], multiple_linear_relation[8:14]), # m*x
-        #     ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
-        # )
+        self.wait(0.5)
 
 
 

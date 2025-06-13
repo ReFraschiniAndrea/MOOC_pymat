@@ -2,24 +2,17 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import Slide
+from config import *
 from W2Anim import *
-from Generic_mooc_utils import HighlightRectangle
+from Generic_mooc_utils import HighlightRectangle, SANS_SERIF_FONT
 
-config.renderer='cairo'
-config.background_color = WHITE
-config.pixel_width=1440
-config.pixel_height=1080
-# config.pixel_width=960
-# config.pixel_height=720
+config.update(RELEASE_CONFIG)
 
 LABELS_SIZE=0.75
 ICONS_HEIGHT = 0.6
 
-class W2Theory_slides(Slide):
+class W2Theory_slides(MOOCSlide):
     def construct(self):
-        self.wait_time_between_slides = 0.05
-        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # 
         self.next_slide(
@@ -39,8 +32,8 @@ class W2Theory_slides(Slide):
         humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[2])
        
         causal_arrows = VGroup(
-            Arrow(circles[1].get_top(), wildfire_icon.get_critical_point(DL), color=BLACK),
-            Arrow(circles[2].get_top(), wildfire_icon.get_critical_point(DR), color=BLACK),
+            Line(tri.get_vertices()[0], tri.get_vertices()[1], color=BLACK, stroke_width=6, buff=ICONS_HEIGHT*2 + 0.5),
+            Line(tri.get_vertices()[0], tri.get_vertices()[2], color=BLACK, stroke_width=6, buff=ICONS_HEIGHT*2 + 0.5),
         )
 
         self.play(
@@ -73,8 +66,8 @@ class W2Theory_slides(Slide):
         ).center()
         ax.set_z_index(-1)
         variable_ax_lab = ax.get_axis_labels(
-            Text('Humidity' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
-            Text('Fire risk', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2)
+            Text('Humidity' , color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2),
+            Text('Fire risk', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2)
         )
 
         forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 0.3, 0))
@@ -120,7 +113,7 @@ class W2Theory_slides(Slide):
             FadeOut(tracing_dot, trace),
             ReplacementTransform(dry_icon, low_temp_icon),
             ReplacementTransform(humidty_icon, high_temp_icon),
-            Transform(variable_ax_lab[0], Text('Temperature', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).move_to(variable_ax_lab[0]))
+            Transform(variable_ax_lab[0], Text('Temperature', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2).move_to(variable_ax_lab[0]))
         )
 
         positive_corr_func = lambda t: 0.4*t**2 +0.2
@@ -199,7 +192,7 @@ class W2Theory_slides(Slide):
         )
         reg_line = RegressionLine(linear_fit[1], linear_fit[0], ax, x_range=X_RANGE)
         reg_line.suspend_updating()
-        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
 
         self.play(FadeOut(wildfire_icon, forest_icon, low_temp_icon, high_temp_icon, variable_ax_lab))
         self.play(ReplacementTransform(log_plot, reg_line))
@@ -464,12 +457,12 @@ class W2Theory_slides(Slide):
         predicted_point = reg_line.proj_points[0]
         predicted_point_line = reg_line.proj_lines[0]
 
-        prediction_eq = MathTex(r'{{\hat{y_i}}} =m {{x_i}} + q', color=BLACK,
+        prediction_eq = MathTex(r'{{\widehat{y_i}}} =m {{x_i}} + q', color=BLACK,
                                 tex_to_color_map={'x_i':BLUE}).move_to(LR_title)
         prediction_eq[0].set_color(ORANGE)
 
         prediction_horiz_line = ax.get_horizontal_line(reg_line.proj_points[0].get_center(), color=p['i'].get_color())
-        prediction_label = MathTex(r'\hat{y_i}', color=ORANGE).scale(LABELS_SIZE).next_to(prediction_horiz_line, LEFT)
+        prediction_label = MathTex(r'\widehat{y_i}', color=ORANGE).scale(LABELS_SIZE).next_to(prediction_horiz_line, LEFT)
 
         self.play(ReplacementTransform(linear_relation, prediction_eq))
         self.play(
@@ -487,7 +480,7 @@ class W2Theory_slides(Slide):
             the error between the actual and predicted values. [CLICK]
             '''
         )
-        residual_eq = MathTex(r'{{r_i}} = {{y_i}} - {{\hat{y_i}}}', color=BLACK).next_to(prediction_eq, DOWN)
+        residual_eq = MathTex(r'{{r_i}} = {{y_i}} - {{\widehat{y_i}}}', color=BLACK).next_to(prediction_eq, DOWN)
         residual_eq[2].set_color(ORANGE)
         residual_eq[4].set_color(ORANGE)
         residual_brace = BraceBetweenPoints(predicted_point.get_center(), p['i'].get_center(), LEFT, color=BLACK, sharpness=1).set_z_index(2)
@@ -632,7 +625,7 @@ class W2Theory_slides(Slide):
             focuses on minimizing the "squares" of the residuals. [CLICK]
             '''
         )
-        ls_title = Text('Least Squares Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        ls_title = Text('Least Squares Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
         self.play(FadeOut(ax, x_lab, y_lab, reg_line, reg_line.proj_lines, reg_line.proj_points, dataset_points))
         self.play(
             minim_problem.animate.center(),

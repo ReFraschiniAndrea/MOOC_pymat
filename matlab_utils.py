@@ -264,6 +264,7 @@ class MatlabCodeWithLogo(CodeWithLogo):
         code,
         logo_pos=UP,
         logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER,
+        logo_shift_buff=0.5,
         **kwargs
     ):
         super().__init__(
@@ -271,4 +272,5 @@ class MatlabCodeWithLogo(CodeWithLogo):
             logo_mobj=ImageMobject(_MATLAB_LOGO).scale(0.5),
             logo_pos=logo_pos,
             logo_buff=logo_buff,
+            logo_shift_buff=logo_shift_buff
         )

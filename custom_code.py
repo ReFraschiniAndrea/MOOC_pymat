@@ -178,7 +178,8 @@ class CodeWithLogo(Mobject):
         code_mobj: CustomCode,
         logo_mobj: ImageMobject,
         logo_pos=UP,
-        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER
+        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER,
+        logo_shift_buff = _LOGO_SHIFT_BUFF
     ):
         super().__init__()
         self.codeMobject = code_mobj
@@ -186,8 +187,8 @@ class CodeWithLogo(Mobject):
             self.codeMobject.add_background_window()
         self.logo = logo_mobj.next_to(self.codeMobject, logo_pos, buff=logo_buff)
         if (logo_pos == UP).all():
-            self.logo.align_to(self.codeMobject.window, LEFT).shift(RIGHT*_LOGO_SHIFT_BUFF)
+            self.logo.align_to(self.codeMobject.window, LEFT).shift(RIGHT*logo_shift_buff)
         elif (logo_pos == LEFT).all():
-             self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*_LOGO_SHIFT_BUFF)
+             self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*logo_shift_buff)
         self.add(self.codeMobject)
         self.add(self.logo)

@@ -1,7 +1,8 @@
 '''Generic mooc utils'''
 
 __all__ = [
-    "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO", "CODE_FONT",
+    "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO",
+    "SANS_SERIF_FONT", "CODE_FONT",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
     "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle",
     "CustomDecimalNumber", "custom_get_axis_labels"
@@ -16,6 +17,7 @@ FRAME_WIDTH = FRAME_HEIGHT * ASPECT_RATIO
 HALF_SCREEN_LEFT = [-FRAME_WIDTH/4, 0, 0]
 HALF_SCREEN_RIGHT = [+FRAME_WIDTH/4, 0, 0]
 
+SANS_SERIF_FONT = 'Arial'
 CODE_FONT = 'Aptos Mono'
 try:
     manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos-Mono.ttf")
@@ -23,6 +25,7 @@ try:
 except:
     print('warning, unable to find font. falling back to monospace.')
     CODE_FONT = 'Monospace'
+
 _CURSOR_ICON = r'Assets\classic_cursor.svg'
 
 
