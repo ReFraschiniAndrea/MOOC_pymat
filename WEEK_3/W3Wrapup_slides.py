@@ -2,26 +2,19 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import ThreeDSlide
+from config import *
 from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, CODE_FONT, HighlightRectangle, CustomDecimalNumber
 from matlab_utils import MatlabCodeWithLogo
 from colab_utils import ColabCodeWithLogo, ColabCode
 from W3Anim import double_arm_kinematics, NewDB, RobotGradientDescent
 
-config.background_color=WHITE
-config.renderer="cairo"
-# config.pixel_width = 960
-# config.pixel_height = 720
-config.pixel_width = 1440 
-config.pixel_height = 1080
+config.update(RELEASE_CONFIG)
 
 LABELS_SIZE = 0.75
 LBELS_SIZE_3D = 1.5
 
-class W3WrapUp_GradientDescent(ThreeDSlide):
+class W3WrapUp_GradientDescent(ThreeDMOOCSlide):
     def construct(self):
-        self.wait_time_between_slides = 0.05
-        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # REFERENCE AXES AND ROBOT ARM APPEAR
         # LABELS AND DISTANCE ARROWS APPEAR

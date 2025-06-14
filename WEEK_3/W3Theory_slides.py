@@ -2,27 +2,20 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import ThreeDSlide
+from config import *
 from W3Anim import *
 from Generic_mooc_utils import *
 import skimage
 
-
-config.background_color=WHITE
-config.renderer="cairo"
-# test resolution
-# config.pixel_width = 960 
-# config.pixel_height = 720 
-# release resolution
-config.pixel_width = 1440 
-config.pixel_height = 1080 
+config.update(RELEASE_CONFIG)
 
 LABELS_SIZE = 0.75
 LBELS_SIZE_3D = 1.5
-class WEEK3Anim_GradientDescent(ThreeDSlide):
+
+class W3Theory_slides(ThreeDMOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
-        #  VIDEO OF THE ROBOTIC ARM IS SHOWN
+        # VIDEO OF THE ROBOTIC ARM IS SHOWN
         self.next_slide(
             notes=
             '''Nowadays, seeing robotic arms performing work is the norm.
@@ -65,7 +58,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
         self.play(Create(ax_2d, run_time=1))
         self.play(Write(ax_2d_labels, run_time=1))
         self.play(robot_arm.MoveByAngles(2*PI, -2*PI), run_time=3)
-        # we have increased by 2PI and decrease it mnaulally to avoid problems later
+        # we have increased by 2PI and decrease it manually to avoid problems later
         robot_arm.theta1.set_value(PI*2/3)  
         robot_arm.theta2.set_value(PI*4/5)
 
@@ -106,7 +99,6 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             stroke_color=RED, 
             stroke_width=2,
             max_tip_length_to_length_ratio=0.05)
-        # dist_label = MathTex('d', color=BLACK).scale(LABELS_SIZE).next_to(distance_arrow, RIGHT, buff=-0.5).shift(UP*0.5)
         self.wait(0.5)
         self.play(Create(distance_arrow))#, Write(dist_label))
 
@@ -437,7 +429,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             reach the lowest point [CLICK]
             '''
         )
-        GD_title = Text('Gradient Descent', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.75)
+        GD_title = Text('Gradient Descent', font_size=64, color=BLACK, font='Arial', weight=LIGHT).to_edge(UP).shift(UP*0.75)
         self.add_fixed_in_frame_mobjects(GD_title)
         self.play(Write(GD_title))
 
@@ -470,7 +462,7 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
 
         self.play(MoveAlongPath(gd_point, curve), run_time=5)#, rate_func=linear
         self.wait(1)
-        self.stop_ambient_camera_rotation()
+        self.begin_ambient_camera_rotation(rate=0)
 
         # SLIDE 22:  ===========================================================
         # CONTOUR LINES APPEAR
@@ -482,6 +474,9 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
             same "elevation". [CLICK]
             '''
         )
+        self.play(FadeOut(gd_point, trace))
+        self.stop_ambient_camera_rotation()  # keep it here so z-axis is still checked by the renderer
+
         # create contours
         def compute_contours(surface: Surface, levels=None):
             u_values, v_values = surface._get_u_values_and_v_values()
@@ -637,11 +632,6 @@ class WEEK3Anim_GradientDescent(ThreeDSlide):
                           contours, ref_sys_2d, target_3d_plot,
                           gradient_vector_field, GD_title))
         self.wait(0.5)
-        # self.play(FadeOut(obj_surf, ref_sys, 
-        #                   angular_target, target_projline, tstar_labels,
-        #                   GD_title,
-        #                   gd_point, trace))
-        # self.set_camera_orientation(phi=0 , theta=-PI/2, zoom=1)
 
         pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
                  r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"

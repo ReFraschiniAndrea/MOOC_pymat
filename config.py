@@ -1,14 +1,33 @@
+from typing import Any
+from textwrap import dedent
+from pydantic import model_validator
+
 from manim import Scene, ThreeDScene
+from manim.utils.color import WHITE
 from manim_slides.config import BaseSlideConfig
 from manim_slides.slide.manim import Slide
 from manim_slides.slide.base import BaseSlide
-from pydantic import model_validator
-from textwrap import dedent
-from typing import Any
 
 __all__ = [
-    "MOOCSlide", "ThreeDMOOCSlide"
+    "MOOCSlide", "ThreeDMOOCSlide",
+    "RELEASE_CONFIG", "TEST_CONFIG"
 ]
+
+RELEASE_CONFIG = {
+    'renderer': 'cairo',
+    'background_color': WHITE,
+    'pixel_width': 1440,
+    'pixel_height': 1080,
+    'frame_rate': 60
+}
+
+TEST_CONFIG = {
+    'renderer': 'cairo',
+    'background_color': WHITE,
+    'pixel_width': 960,
+    'pixel_height': 720,
+    'frame_rate': 15
+}
 
 class MOOCSlideConfig(BaseSlideConfig):  # type: ignore
     """Base class for slide config."""

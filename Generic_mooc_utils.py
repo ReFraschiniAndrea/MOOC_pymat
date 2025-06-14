@@ -65,14 +65,14 @@ class DynamicSplitScreen(VMobject):
             height=FRAME_HEIGHT, 
             fill_opacity=1, 
             stroke_width=0
-        ).set_z_index(0).center()
+        ).set_z_index(-1).center()
         self.secondaryRect = Rectangle(
             color=side_color, 
             width=FRAME_WIDTH,
             height= 2 * buff,
             fill_opacity=1,
             stroke_width=0
-        ).set_z_index(0).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        ).set_z_index(-1).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
         self.mainRect.save_state()
         self.secondaryRect.save_state()
 
