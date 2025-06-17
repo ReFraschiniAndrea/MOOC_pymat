@@ -5,6 +5,7 @@ __all__ = [
     "SANS_SERIF_FONT", "CODE_FONT",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
     "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle",
+    "FunctionAbstraction",
     "CustomDecimalNumber", "custom_get_axis_labels"
 ]
 
@@ -188,7 +189,8 @@ class Cursor(SVGMobject):
         super().__init__(file_name=_CURSOR_ICON, height=(24/1080)*FRAME_HEIGHT, **kwargs)
 
     def Click(self):
-        return self.animate(rate_func=there_and_back, run_time=0.1).scale(0.8)
+        # return self.animate(rate_func=there_and_back, run_time=0.1).scale(0.8)
+        return ApplyMethod(self.scale, 0.8, rate_func=there_and_back, run_time=0.1)
     
     def fingertip(self):
         return self.get_top() + LEFT * 2.5/17*self.width# + DOWN*100/1200*self.height+
@@ -226,3 +228,59 @@ class CustomDecimalNumber(DecimalNumber):
         mob = self.string_to_mob_map[string].copy()
         mob.font_size = self._font_size
         return mob
+    
+
+_LAPTOP_ICON = r"Assets\laptop_icon.svg"
+class FunctionAbstraction(VMobject):
+    def __init__(self, scale = 1):
+        super().__init__()
+        self.LaptopIcon = SVGMobject(_LAPTOP_ICON).set_color(BLUE).scale(scale)
+        self.Window = SurroundingRectangle(
+            self.LaptopIcon,
+            fill_color=WHITE,
+            stroke_color=BLUE,
+            buff=0.5,
+            stroke_width = 6,
+            fill_opacity=1
+        )
+        self.add(self.Window, self.LaptopIcon)
+
+    def _get_spacing(self, n):
+        return 0.6*self.Window.height / (n-1) if n > 1 else 0
+
+    def add_inputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF):
+        n_inputs = len(labels)
+        spacing = self._get_spacing(n_inputs)
+        self.InputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
+        self.InputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, LEFT, buff=0)
+        self.InputLabels = VGroup(
+            Text(l, color=BLUE, font=CODE_FONT)
+            if isinstance(l, str) else l  for l in labels
+        )
+        for i in range(n_inputs):
+            self.InputLabels[i].next_to(self.InputArrows[i], LEFT, buff=buff)
+        
+        self.add(self.InputArrows, self.InputLabels)
+
+    def add_outputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF):
+        n_inputs = len(labels)
+        spacing = self._get_spacing(n_inputs)
+        self.OutputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
+        self.OutputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, RIGHT, buff=0)
+        self.OutputLabels = VGroup(
+            Text(l, color=BLUE, font=CODE_FONT)
+            if isinstance(l, str) else l  for l in labels
+        )
+        for i in range(n_inputs):
+            self.OutputLabels[i].next_to(self.OutputArrows[i], RIGHT, buff=buff)
+        
+        self.add(self.OutputArrows, self.OutputLabels)
+
+
+config.background_color = WHITE
+class Test(ThreeDScene):
+    def construct(self):
+        a = FunctionAbstraction()
+        a.add_inputs("x", "y")
+        a.add_outputs("m", "q")
+        self.add(a)

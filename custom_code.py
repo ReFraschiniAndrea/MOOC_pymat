@@ -147,6 +147,8 @@ class CustomCode(VMobject):
 
 
     def add_background_window(self, rectangle: Rectangle = None, background_config=None):
+        if self.window is not None:
+            self.remove(self.window) # remove window if it already has one
         if rectangle is not None:
             self.window = rectangle
         else:
