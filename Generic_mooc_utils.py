@@ -2,11 +2,12 @@
 
 __all__ = [
     "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO",
-    "SANS_SERIF_FONT", "CODE_FONT",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
-    "pixel2p", "Cursor", "DynamicSplitScreen", "HighlightRectangle",
-    "FunctionAbstraction",
-    "CustomDecimalNumber", "custom_get_axis_labels"
+    "SANS_SERIF_FONT", "CODE_FONT",
+    "HighlightRectangle", "Title", "DynamicSplitScreen",
+    "Cursor", "FunctionAbstraction", "VectorArray",
+    "CustomDecimalNumber",
+    "custom_get_axis_labels", "pixel2p",
 ]
 
 from manim import *
@@ -48,6 +49,14 @@ def custom_get_axis_labels(
         y_label.next_to(ax.get_axis(1).get_corner(UR), RIGHT),
     )
 
+class Title(Text):
+    def __init__(self, text: str):
+        super().__init__(
+            text, color=BLACK,
+            font_size=64, font=SANS_SERIF_FONT, weight=LIGHT,
+            # stroke_width=0,
+            stroke_color=BLACK)
+        self.to_edge(UP).shift(UP*0.5)
 
 class HighlightRectangle(BackgroundRectangle):
     def __init__(
@@ -91,8 +100,10 @@ class DynamicSplitScreen(VMobject):
         self.secondaryRect.save_state()
 
         self.mainObj = None
+        self.followMainObj = None
         self.secondaryObj = None
         self.brought_in_ = False
+        self.last_shift_ = None
         self.buff_ = buff
 
         self.mainRect.add_updater(
@@ -102,23 +113,41 @@ class DynamicSplitScreen(VMobject):
         )
         self.add(self.mainRect, self.secondaryRect)
 
-    def add_main_obj(self, main_obj: VMobject):
+    def add_main_obj(self, main_obj: VMobject, follow_obj: VMobject = None):
         self.mainObj = main_obj
+        self.followMainObj = follow_obj 
 
     def remove_main_obj(self):
         self.mainObj = None
+        self.followMainObj = None
 
-    def add_side_obj(self, secondary_object: VMobject):
+    def add_side_obj(self, secondary_object: VMobject, center_horizontally: bool = True):
+        """If the secondary rectangle is outof frame, resizes it and adds the object
+        If its in frame, the rectangle is not resized and it is assumed that the the
+        object is already in the correct position"""
         self.remove_side_obj()
-        self.secondaryRect.stretch_to_fit_height(secondary_object.height + 2 * self.buff_)
+        if self.brought_in_ == False:
+            self.secondaryRect.stretch_to_fit_height(secondary_object.height + 2 * self.buff_)
+            self.secondaryRect.move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+            if center_horizontally:
+                secondary_object.move_to(self.secondaryRect)
+            else:
+                secondary_object.match_y(self.secondaryRect)
+        else:
+            self.secondaryRect.move_to([0, +FRAME_HEIGHT/2, 0], aligned_edge=UP)
+            self.mainRect.update()
+        self.secondaryObj = secondary_object
+        self.add(self.secondaryObj)
+
+    def add_empty_side_obj(self, height):
+        """Height is intended to be the one of the objects that will appear."""
+        self.remove_side_obj()
+        self.secondaryRect.stretch_to_fit_height(height + 2 * self.buff_)
         if self.brought_in_ == False:
             self.secondaryRect.move_to(self.mainRect.get_top(), aligned_edge=DOWN)
         else:
             self.secondaryRect.move_to([0, +FRAME_HEIGHT/2, 0], aligned_edge=UP)
             self.mainRect.update()
-        self.secondaryObj = secondary_object
-        secondary_object.move_to(self.secondaryRect)
-        self.add(self.secondaryObj)
     
     def remove_side_obj(self):
         if self.secondaryObj is not None:
@@ -132,6 +161,7 @@ class DynamicSplitScreen(VMobject):
         self.secondaryRect.restore()
         self.mainRect.restore()
         self.mainRect.resume_updating()
+        self.last_shift_ = None
 
     def get_final_mainObj_pos(self):
         return [0, (-self.secondaryRect.height)/2, 0]
@@ -154,33 +184,43 @@ class DynamicSplitScreen(VMobject):
             if self.mainObj is not None:
                 self.mainObj.shift(UP*self.secondaryRect.height/2)
     
+    def _MoveSecondaryRect(self, direction, **kwargs):
+        animations = [
+            self.secondaryRect.animate(**kwargs).shift(direction*self.secondaryRect.height),
+        ]
+        if self.secondaryObj is not None:
+            animations.append(
+                self.secondaryObj.animate(**kwargs).shift(direction*self.secondaryRect.height),
+            )
+        if self.mainObj is not None:
+            shift = self._get_shift()
+            animations.append(
+                self.mainObj.animate(**kwargs).shift(direction*shift)
+            )
+            if self.followMainObj is not None:
+                self.followMainObj.shift(direction*shift)
+
+        return AnimationGroup(*animations)
+    
+    def _get_shift(self) -> float:
+        if self.brought_in_:
+            shift = self.secondaryRect.height*(0.5 + self.mainObj.get_y()/FRAME_HEIGHT)
+            self.last_shift_ = shift
+            return shift
+        elif self.last_shift_ is not None:
+            shift = self.last_shift_
+            self.last_shift_ = None
+            return shift
+        else:
+            return self.secondaryRect.height*0.5
+    
     def bringIn(self, **kwargs):
         self.brought_in_=True
-        if self.mainObj is not None:
-            return AnimationGroup(
-                self.secondaryRect.animate(**kwargs).shift(DOWN*self.secondaryRect.height),
-                self.secondaryObj.animate(**kwargs).shift(DOWN*self.secondaryRect.height),
-                self.mainObj.animate(**kwargs).shift(DOWN*self.secondaryRect.height/2)
-            )
-        else:
-            return AnimationGroup(
-                self.secondaryRect.animate(**kwargs).shift(DOWN*self.secondaryRect.height),
-                self.secondaryObj.animate(**kwargs).shift(DOWN*self.secondaryRect.height),
-            )
+        return self._MoveSecondaryRect(direction=DOWN, **kwargs)
     
     def bringOut(self, **kwargs):
         self.brought_in_=False
-        if self.mainObj is not None:
-            return AnimationGroup(
-                self.secondaryRect.animate(**kwargs).shift(UP*self.secondaryRect.height),
-                self.secondaryObj.animate(**kwargs).shift(UP*self.secondaryRect.height),
-                self.mainObj.animate(**kwargs).shift(UP*self.secondaryRect.height/2)
-            )
-        else:
-            return AnimationGroup(
-                self.secondaryRect.animate(**kwargs).shift(UP*self.secondaryRect.height),
-                self.secondaryObj.animate(**kwargs).shift(UP*self.secondaryRect.height),
-            )
+        return self._MoveSecondaryRect(direction=UP, **kwargs)
 
 
 class Cursor(SVGMobject):
@@ -228,7 +268,6 @@ class CustomDecimalNumber(DecimalNumber):
         mob = self.string_to_mob_map[string].copy()
         mob.font_size = self._font_size
         return mob
-    
 
 _LAPTOP_ICON = r"Assets\laptop_icon.svg"
 class FunctionAbstraction(VMobject):
@@ -277,10 +316,22 @@ class FunctionAbstraction(VMobject):
         self.add(self.OutputArrows, self.OutputLabels)
 
 
-config.background_color = WHITE
-class Test(ThreeDScene):
-    def construct(self):
-        a = FunctionAbstraction()
-        a.add_inputs("x", "y")
-        a.add_outputs("m", "q")
-        self.add(a)
+class VectorArray(Table):
+    def __init__(self, array, arrangement='vertical', include_dots=True, color=BLUE, h_buff=0.6, v_buff=1.0):
+        table = [Text(t, font=CODE_FONT, color=BLACK) for t in array]
+        if include_dots:
+            if arrangement=='vertical':
+                table.insert(-1, MathTex(r'\vdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
+            else:
+                table.insert(-1, MathTex(r'\hdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
+        table = [[t] for t in table] if arrangement=='vertical' else [table]
+
+        super().__init__(
+            table, h_buff=h_buff, v_buff=v_buff,
+            element_to_mobject= lambda m: m,  # identity
+            include_outer_lines=True,
+            line_config={'stroke_width':7, 'color':color}
+        )
+    
+    def get_lines(self) -> VGroup:
+        return self.get_horizontal_lines() + self.get_vertical_lines()

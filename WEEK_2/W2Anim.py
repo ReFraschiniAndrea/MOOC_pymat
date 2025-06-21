@@ -151,17 +151,20 @@ class LinearRegressionEquations(VMobject):
 
     def ExtractSumTerms(self, target: VGroup) -> Succession:
         sums = self._get_sums()
+        sums2target_map = {0:0, 1:0, 2:0, 3:1, 4:1, 5:2, 6:3}
         return Succession(
             sums.animate(run_time=0).set_opacity(0),
             AnimationGroup(
                 FadeOut(self),
-                ReplacementTransform(sums[0].copy(), target[0]),
-                ReplacementTransform(sums[1].copy(), target[0]),
-                ReplacementTransform(sums[2].copy(), target[0]),
-                ReplacementTransform(sums[3].copy(), target[1]),
-                ReplacementTransform(sums[4].copy(), target[1]),
-                ReplacementTransform(sums[5].copy(), target[2]),
-                ReplacementTransform(sums[6].copy(), target[3]),
+                *[ReplacementTransform(sums[s].copy(), target[t])
+                for s, t in sums2target_map.items()]
+                # ReplacementTransform(sums[0].copy().set_opacity(0), target[0]),
+                # ReplacementTransform(sums[1].copy().set_opacity(0), target[0]),
+                # ReplacementTransform(sums[2].copy().set_opacity(0), target[0]),
+                # ReplacementTransform(sums[3].copy().set_opacity(0), target[1]),
+                # ReplacementTransform(sums[4].copy().set_opacity(0), target[1]),
+                # ReplacementTransform(sums[5].copy().set_opacity(0), target[2]),
+                # ReplacementTransform(sums[6].copy().set_opacity(0), target[3]),
             )
         )
 

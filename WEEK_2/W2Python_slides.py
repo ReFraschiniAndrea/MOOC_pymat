@@ -7,6 +7,9 @@ from Generic_mooc_utils import *
 from colab_utils import *
 from W2Anim import LinearRegressionEquations
 import matplotlib.pyplot as plt
+env = os.environ
+env["PATH"] = r"C:\Users\andrea.refraschini\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
+
 
 config.update(TEST_CONFIG)
 
@@ -145,7 +148,7 @@ class W2Python_slides(MOOCSlide):
             [CLICK]
             '''
         )
-        my_dataset_highlight = HighlightRectangle(import_code[5][12:22])
+        my_dataset_highlight = HighlightRectangle(import_code[5][:10])
         self.play(Create(my_dataset_highlight))
 
 		# SLIDE 11:  ===========================================================
@@ -312,7 +315,7 @@ class W2Python_slides(MOOCSlide):
 
         self.play(
             Create(column_highlights[0]),
-            Create(colored_dots[0]),
+            GrowFromCenter(colored_dots[0]),
             AddTextLetterByLetter(full_labels[0], rate_func=linear, time_per_char=0.01)
         )
 
@@ -325,7 +328,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(
             Create(column_highlights[1]),
-            Create(colored_dots[1]),
+            GrowFromCenter(colored_dots[1]),
             AddTextLetterByLetter(full_labels[1], rate_func=linear, time_per_char=0.01)
         )
 		# SLIDE 22:  ===========================================================
@@ -338,7 +341,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(
             Create(column_highlights[2]),
-            Create(colored_dots[2]),
+            GrowFromCenter(colored_dots[2]),
             AddTextLetterByLetter(full_labels[2], rate_func=linear, time_per_char=0.01)
         )
 		# SLIDE 23:  ===========================================================
@@ -351,7 +354,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(
             Create(column_highlights[3]),
-            Create(colored_dots[3]),
+            GrowFromCenter(colored_dots[3]),
             AddTextLetterByLetter(full_labels[3], rate_func=linear, time_per_char=0.01)
         )
 		# SLIDE 24:  ===========================================================
@@ -411,24 +414,22 @@ class W2Python_slides(MOOCSlide):
         cl_env.clear(self)
         self.remove(cl_env, *full_labels, *colored_dots, *column_highlights, x_brace, y_brace)
         DSS.mainRect.set_z_index(-1)
-        # self.play(FadeOut(cl_env, full_labels, colored_dots, column_highlights, x_brace, y_brace))
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[0]))
 
 		# SLIDE 26:  ===========================================================
         # SCHEMATIC DRAWING OF THE FUNCTION IS BROUGHT IN
         self.next_slide(
             notes=
-            '''We are going to write a function that [CLICK] takes as inputs the datapoints, organized in two lists.
+            '''We are going to write a function that [CLICK] takes as inputs the
+            datapoints, organized in two lists. [CLICK]
             '''
         )
         fscheme = FunctionAbstraction(scale=0.7)
         DSS.add_side_obj(fscheme)
-        self.play(DSS.bringIn())
-        
-        self.play(linear_regression_code.TypeLetterbyLetter(lines=[1]))
-        DSS.add_main_obj(linear_regression_code[:2])
+        DSS.add_main_obj(linear_regression_code[0], follow_obj=linear_regression_code[1:])
 
-        linear_regression_code.move_to(DSS.get_final_mainObj_pos())
+        self.play(DSS.bringIn())
+        self.play(linear_regression_code.TypeLetterbyLetter(lines=[1]))
 
 		# SLIDE 27:  ===========================================================
         # 
@@ -471,18 +472,22 @@ class W2Python_slides(MOOCSlide):
         # 
         self.next_slide(
             notes=
-            '''This is the structure of the Python function that we will write. The function will have two inputs (x and y) and two outputs (m and q). What we need to do now is to fill in the dots.
+            '''This is the structure of the Python function that we will write.
+            The function will have two inputs (x and y) and two outputs
+            (m and q). What we need to do now is to fill in the dots. [CLICK]
             '''
         )
 		# SLIDE 31:  ===========================================================
         # LINEAR REGRESSION FORMULAS APPEAR
         self.next_slide(
             notes=
-            '''This function will perform linear regression by computing the coefficients m and q according to these formulas.
-At first glance, this might seem overwhelming, but let's simplify it by breaking the task into smaller steps. 
-
+            '''This function will perform linear regression by computing the
+            coefficients m and q according to these formulas. At first glance,
+            this might seem overwhelming, but let's simplify it by breaking the
+            task into smaller steps. [CLICK]
             '''
         )
+        DSS.remove_main_obj()
         self.play(
             DSS.bringOut(),
             VGroup(x_vector, y_vector, m_label, q_label).animate.shift(UP*DSS.secondaryRect.height)
@@ -492,6 +497,7 @@ At first glance, this might seem overwhelming, but let's simplify it by breaking
         LR_equations.save_state()
         DSS.add_side_obj(LR_equations)
         self.play(DSS.bringIn())
+        DSS.add_main_obj(linear_regression_code[:2], linear_regression_code[2:])
 
 		# SLIDE 32:  ===========================================================
         # 
@@ -577,7 +583,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             for i in range(len(x)):
                 sum_x += x[i]
             '''
-        ).align_to(linear_regression_code[2][16:], UL)
+        ).align_to(linear_regression_code[2], UL)
         self.play(for_sum_code.TypeLetterbyLetter())
 
 		# SLIDE 37:  ===========================================================
@@ -588,7 +594,7 @@ We can take advantage of this, and compute these terms once and reuse the result
             For example, np.sum(x) calculates the sum of all the x-coordinates
             '''
         )
-        self.play(ReplacementTransform(for_sum_code, linear_regression_code[2][16:]))
+        self.play(ReplacementTransform(for_sum_code, linear_regression_code[2]))
 
 		# SLIDE 38:  ===========================================================
         # 
@@ -614,23 +620,80 @@ We can take advantage of this, and compute these terms once and reuse the result
             concept in Python: vectorized operations.
             '''
         )
-        
+        DSS.add_side_obj(sum_terms)
+        DSS.add_main_obj(linear_regression_code[:4], linear_regression_code[4:])
+        self.play(DSS.bringOut())
+
+        title = Title('Vectorized operations') 
+        x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]**2' for i in [0,1,2,'n']]).scale(0.6)
+        vector_labels = [Text(s, color=BLACK, font=CODE_FONT) for s in ['x', 'y', 'x*y', 'x**2']]
+
+        y_vector.next_to(x_vector, RIGHT)
+        xy_vector.next_to(y_vector, RIGHT, buff=1)
+        vector_labels[0].next_to(x_vector, UP)
+        vector_labels[1].next_to(y_vector, UP).align_to(vector_labels[0], UP)
+        vector_labels[2].next_to(xy_vector, UP).align_to(vector_labels[1], DOWN)
+        first_group=VGroup(x_vector, y_vector, xy_vector, *vector_labels[:3]).center()
+        title.next_to(first_group,UP)
+        first_group.add(title)
+
+        DSS.add_empty_side_obj(first_group.height)
+        # DSS.add_main_obj(linear_regression_code[:4], follow_obj=linear_regression_code[4:])
+        self.play(DSS.bringIn())
+        first_group.move_to(DSS.secondaryRect)
+        self.play(Write(title))
+
 		# SLIDE 41:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''] let us consider the vectors x and y, containing the elements xi and yi, respectively
+            '''Let us consider the vectors x and y, containing the elements xi
+            and yi, respectively. [CLICK]
             '''
         )
-        self.play(sum_terms.animate.shift(UP*DSS.secondaryRect.height))
-        # x_vector = Matrix()
+        self.play(
+            Create(x_vector),
+            Create(y_vector),
+            FadeIn(*vector_labels[:2])
+        )
+        
 		# SLIDE 42:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''the operation x * y creates a new array, [CLICK] whose first entry is the product of the first entries of x and y, [CLICK] the second entry is the product of the second entries, all the way up to the last element
+            '''The operation x * y creates a new array, [CLICK]...
             '''
         )
+        self.play(
+            Create(xy_vector.get_lines()),
+            FadeIn(vector_labels[2])
+        )
+
+		# SLIDE 42:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''...whose first entry is the product of the first entries of x and
+            y, the second entry is the product of the second entries, all the
+            way up to the last element. [CLICK]
+            '''
+        )
+        self.play(
+            AnimationGroup(
+                *[AnimationGroup(
+                    ReplacementTransform(y_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[-4:]),
+                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[:4]),
+                    FadeIn(xy_vector.get_entries((i, 1))[4]),
+                    lag_ratio=0.2
+                ) if i !=4 else FadeIn(xy_vector.get_entries((i, 1)))
+                for i in range(1,6)],
+                lag_ratio=0.2
+            )
+        )
+
 		# SLIDE 43:  ===========================================================
         # 
         self.next_slide(
@@ -640,18 +703,60 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[4]))
+
 		# SLIDE 44:  ===========================================================
         # 
         self.next_slide(
             notes=
-            '''Similarly, the element-wise power operation x ** 2 is also vectorized, meaning it applies the power operation to each element of the array individually. 
-[CLICK] so that combining this operation with np.sum gives the last term.
-            Very good. Now the hardest part is behind us. We just need to combine these quantities to finalize the computation.
+            '''Similarly, the element-wise power operation x ** 2 is also
+            vectorized, meaning it applies the power operation to each element
+            of the array individually. [CLICK]
+            '''
+        )
+        self.play(FadeOut(y_vector, xy_vector, *vector_labels[1:3]) )
+        x2_vector.move_to(xy_vector)
+        vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
+        self.play(FadeIn(x2_vector.get_lines(), vector_labels[-1]))
+        self.play(
+            AnimationGroup(
+                *[AnimationGroup(
+                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), x2_vector.get_entries((i, 1))[:4]),
+                    FadeIn(x2_vector.get_entries((i, 1))[4:]),
+                    lag_ratio=0.2
+                ) if i !=4 else FadeIn(x2_vector.get_entries((i, 1)))
+                for i in range(1,6)],
+                lag_ratio=0.2
+            )
+        )
+
+		# SLIDE 44:  ===========================================================
+        # NP.SUM(X**2) LINE WRITTEN
+        self.next_slide(
+            notes=
+            '''...so that combining this operation with np.sum gives the last
+            term. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[5]))
+
+		# SLIDE 44:  ===========================================================
+        # VECTORIZED OPERATIONS BROUGHT OUT OF FRAME
+        # 'm', 'q' EQUATIONS BROUGHT BACK IN
+        self.next_slide(
+            notes=
+            '''Very good. Now the hardest part is behind us. We just need to
+            combine these quantities to finalize the computation.
+            '''
+        )
+        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title))
+        DSS.add_main_obj(linear_regression_code[:6], follow_obj=linear_regression_code[6:])
+        self.play(DSS.bringOut())
+
+        DSS.add_side_obj(LR_equations.restore())
+        self.play(DSS.bringIn())
+
 		# SLIDE 45:  ===========================================================
-        # 
+        # NUMERATOR LINE WRITTEN
         self.next_slide(
             notes=
             '''First, we compute the numerator of the expression giving m.
@@ -661,7 +766,7 @@ We can take advantage of this, and compute these terms once and reuse the result
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[7, 8]))
 
 		# SLIDE 46:  ===========================================================
-        # 
+        # DENOMINATOR LINE WRITTEN
         self.next_slide(
             notes=
             '''Then, we compute the denominator, [CLICK] ...
@@ -714,10 +819,10 @@ We can take advantage of this, and compute these terms once and reuse the result
         )
         code_recap_highlights = [
             HighlightRectangle(code_snippet) for code_snippet in
-            [linear_regression_code[1][12:],
-             VGroup(linear_regression_code[i][16:] for i in range(2,6)),
-             VGroup(linear_regression_code[i][16:] for i in range(7,12)),
-             linear_regression_code[13][16:]]
+            [linear_regression_code[1],
+             linear_regression_code[2:6],
+             linear_regression_code[7:12],
+             linear_regression_code[13]]
         ]
         self.play(Create(code_recap_highlights[0]))
 
@@ -754,7 +859,8 @@ We can take advantage of this, and compute these terms once and reuse the result
         # INTO COLAB, FUNCTION DEFINITION CELL IS RUN
         self.next_slide(
             notes=
-            '''Now that the function has been written we can run the block and it is ready to be used
+            '''Now that the function has been written we can run the block and
+            it is ready to be used. [CLICK]
             '''
         )
         self.play(FadeOut(code_recap_highlights[3]))
@@ -768,8 +874,9 @@ We can take advantage of this, and compute these terms once and reuse the result
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''In this way, we are ready to apply it to the Algerian forest dataset.
-            We wonder how the temperature influences the Fire Weather Index,
+            '''In this way, we are ready to apply it to the Algerian forest
+            dataset. We wonder how the temperature influences the Fire Weather
+            Index,
             '''
         )
         LR_example_code = ColabCode(
@@ -810,8 +917,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''The label "Temperature" extracts the corresponding column from the dataset 
             '''
         )
-        temperature_highlight = HighlightRectangle(LR_example_code[1][27:40])
-        values_highlight = HighlightRectangle(LR_example_code[1][42:])
+        temperature_highlight = HighlightRectangle(LR_example_code[1][13:26])
+        values_highlight = HighlightRectangle(LR_example_code[1][28:])
 
         self.play(Create(temperature_highlight))
         
@@ -866,8 +973,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         f_string_highlights = VGroup(
-            HighlightRectangle(LR_example_code[8][18]),
-            HighlightRectangle(LR_example_code[9][18])
+            HighlightRectangle(LR_example_code[8][6]),
+            HighlightRectangle(LR_example_code[9][6])
         )
 
         self.play(Create(h) for h in f_string_highlights)
@@ -881,8 +988,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         dot_4f_highlights = VGroup(
-            HighlightRectangle(LR_example_code[8][33:37]),
-            HighlightRectangle(LR_example_code[9][39:43])
+            HighlightRectangle(LR_example_code[8][19:23]),
+            HighlightRectangle(LR_example_code[9][25:29])
         )
 
         self.play(ReplacementTransform(fh, dot_h) for fh, dot_h in zip(f_string_highlights, dot_4f_highlights))
@@ -995,8 +1102,8 @@ We can take advantage of this, and compute these terms once and reuse the result
             '''
         )
         plot_label_highlights = [
-            HighlightRectangle(plotting_code[2][55:60]),
-            HighlightRectangle(plotting_code[3][44:49])
+            HighlightRectangle(plotting_code[2][39:44]),
+            HighlightRectangle(plotting_code[3][29:34])
         ]
         self.play(*[Create(highlight) for highlight in plot_label_highlights])
 
@@ -1065,8 +1172,8 @@ We can take advantage of this, and compute these terms once and reuse the result
         DSS.mainRect.set_z_index(-1)
         self.wait(1)
         self.play(
-            Transform(LR_example_code_2[1][28:39], replacement_code[1][28:30]),
-            Transform(LR_example_code_2[1][39:], replacement_code[1][30:-1]),
+            Transform(LR_example_code_2[1][14:25], replacement_code[1][14:16]),
+            Transform(LR_example_code_2[1][25:], replacement_code[1][16:]),
         )
         self.add(replacement_code); self.add(LR_example_code_2); self.remove(LR_example_code_2) # need to readd otherwise remove does not work...
 
@@ -1122,199 +1229,93 @@ We can take advantage of this, and compute these terms once and reuse the result
         self.play(FadeIn(temp_fwi_plot, shift=FRAME_WIDTH/4*RIGHT))
 
 
-# class Test(Scene):
-#     def construct(self):
-#         class VectorArray(Table):
-#             def __init__(self, array, arrangement='vertical', include_dots=True, color=BLUE, h_buff=0.6, v_buff=1.0):
-#                 table = [Text(t, font=CODE_FONT, color=BLACK) for t in array]
-#                 if include_dots:
-#                     if arrangement=='vertical':
-#                         table.insert(-1, MathTex(r'\vdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
-#                     else:
-#                         table.insert(-1, MathTex(r'\hdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
-#                 table = [[t] for t in table] if arrangement=='vertical' else [table]
-
-#                 super().__init__(
-#                     table, h_buff=h_buff, v_buff=v_buff,
-#                     element_to_mobject= lambda m: m,  # identity
-#                     include_outer_lines=True,
-#                     line_config={'stroke_width':7, 'color':color}
-#                 )
-            
-#             def get_lines(self) -> VGroup:
-#                 return self.get_horizontal_lines() + self.get_vertical_lines()
-            
-        
-#         DSS = DynamicSplitScreen(RED, GREEN)
-#         lr = LinearRegressionEquations().scale(0.75)
-#         linear_regression_code = ColabCode(
-#             r'''
-#             # Linear regression
-#             def linear_regression(x, y):
-#                 sum_x = np.sum(x)
-#                 sum_y = np.sum(y)
-#                 sum_xy = np.sum(x * y)
-#                 sum_x2 = np.sum(x ** 2)
-
-#                 n = len(x)
-#                 numerator = n*sum_xy - sum_x*sum_y
-#                 denominator = n*sum_x2 - sum_x**2
-#                 m = numerator / denominator
-#                 q = (sum_y - m*sum_x)/n
-                
-#                 return m, q
-#             '''
-#         ).center()
-#         DSS.set_opacity(0.5)
-#         self.add(DSS)
-#         DSS.add_side_obj(lr)
-#         DSS.add_main_obj(linear_regression_code.code[:6])
-#         self.add(linear_regression_code.code[:6])
-#         self.play(DSS.bringIn())
-#         self.play(DSS.bringOut())
-
-#         labels =[Text(lab, font=CODE_FONT, color=BLACK) for lab in ('x', 'y', 'x*y', 'x**2')]        
-#         x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-#         y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-#         xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-#         x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]**2' for i in [0,1,2,'n']]).scale(0.6)
-
-
-#         VGroup(x_vector, y_vector, xy_vector).arrange(RIGHT)
-#         xy_vector.shift(RIGHT)
-
-#         DSS.add_side_obj(x_vector.copy().set_opacity(0))
-#         self.play(Circumscribe(linear_regression_code.code[0][0]))
-#         self.play(DSS.bringIn())
-#         for v in (x_vector, y_vector, xy_vector, x2_vector):
-#             v.align_to(DSS.secondaryObj, DOWN)
-
-#         self.play(Create(x_vector), Create(y_vector), Create(xy_vector.get_lines()))
-
-#         # TRANFORM WITH FADE???
-#         self.play(
-#             AnimationGroup(
-#                 *[AnimationGroup(
-#                     ReplacementTransform(y_vector.get_entries((i, 1)).copy(), xy_vector.get_entries((i, 1))[-4:]),
-#                     ReplacementTransform(x_vector.get_entries((i, 1)).copy(), xy_vector.get_entries((i, 1))[:4]),
-#                     FadeIn(xy_vector.get_entries((i, 1))[4]),
-#                     lag_ratio=0.2
-#                 ) if i !=4 else FadeIn(xy_vector.get_entries((i, 1)))
-#                 for i in range(1,6)],
-#                 lag_ratio=0.2
-#             )
-#         )
-#         self.play(FadeOut(y_vector, xy_vector))
-#         self.play(FadeIn(x2_vector.get_lines()))
-#         self.play(
-#             AnimationGroup(
-#                 *[AnimationGroup(
-#                     Transform(x_vector.get_entries((i, 1)).copy(), x2_vector.get_entries((i, 1))[:4]),
-#                     FadeIn(x2_vector.get_entries((i, 1))[4:]),
-#                     lag_ratio=0.2
-#                 ) if i !=4 else FadeIn(x2_vector.get_entries((i, 1)))
-#                 for i in range(1,6)],
-#                 lag_ratio=0.2
-#             )
-#         )
-
-# class Test(Scene):
-#     def construct(self):
-#         env = ColabEnv(r'Assets\W2\colabSLR.png')
-#         c = ColabCodeBlock('Lorem ispum')
-#         d = ColabCodeBlock('Ibam forte via sacra')
-#         self.add(env)
-#         self.wait()
-#         env.add_cell(c)
-#         env.add_cell(d)
-#         self.play(env.Run(0))
-#         self.wait()
-#         d.add_output('my my ...')
-#         self.play(env.Run(1, new_cursor=True))
-#         self.wait()
-#         self.play(env.focus_output(1))
-#         # self.play(env.Run(0, new_cursor=False))
-#         # self.add(env); self.remove(env)
-#         self.wait()
-#         env.clear(self)
-#         self.wait()
-#         env.add_cell(ColabCodeBlock('hello !!!'))
-#         env.add_cell(ColabCodeBlock('why !!!'))
-#         self.wait()
-#         self.add(env)
-#         self.wait()
-#         self.play(env.Run(0))
-#         self.wait()
-#         env.cells[1].add_output('Bayonetta')
-#         self.play(env.Run(1, new_cursor=False))
-#         self.wait()
-#         self.play(env.Run(1, new_cursor=True))
-#         self.wait()
-#         self.play(env.focus_output(1))
-
 class Test(Scene):
-    def construct(self):
-        # NOTE: the tailing space in the line x = my_dataset is essential, otherwise the font size changes???
-        LR_example_code_2 = ColabCode(
-            r'''
-            # Perform simple linear regression
-            x = my_dataset['RH'].values 
-            y = my_dataset['FWI'].values
-
-            m, q = linear_regression(x, y)
-
-            # Print results
-            print('Linear model results:')
-            print(f'Slope (m): {m:.4f}')
-            print(f'Y-intercept (q): {q:.4f}')
-            '''
-        ).center()
-        # replacement_code = ColabCode(r"""x = my_dataset['RH'].values""").code
-        # replacement_code.move_to(LR_example_code_2[1]).align_to(LR_example_code_2[1], DL)
-
-        # DSS = DynamicSplitScreen(COLAB_LIGHTGRAY, WHITE)
-        # self.add (DSS, LR_example_code_2)
-        # self.play(
-        #     Transform(LR_example_code_2[1][28:39], replacement_code[0][16:18]),
-        #     Transform(LR_example_code_2[1][39:], replacement_code[0][18:]),
-        # )
-
-        # create other plot
-        # q, m = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
-        # fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-        # ax.scatter(RH, FWI, color='blue', alpha=0.5, label='Data points')
-        # ax.plot(RH, m*RH+q, color='red', label='Regression line')
-        # ax.set_xlabel('RH')
-        # ax.set_ylabel('FWI')
-        # ax.set_title('Linear Regression: FWI vs RH')
-        # ax.grid(True)
-        # ax.legend()
-        # # save figure as array
-        # fig.canvas.draw()
-        # buf1 = np.array(fig.canvas.buffer_rgba())
-        # rh_fwi_plot = ImageMobject(buf1).scale_to_fit_width(6)
-        plotting_code = ColabCode(
-            r'''
-            # Plotting
-            plt.figure(figsize=(16, 10))
-            plt.scatter(x, y, color='blue', alpha=0.5, label='Data points')
-            plt.plot(x, m*x+q, color='red', label='Regression line')
-
-            plt.xlabel('Temperature')
-            plt.ylabel('FWI')
-            plt.title('Linear Regression: FWI vs Temperature')
-            plt.grid(True)
-            plt.legend()
-            '''
-        ).center()
-
-        cl_env = ColabEnv(r'Assets\W2\colabSLR.png')
-        cl_env.add_cell(ColabCodeBlock(LR_example_code_2.code_string))
-        cl_env.add_cell(ColabCodeBlock(plotting_code.code_string.replace('Temperature','RH')))
-        self.add(cl_env)
-        # LR_example_code_2.add_background_window(DSS.mainRect.suspend_updating())
-        # self.play(LR_example_code_2.IntoColab(cl_env))
+    def construct(self):    
         
-        # self.play(cl_env.Run(0))
-        # cl_env.cells[1].add_output(rh_fwi_plot)
-        # self.play(cl_env.Run(1, new_cursor=False))
+        DSS = DynamicSplitScreen(RED, GREEN)
+        lr = LinearRegressionEquations().scale(0.75)
+        linear_regression_code = ColabCode(
+            r'''
+            # Linear regression
+            def linear_regression(x, y):
+                sum_x = np.sum(x)
+                sum_y = np.sum(y)
+                sum_xy = np.sum(x * y)
+                sum_x2 = np.sum(x ** 2)
+
+                n = len(x)
+                numerator = n*sum_xy - sum_x*sum_y
+                denominator = n*sum_x2 - sum_x**2
+                m = numerator / denominator
+                q = (sum_y - m*sum_x)/n
+                
+                return m, q
+            '''
+        ).center()
+        DSS.set_opacity(0.5)
+        self.add(DSS)
+        DSS.add_side_obj(lr)
+        DSS.add_main_obj(linear_regression_code.code[:6])
+        self.add(linear_regression_code.code[:6])
+        self.play(DSS.bringIn())
+        self.play(DSS.bringOut())
+
+        labels =[Text(lab, font=CODE_FONT, color=BLACK) for lab in ('x', 'y', 'x*y', 'x**2')]   
+        title = Title('Vectorized operations')     
+        x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
+        x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]**2' for i in [0,1,2,'n']]).scale(0.6)
+        vector_labels = [Text(s, color=BLACK, font=CODE_FONT) for s in ['x', 'y', 'x*y', 'x**2']]
+
+        y_vector.next_to(x_vector, RIGHT)
+        xy_vector.next_to(y_vector, RIGHT, buff=1)
+        vector_labels[0].next_to(x_vector, UP)
+        vector_labels[1].next_to(y_vector, UP).align_to(vector_labels[0], UP)
+        vector_labels[2].next_to(xy_vector, UP).align_to(vector_labels[1], DOWN)
+        first_group=VGroup(x_vector, y_vector, xy_vector, *vector_labels[:3]).center()
+        title.next_to(first_group,UP)
+        first_group.add(title)
+
+        DSS.add_empty_side_obj(first_group.height)
+        self.play(DSS.bringIn())
+        first_group.move_to(DSS.secondaryRect)
+
+        self.play(Write(title))
+        self.play(Create(x_vector), Create(y_vector), Create(xy_vector.get_lines()),
+                  FadeIn(*vector_labels[:3]))
+
+        # TRANSFORM WITH FADE???
+        self.play(
+            AnimationGroup(
+                *[AnimationGroup(
+                    ReplacementTransform(y_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[-4:]),
+                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[:4]),
+                    FadeIn(xy_vector.get_entries((i, 1))[4]),
+                    lag_ratio=0.2
+                ) if i !=4 else FadeIn(xy_vector.get_entries((i, 1)))
+                for i in range(1,6)],
+                lag_ratio=0.2
+            )
+        )
+        self.play(FadeOut(y_vector, xy_vector, *vector_labels[1:3]) )
+        x2_vector.move_to(xy_vector)
+        vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
+        self.play(FadeIn(x2_vector.get_lines(), vector_labels[-1]))
+        self.play(
+            AnimationGroup(
+                *[AnimationGroup(
+                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), x2_vector.get_entries((i, 1))[:4]),
+                    FadeIn(x2_vector.get_entries((i, 1))[4:]),
+                    lag_ratio=0.2
+                ) if i !=4 else FadeIn(x2_vector.get_entries((i, 1)))
+                for i in range(1,6)],
+                lag_ratio=0.2
+            )
+        )
+
+        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title))
+        self.play(
+            DSS.bringOut(),
+            # VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1]).animate.shift(UP*DSS.secondaryRect.height)
+        )
