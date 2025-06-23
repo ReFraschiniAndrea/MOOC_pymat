@@ -63,17 +63,18 @@ class HighlightRectangle(BackgroundRectangle):
         self,
         mobject: Mobject,
         color = BLUE,
+        opacity: float = 0.4,
         corner_radius: float = 0.1,
         buff: float = 0.05,
         **kwargs
     ):
         super().__init__(mobject, color=color, 
-                         stroke_width=0, stroke_opacity=0, fill_opacity=0.4, 
+                         stroke_width=0, stroke_opacity=0, fill_opacity=opacity, 
                          buff=buff, corner_radius=corner_radius, **kwargs)
         self.set_z_index(mobject.z_index)
         mobject.set_z_index(mobject.z_index+0.1)
         
-class DynamicSplitScreen(VMobject):
+class DynamicSplitScreen(Mobject):
     '''Horizontal spliscreen that adapts dynamically to the content.'''
     def __init__(
         self,
@@ -88,14 +89,14 @@ class DynamicSplitScreen(VMobject):
             height=FRAME_HEIGHT, 
             fill_opacity=1, 
             stroke_width=0
-        ).set_z_index(0).center()
+        ).set_z_index(-1).center()
         self.secondaryRect = Rectangle(
             color=side_color, 
             width=FRAME_WIDTH,
             height= 2 * buff,
             fill_opacity=1,
             stroke_width=0
-        ).set_z_index(0).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        ).set_z_index(-1).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
         self.mainRect.save_state()
         self.secondaryRect.save_state()
 
@@ -329,9 +330,29 @@ class VectorArray(Table):
         super().__init__(
             table, h_buff=h_buff, v_buff=v_buff,
             element_to_mobject= lambda m: m,  # identity
-            include_outer_lines=True,
+            include_outer_lines=False,
             line_config={'stroke_width':7, 'color':color}
         )
-    
+        # The outer rectangle should be added first so it is drawn first
+        _lines =  self.get_horizontal_lines() + self.get_vertical_lines()
+        _entries = self.get_entries()
+        self.remove(_lines, _entries)
+        self._add_outer_rectangle()
+        self.add(_lines, _entries)
+        
+    def _add_outer_rectangle(self):
+        anchor_left = self.get_columns()[0].get_left()[0] - 0.5 * self.h_buff
+        anchor_right = self.get_columns()[-1].get_right()[0] + 0.5 * self.h_buff
+        anchor_top = self.get_rows()[0].get_top()[1] + 0.5 * self.v_buff
+        anchor_bottom = self.get_rows()[-1].get_bottom()[1] - 0.5 * self.v_buff
+        self.outer_rectangle = Polygon(
+            [anchor_left, anchor_top, 0],
+            [anchor_right, anchor_top, 0],
+            [anchor_right, anchor_bottom, 0],
+            [anchor_left, anchor_bottom, 0],
+            **self.line_config
+        )
+        self.add(self.outer_rectangle)
+
     def get_lines(self) -> VGroup:
-        return self.get_horizontal_lines() + self.get_vertical_lines()
+        return VGroup(self.outer_rectangle) + self.get_horizontal_lines() + self.get_vertical_lines()
