@@ -1,7 +1,7 @@
 """
     Colab like style.
 
-    Style for pyhton code imitating Google Colab's appearence.
+    Style for python code imitating Google Colab's appearence.
 """
 
 from pygments.style import Style

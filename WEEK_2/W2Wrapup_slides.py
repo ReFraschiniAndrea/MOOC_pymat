@@ -2,11 +2,10 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
+from mooc_utils import *
+from mooc_utils.colab import ColabCodeWithLogo, COLAB_LIGHTGRAY
+from mooc_utils.matlab import MatlabCodeWithLogo
 from W2Anim import *
-from Generic_mooc_utils import *
-from colab_utils import ColabCodeWithLogo, COLAB_LIGHTGRAY
-from matlab_utils import MatlabCodeWithLogo
 
 config.update(RELEASE_CONFIG)
 

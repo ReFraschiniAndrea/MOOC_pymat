@@ -2,9 +2,9 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import *
-from matlab_utils import *
+from mooc_utils import *
+from mooc_utils.matlab import *
+from mooc_utils.colab import COLAB_LIGHTGRAY
 from W2Anim import *
 
 

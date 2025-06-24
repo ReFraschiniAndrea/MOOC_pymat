@@ -7,32 +7,16 @@ __all__ = [
 ]
 
 from manim import *
-from Generic_mooc_utils import *
-from custom_code import CustomCode, CodeWithLogo
+from .Generic_mooc_utils import FRAME_WIDTH, FRAME_HEIGHT, CODE_FONT, Cursor
+from .custom_code import CustomCode, CodeWithLogo
 from typing import Any
-
-# import custom lexer and style for Colab-like python code listings
-# Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
-from pygments.styles._mapping import STYLES
-from pygments.lexers._mapping import LEXERS
-
-# STYLES['ColabStyle'] = ('ColabStyle', 'colab', ())
-# _STYLE_NAME_TO_MODULE_MAP['colab'] = 'ColabStyle'
-# pygments.styles.STYLES['colab'] = ColabStyle  # Optional for some versions
-LEXERS['CustomMatlabLexer'] = (
-    'CustomMatlabLexer', # name of the module
-    'Custom-matlab', # Name of the lexer
-    ('custommatlab',), # aliases
-    ('*.m',), # extensions
-    () # mime types
-    )
 
 _MATLAB_LOGO = r'Assets\matlab_logo.png'
 COLAB_FONT_SIZE = 12
 MATLAB_FONT_SIZE = 12
 MATLAB_PLOT_WIDTH = 5
-_MATLAB_CELL_TO_CELL_BUFF = 0.25
 MATLAB_GRAY = "#f0f0f0"
+_MATLAB_CELL_TO_CELL_BUFF = 0.25
 
 class MatlabCode(CustomCode):
     # override default options
