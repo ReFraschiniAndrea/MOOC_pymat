@@ -1,10 +1,4 @@
 from manim import *
-import os
-
-
-env = os.environ
-env["PATH"] = r"C:\Users\rfand\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
-
 
 def double_arm_kinematics(l1:float, l2:float, theta1:float, theta2:float, alpha=1, center=[0,0,0]):
     return [
@@ -145,28 +139,3 @@ class RobotGradientDescent():
 
         result = np.resize(result, (i+2, 3)) # weird I know
         return result
-
-def objective_function_level_curve(
-        theta1: np.ndarray, 
-        G, 
-        l1, 
-        l2, 
-        x0: float, 
-        y0: float, 
-        clamp=True
-        ):
-    D = np.sqrt(x0**2+ y0**2)
-    thetastar= np.arctan2(y0, x0)
-    alpha = theta1 - thetastar
-    # linear trigonometric equation
-    # a*sin(x) + b*sin(x) = c -> R sin(x + phi) = c
-    # with R = sqrt(a**2 + b**2), phi=atan2(b/a)
-    a = np.sin(alpha)
-    b = np.cos(alpha) - D/l1
-    # c = (k**2 - (l1**2 + l2**2 + D**2))/(2*l1*l2) + D/l2*np.cos(alpha)
-    c = G + D/l2*np.cos(alpha)
-    R = np.sqrt(1+(D*l1)**2 -2*D/l1*np.cos(alpha)) # argument is always positive
-    phi = np.arctan2(b, a)
-    beta1 = np.arcsin(c/R) - phi
-    beta2 = np.pi - np.arcsin(c/R) - phi
-    return beta1 + thetastar, beta2+thetastar

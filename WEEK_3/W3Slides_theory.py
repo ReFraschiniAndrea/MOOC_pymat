@@ -2,26 +2,16 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import ThreeDSlide
+from mooc_utils import *
 from W3Anim import *
-from Generic_mooc_utils import *
 import skimage
 
-env = os.environ
-env["PATH"] = r"C:\Users\rfand\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
-
-config.background_color=WHITE
-config.renderer="cairo"
-# test resolution
-# config.pixel_width = 960 
-# config.pixel_height = 720 
-# release resolution
-config.pixel_width = 1440 
-config.pixel_height = 1080 
+config.update(RELEASE_CONFIG)
 
 LABELS_SIZE = 0.75
 LBELS_SIZE_3D = 1.5
-class WEEK3Anim_GradientDescent(ThreeDSlide):
+
+class WEEK3Anim_GradientDescent(ThreeDMOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
         #  VIDEO OF THE ROBOTIC ARM IS SHOWN

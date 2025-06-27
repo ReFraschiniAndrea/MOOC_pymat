@@ -2,24 +2,14 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import Slide
-from Generic_mooc_utils import *
-from matlab_utils import *
-from colab_utils import COLAB_LIGHTGRAY
+from mooc_utils import *
+from mooc_utils.matlab import *
 from W3Anim import NewDB
 
-config.renderer='cairo'
-config.background_color = WHITE
-# config.pixel_width=960
-# config.pixel_height=720
-config.pixel_width=1440
-config.pixel_height=1080
+config.update(RELEASE_CONFIG)
 
-
-class W3Slides_matlab(Slide):
+class W3Matlab_slides(MOOCSlide):
     def construct(self):
-        self.wait_time_between_slides = 0.05
-        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # COVER: MATLAB ENVIRONMENT APPEARS, PSEUDO CODE FADES IN ON TOP
         self.next_slide(
@@ -130,7 +120,7 @@ class W3Slides_matlab(Slide):
             Niter = 1000;         % max iteration number
             '''
         )
-        DSS = DynamicSplitScreen(main_color=WHITE, side_color=COLAB_LIGHTGRAY)
+        DSS = DynamicSplitScreen(main_color=WHITE, side_color=MATLAB_LIGHTGRAY)
         self.add(DSS)
         self.remove(empty_cell.window)
         RequireLine = pc[1]
