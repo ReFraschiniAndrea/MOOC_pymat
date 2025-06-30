@@ -2,14 +2,10 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import *
-from colab_utils import *
+from mooc_utils import *
+from mooc_utils.colab import *
 from W2Anim import *
 import matplotlib.pyplot as plt
-env = os.environ
-env["PATH"] = r"C:\Users\andrea.refraschini\AppData\Local\Programs\MiKTeX\miktex\bin\x64;" + env["PATH"]
-
 
 config.update(TEST_CONFIG)
 

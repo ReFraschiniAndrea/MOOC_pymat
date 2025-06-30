@@ -1,39 +1,25 @@
 __all__ = [
     "MATLAB_GRAY",
+    "MATLAB_LIGHTGRAY",
+    "MATLAB_FONT_SIZE"
     "MatlabCode",
     "MatlabCodeBlock",
     "MatlabEnv",
     "MatlabOutputText",
-    "MatlabCodeWithLogo"
+    "MatlabCodeWithLogo",
 ]
 
 from manim import *
-from Generic_mooc_utils import *
-from custom_code import CustomCode, CodeWithLogo
-from typing import Any,  List
-
-# import custom lexer and style for Colab-like python code listings
-# Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
-from pygments.styles._mapping import STYLES
-from pygments.lexers._mapping import LEXERS
-
-# STYLES['ColabStyle'] = ('ColabStyle', 'colab', ())
-# _STYLE_NAME_TO_MODULE_MAP['colab'] = 'ColabStyle'
-# pygments.styles.STYLES['colab'] = ColabStyle  # Optional for some versions
-LEXERS['CustomMatlabLexer'] = (
-    'CustomMatlabLexer', # name of the module
-    'Custom-matlab', # Name of the lexer
-    ('custommatlab',), # aliases
-    ('*.m',), # extensions
-    () # mime types
-    )
+from .Generic_mooc_utils import FRAME_WIDTH, FRAME_HEIGHT, CODE_FONT, Cursor
+from .custom_code import CustomCode, CodeWithLogo
+from typing import Any, List
 
 _MATLAB_LOGO = r'Assets\matlab_logo.png'
-COLAB_FONT_SIZE = 12
 MATLAB_FONT_SIZE = 12
 MATLAB_PLOT_WIDTH = 5
+MATLAB_GRAY = "#f0f0f0"    # Color of plot windows
+MATLAB_LIGHTGRAY = "#f7f7f7"
 _MATLAB_CELL_TO_CELL_BUFF = 0.25
-MATLAB_GRAY = "#f0f0f0"
 _MATLAB_CELLS_Z_INDEX = -3
 
 class MatlabCode(CustomCode):
@@ -229,7 +215,7 @@ class MatlabEnv(Mobject):
 
 class MatlabOutputText(Paragraph):
     def __init__(self, text, **kwargs):
-        super().__init__(text, font_size=COLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
+        super().__init__(text, font_size=MATLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
                         line_spacing=0.5, **kwargs)
         
 class MatlabOutput(Mobject):

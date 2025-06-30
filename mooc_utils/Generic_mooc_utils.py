@@ -7,11 +7,10 @@ __all__ = [
     "HighlightRectangle", "Title", "DynamicSplitScreen",
     "Cursor", "FunctionAbstraction", "VectorArray",
     "CustomDecimalNumber",
-    "custom_get_axis_labels", "pixel2p",
+    "custom_get_axis_labels",
 ]
 
 from manim import *
-import manimpango
 
 FRAME_HEIGHT = 10.66  # In 4:3 frame height is 10.66, not 8!
 ASPECT_RATIO = 4/3
@@ -21,23 +20,10 @@ HALF_SCREEN_RIGHT = [+FRAME_WIDTH/4, 0, 0]
 
 SANS_SERIF_FONT = 'Arial'
 CODE_FONT = 'Aptos Mono'
-try:
-    manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos-Mono.ttf")
-    manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos.ttf")
-except:
-    print('warning, unable to find font. falling back to monospace.')
-    CODE_FONT = 'Monospace'
 
 _CURSOR_ICON = r'Assets\classic_cursor.svg'
+_LAPTOP_ICON = r"Assets\laptop_icon.svg"
 
-
-def pixel2p(x, y):
-    '''Converts pixel coordinates (1080 x 1440) into manim units.'''
-    return [
-        (x- 720)/1440*FRAME_WIDTH,
-        -(y - 540)/1080 *FRAME_HEIGHT,
-        0
-    ]
 
 def custom_get_axis_labels(
     ax: Axes,
@@ -270,7 +256,6 @@ class CustomDecimalNumber(DecimalNumber):
         mob.font_size = self._font_size
         return mob
 
-_LAPTOP_ICON = r"Assets\laptop_icon.svg"
 class FunctionAbstraction(VMobject):
     def __init__(self, scale = 1):
         super().__init__()

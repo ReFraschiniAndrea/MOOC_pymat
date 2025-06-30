@@ -11,26 +11,10 @@ __all__ = [
 ]
 
 from manim import *
-from Generic_mooc_utils import *
-from custom_code import CustomCode, CodeWithLogo
+from .Generic_mooc_utils import FRAME_HEIGHT, FRAME_WIDTH, CODE_FONT, Cursor
+from .custom_code import CustomCode, CodeWithLogo
 from typing import Any, List
 
-# import custom lexer and style for Colab-like python code listings
-# Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
-from pygments.styles._mapping import STYLES
-# from pygments.styles.__init__ import _STYLE_NAME_TO_MODULE_MAP 
-from pygments.lexers._mapping import LEXERS
-
-# STYLES['ColabStyle'] = ('ColabStyle', 'colab', ())
-# _STYLE_NAME_TO_MODULE_MAP['colab'] = 'ColabStyle'
-# pygments.styles.STYLES['colab'] = ColabStyle  # Optional for some versions
-LEXERS['ColabPythonLexer'] = (
-    'ColabPythonLexer', # name of the module
-    'Colab-python', # Name of the lexer
-    ('colabpython',), # aliases
-    ('*.py',), # extensions
-    () # mime types
-    )
 
 # Colab constants
 COLAB_LIGHTGRAY = "#f7f7f7" # Main color of colab cell
@@ -195,10 +179,18 @@ class ColabBlockOutputText(Paragraph):
                         line_spacing=0.5, **kwargs)
 
 class ColabEnv(Mobject):
-    TOP_LEFT_CORNER_ = pixel2p(77, 156)
-    MENU_ = pixel2p(25, 381)
-    UPLOAD_ = pixel2p(83, 206)
-    PLUS_CODE_ = pixel2p(210, 105)
+    def _pixel2p(x, y):
+        '''Converts pixel coordinates (1080 x 1440) into manim units.'''
+        return [
+            (x- 720)/1440*FRAME_WIDTH,
+            -(y - 540)/1080 *FRAME_HEIGHT,
+            0
+        ]
+    
+    TOP_LEFT_CORNER_ = _pixel2p(77, 156)
+    MENU_ = _pixel2p(25, 381)
+    UPLOAD_ = _pixel2p(83, 206)
+    PLUS_CODE_ = _pixel2p(210, 105)
 
     def __init__(self, background=None):
         super().__init__()
@@ -230,10 +222,8 @@ class ColabEnv(Mobject):
         while len(self.cells) > 0:
             self.remove_cell(scene)
         # cursor is removed from the scene but not from the environment
-        # self.remove(self.cursor)  
         self.cursor.move_to([-20,-20, 0])
         scene.remove(self.cursor)
-        # self.add(self.cursor)
 
     def OutofColab(self, cell: ColabCodeBlock, fullscreen=True, **kwargs):
         target = ColabCode(cell.colabCode.code_string)
@@ -259,15 +249,9 @@ class ColabEnv(Mobject):
         if cell > len(self.cells):
             raise IndexError('Cell index out of range')
         cell_to_run = self.cells[cell]
-        # NOTE: cursor ownership is moved to the cell to avoid z_index problems
-        # self.remove(self.cursor)
-        # for c in self.cells:
-        #     c.remove(self.cursor)
-        # cell_to_run.add(self.cursor)
 
         result = []
         if new_cursor:
-            # self.add(self.cursor)
             self.cursor.move_to(cell_to_run.playButton)
             result.append(GrowFromCenter(self.cursor))
         else:

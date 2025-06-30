@@ -2,9 +2,8 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
+from mooc_utils import *
 from W2Anim import *
-from Generic_mooc_utils import HighlightRectangle, SANS_SERIF_FONT
 
 config.update(RELEASE_CONFIG)
 

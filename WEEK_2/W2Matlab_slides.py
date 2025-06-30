@@ -2,10 +2,8 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import *
-from matlab_utils import *
-from colab_utils import COLAB_LIGHTGRAY
+from mooc_utils import *
+from mooc_utils.matlab import *
 from W2Anim import *
 
 
@@ -175,7 +173,7 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         mat_env.clear(self)
-        DSS = DynamicSplitScreen(WHITE, COLAB_LIGHTGRAY)
+        DSS = DynamicSplitScreen(WHITE, MATLAB_LIGHTGRAY)
         self.add(DSS)
         import_code.add_background_window(DSS.mainRect.suspend_updating().set_color(WHITE))  # this set color prevents something bad, why?
         
