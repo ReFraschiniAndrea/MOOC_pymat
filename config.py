@@ -4,6 +4,7 @@ from manim_slides.config import BaseSlideConfig
 from manim_slides.slide.manim import Slide
 from manim_slides.slide.base import BaseSlide
 from pydantic import model_validator
+import re
 from textwrap import dedent
 from typing import Any
 
@@ -38,6 +39,9 @@ class MOOCSlideConfig(BaseSlideConfig):  # type: ignore
             if not self.notes.startswith("\n"):
                 self.notes = "            " + self.notes
             self.notes = dedent(self.notes).strip("\n")
+            self.notes = re.sub(r'\r?\n',' ', self.notes) # replace newlines with spaces
+            self.notes = re.sub(r'\s{2,}', ' ', self.notes) # remove multiple spaces
+
 
         return self
     

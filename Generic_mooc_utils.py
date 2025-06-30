@@ -123,8 +123,8 @@ class DynamicSplitScreen(Mobject):
         self.followMainObj = None
 
     def add_side_obj(self, secondary_object: VMobject, center_horizontally: bool = True):
-        """If the secondary rectangle is outof frame, resizes it and adds the object
-        If its in frame, the rectangle is not resized and it is assumed that the the
+        """If the secondary rectangle is out of frame, resizes it and adds the object
+        If it's in frame, the rectangle is not resized and it is assumed that the the
         object is already in the correct position"""
         self.remove_side_obj()
         if self.brought_in_ == False:

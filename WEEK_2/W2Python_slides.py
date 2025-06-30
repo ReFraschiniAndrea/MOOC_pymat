@@ -77,8 +77,8 @@ class W2Python_slides(MOOCSlide):
         # FOLDER ICON IS CLICKED AND SIDE MENU APPEARS
         self.next_slide(
             notes=
-            '''a side bar appears showing the list of available files.
-            Let us click on the upload button, [CLICK]
+            '''a side bar appears showing the list of available files. Let us
+            click on the upload button, [CLICK]
             '''
         )
         self.play(Succession(hand_cursor.animate.move_to(cl_env.MENU_), hand_cursor.Click()))
@@ -90,9 +90,9 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''and select from your local file system the file
-            Algerian_forest_dataset.csv. [CLICK]
-            This dataset includes detailed features related to a set of forest
-            fires recorded in Algeria.
+            Algerian_forest_dataset.csv. [CLICK] This dataset includes detailed
+            features related to a set of forest fires recorded in Algeria.
+            [CLICK]
             '''
         )
         self.play(Succession(hand_cursor.animate.move_to(cl_env.UPLOAD_), hand_cursor.Click()))
@@ -103,7 +103,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''Next, we load the modules we are going to use in this project,
-            and load the dataset.[CLICK] 
+            and load the dataset. [CLICK]
             '''
         )
         empty_cell = ColabCodeBlock(code='')
@@ -118,7 +118,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''We need the module "numpy", imported with the name "np", for
-            vector oparations, [CLICK] 
+            vector oparations, [CLICK]
             '''
         )
         import_code = ColabCode(
@@ -185,10 +185,10 @@ class W2Python_slides(MOOCSlide):
         # CLASS DEFINITION SNIPPET APPEARS AT TOP
         self.next_slide(
             notes=
-            '''A class is like a blueprint for organizing and working with data. It
-            defines the attributes, that is characteristics, and methods, that
-            is functions to perform actions, that an object can have.
-            For example, the class DataFrame has attributes like "shape" containing its columns and rows, 
+            '''A class is like a blueprint for organizing and working with data.
+            It defines the attributes, that is characteristics, and methods,
+            that is functions to perform actions, that an object can have.
+            [CLICK]
             '''
         )
         class_code = ColabCode(
@@ -274,8 +274,8 @@ class W2Python_slides(MOOCSlide):
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''First of all, we find the number of rows and columns. We use
-            the attribute of the dataset called [CLICK] ...
+            '''First of all, we find the number of rows and columns. We use the
+            attribute of the dataset called [CLICK] ...
             '''
         )
         dataset_size_code = ColabCode(
@@ -290,7 +290,7 @@ class W2Python_slides(MOOCSlide):
         # PRINT SHAPE LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''..."shape" to find the number of rows and columns. [CLICK] 
+            '''..."shape" to find the number of rows and columns. [CLICK]
             '''
         )
         self.play(dataset_size_code.TypeLetterbyLetter(lines=[1]))
@@ -313,8 +313,8 @@ class W2Python_slides(MOOCSlide):
         # HEAD CODE IS WRITTEN
         self.next_slide(
             notes=
-            '''Next, we use the method head. The line dataset.head(5)
-            displays [CLICK]
+            '''Next, we use the method head. The line dataset.head(5) displays
+            [CLICK]
             '''
         )
         DSS.reset()
@@ -365,8 +365,8 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''In the table, each row represents a different fire event, while
-            each column corresponds to a specific variable associated with
-            that event:
+            each column corresponds to a specific variable associated with that
+            event: [CLICK]
             '''
         )
         self.play(cl_env.focus_output(cell=1 ,scale=0.5, alignment=LEFT))
@@ -438,7 +438,7 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''In our context, temperature, relative humidity, and Build-up
             index can (separately) play the role of variable X, while the fire
-            weather index plays the role of variable Y.
+            weather index plays the role of variable Y. [CLICK]
             '''
         )
         moving_brace = Brace(column_highlights[0], DOWN, color=BLACK)
@@ -593,8 +593,9 @@ class W2Python_slides(MOOCSlide):
         # ALL SUMS ARE HIGHLIGHTED
         self.next_slide(
             notes=
-            '''First we will compute the results of each sum, and then we will combine the results.
-            Before starting the implementation, it's worth noting that some sums are repeated. [CLICK]
+            '''First we will compute the results of each sum, and then we will
+            combine the results. Before starting the implementation, it's worth
+            noting that some sums are repeated. [CLICK]
             '''
         ) 
         sums_highlights = VGroup(
@@ -619,7 +620,7 @@ class W2Python_slides(MOOCSlide):
         # HIGHLIGHT SUMS OF y_i
         self.next_slide(
             notes=
-            '''The sum over y_i appears twice, [CLICK] 
+            '''The sum over y_i appears twice, [CLICK]
             '''
         )
         self.play(FadeOut(sum_x_highlights, sum_xy_x2_highlights))
@@ -645,7 +646,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''We are going to write now a python code that computes these four
-            terms.  [CLICK]
+            terms. [CLICK]
             '''
         )
         self.play(FadeOut(sum_x_highlights))
@@ -658,7 +659,8 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''These sums can be computed by writing suitable "for" loops.
             However, we will compute them in a more concise and readable way by
-            leveraging the np.sum function from the NumPy library (imported as np).
+            leveraging the np.sum function from the NumPy library (imported as
+            np). [CLICK]
             '''
         )
         for_sum_code = ColabCode(
@@ -783,7 +785,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''As a consequence, with np.sum(x * y) we compute the sum of all
-            the products xi times yi, that is the term called sum_xy
+            the products xi times yi, that is the term called sum_xy. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[4]))
@@ -833,7 +835,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''Very good. Now the hardest part is behind us. We just need to
-            combine these quantities to finalize the computation.
+            combine these quantities to finalize the computation. [CLICK]
             '''
         )
         DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title))
@@ -867,7 +869,7 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''...and we divide the numerator by the denominator to obtain the
-            value of m. [CLICK] 
+            value of m. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[10]))
@@ -968,7 +970,7 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''In this way, we are ready to apply it to the Algerian forest
             dataset. We wonder how the temperature influences the Fire Weather
-            Index,
+            Index, [CLICK] ...
             '''
         )
         LR_example_code = ColabCode(
@@ -994,7 +996,8 @@ class W2Python_slides(MOOCSlide):
         # X = TEMPERATURE CODE LINE APPEARS
         self.next_slide(
             notes=
-            '''To this goal, we chose the temperature as the x, using this code 
+            '''To this goal, we chose the temperature as the x, using this code:
+            [CLICK]
             '''
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[1]))
@@ -1003,7 +1006,8 @@ class W2Python_slides(MOOCSlide):
         # HIGHLIGHT 'TEMPERATURE'
         self.next_slide(
             notes=
-            '''The label "Temperature" extracts the corresponding column from the dataset 
+            '''The label "Temperature" extracts the corresponding column from
+            the dataset, [CLICK] ...
             '''
         )
         temperature_highlight = HighlightRectangle(LR_example_code[1][13:26])
@@ -1015,7 +1019,7 @@ class W2Python_slides(MOOCSlide):
         # HIGHLIGHT VALUES
         self.next_slide(
             notes=
-            '''and the attribute "values" returns the array.
+            '''and the attribute "values" returns the array. [CLICK]
             '''
         )
         self.play(ReplacementTransform(temperature_highlight, values_highlight))
@@ -1024,7 +1028,7 @@ class W2Python_slides(MOOCSlide):
         # Y = FWI CODE LINE APPEARS
         self.next_slide(
             notes=
-            '''And similarly, for FWI which becomes y.
+            '''And similarly, for FWI which becomes y. [CLICK]
             '''
         )
         self.play(FadeOut(values_highlight))
@@ -1047,7 +1051,8 @@ class W2Python_slides(MOOCSlide):
         # PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
-            '''Finally, we print the results: the regression coefficients m and q. 
+            '''Finally, we print the results: the regression coefficients m and
+            q. [CLICK]
             '''
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
@@ -1088,7 +1093,8 @@ class W2Python_slides(MOOCSlide):
         # CELL IS RUN, RESULT OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''Running this cell in the notebook, we see the results printed on the screen.
+            '''Running this cell in the notebook, we see the results printed on
+            the screen. [CLICK]
             '''
         )
         self.play(FadeOut(dot_4f_highlights))
@@ -1144,7 +1150,7 @@ class W2Python_slides(MOOCSlide):
             buf1 = np.array(fig.canvas.buffer_rgba())
             return ImageMobject(buf1)
         
-        PLOT_WIDTH=6
+        PLOT_WIDTH=7
         
         # create the plot with matplotlib
         temp, RH, FWI = dataset[1:, 0], dataset[1:, 1], dataset[1:, -1]
@@ -1164,24 +1170,26 @@ class W2Python_slides(MOOCSlide):
             x-y plane. [CLICK]
             '''
         )
-        self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
         ax.scatter(temp, FWI, color='blue', alpha=0.5, label='Data points')
         new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        DSS.secondaryObj.become(new_plot)
+
+        self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
+        self.play(DSS.secondaryObj.animate.become(new_plot))
 
         # SLIDE 70:  ===========================================================
         # PLOT LINE APPEARS
         self.next_slide(
             notes=
             '''Then, we use the function "plot" to display the regression line
-            in red. Finally, we can enhance the plot's readability by adding: 
+            in red. Finally, we can enhance the plot's readability by adding:
             [CLICK]
             '''
         )
-        self.play(plotting_code.TypeLetterbyLetter(lines=[3]))
         ax.plot(temp, m*temp+q, color='red', label='Regression line')
         new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        DSS.secondaryObj.become(new_plot)
+
+        self.play(plotting_code.TypeLetterbyLetter(lines=[3]))
+        self.play(DSS.secondaryObj.animate.become(new_plot))
 
         # SLIDE 71:  ===========================================================
         # X, Y LABEL LINES AND RESULT SHOWN
@@ -1190,11 +1198,14 @@ class W2Python_slides(MOOCSlide):
             '''...axis labels, [CLICK]
             '''
         )
-        self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
         ax.set_xlabel('Temperature')
         ax.set_ylabel('FWI')
         new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        DSS.secondaryObj.become(new_plot)
+        plotting_code[5:].shift(UP*0.7)
+
+        self.play(plotting_code[:4].animate.shift(UP*0.7))
+        self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
+        self.play(DSS.secondaryObj.animate.become(new_plot))
 
         # SLIDE 72:  ===========================================================
         # GRID, TITLE LEGEND LINES AND RESULT SHOWN
@@ -1204,12 +1215,13 @@ class W2Python_slides(MOOCSlide):
             function leverages the [CLICK] ...
             '''
         )
-        self.play(plotting_code.TypeLetterbyLetter(lines=[7, 8, 9]))
         ax.set_title('Linear Regression: FWI vs Temperature')
         ax.grid(True)
         ax.legend()
         new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        DSS.secondaryObj.become(new_plot)
+
+        self.play(plotting_code.TypeLetterbyLetter(lines=[7, 8, 9]))
+        self.play(DSS.secondaryObj.animate.become(new_plot))
 
         # SLIDE 73:  ===========================================================
         # LABEL KEYWORDS HIGHLIGHTED
@@ -1255,6 +1267,7 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''The slope is positive, indicating that an increase in the
             temperature corresponds to a higher overall risk of forest fires.
+            [CLICK]
             '''
         )
         self.play(cl_env.focus_output(0, scale=0.7))
@@ -1321,7 +1334,7 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''From the plot it can be seen an opposite trend with respect to
             the previous case: this means that an increase in relative humidity
-            decreases the overall risk of forest fire.
+            decreases the overall risk of forest fire. [CLICK]
             '''
         )
         self.play(cl_env.focus_output(cell=1, scale=0.7))
