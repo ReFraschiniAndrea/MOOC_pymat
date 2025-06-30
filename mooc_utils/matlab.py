@@ -1,7 +1,7 @@
 __all__ = [
     "MATLAB_GRAY",
     "MATLAB_LIGHTGRAY",
-    "MATLAB_FONT_SIZE"
+    "MATLAB_FONT_SIZE",
     "MatlabCode",
     "MatlabCodeBlock",
     "MatlabEnv",

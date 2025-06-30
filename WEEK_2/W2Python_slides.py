@@ -7,7 +7,8 @@ from mooc_utils.colab import *
 from W2Anim import *
 import matplotlib.pyplot as plt
 
-config.update(TEST_CONFIG)
+config.update(RELEASE_CONFIG)
+config.max_files_cached = 200  # these presentation is particularly long
 
 class W2Python_slides(MOOCSlide):
     def construct(self):
@@ -704,7 +705,7 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         DSS.add_side_obj(sum_terms)
-        DSS.add_main_obj(linear_regression_code[:4], linear_regression_code[4:])
+        DSS.remove_main_obj()
         self.play(DSS.bringOut())
 
         title = Text('Vectorized operations', font=SANS_SERIF_FONT, weight=LIGHT, font_size=64, color=BLACK, stroke_color=BLACK)
@@ -724,7 +725,8 @@ class W2Python_slides(MOOCSlide):
         first_group.add(title)
 
         DSS.add_empty_side_obj(first_group.height)
-        self.play(DSS.bringIn())
+        DSS.add_main_obj(linear_regression_code[:4], linear_regression_code[4:])
+        self.play(DSS.bringIn(consider_follow=linear_regression_code[4:6]))
         first_group.move_to(DSS.secondaryRect)
         self.play(Write(title))
 
@@ -796,9 +798,10 @@ class W2Python_slides(MOOCSlide):
             of the array individually. [CLICK]
             '''
         )
-        self.play(FadeOut(y_vector, xy_vector, *vector_labels[1:3]) )
         x2_vector.move_to(xy_vector)
         vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
+
+        self.play(FadeOut(y_vector, xy_vector, *vector_labels[1:3]) )
         self.play(
             Create(x2_vector.get_lines()),
             FadeIn(vector_labels[-1])
@@ -835,10 +838,11 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title))
-        DSS.add_main_obj(linear_regression_code[:6], follow_obj=linear_regression_code[6:])
+        DSS.remove_main_obj()
         self.play(DSS.bringOut())
 
         DSS.add_side_obj(LR_equations.restore())
+        DSS.add_main_obj(linear_regression_code[:6], follow_obj=linear_regression_code[6:])
         self.play(DSS.bringIn())
 
         # SLIDE 47:  ===========================================================
@@ -896,7 +900,7 @@ class W2Python_slides(MOOCSlide):
             implementation of our function. Let us quickly revise it. [CLICK]
             '''
         )
-        DSS.add_main_obj(linear_regression_code)
+        DSS.add_main_obj(linear_regression_code[:])
         self.play(DSS.bringOut())
 
         # SLIDE 52:  ===========================================================
@@ -1156,7 +1160,7 @@ class W2Python_slides(MOOCSlide):
         
         self.play(plotting_code.TypeLetterbyLetter(lines=[1]))
         DSS.add_main_obj(plotting_code[:2], follow_obj=plotting_code[2:])
-        self.play(DSS.bringIn())
+        self.play(DSS.bringIn(consider_follow = plotting_code[2:4]))
 
         # SLIDE 69:  ===========================================================
         # PLT.SCATTER LINE WRITTEN
@@ -1197,9 +1201,9 @@ class W2Python_slides(MOOCSlide):
         ax.set_xlabel('Temperature')
         ax.set_ylabel('FWI')
         new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        plotting_code[5:].shift(UP*0.7)
+        DSS.add_main_obj(plotting_code[:4], plotting_code[4:])
 
-        self.play(plotting_code[:4].animate.shift(UP*0.7))
+        self.play(DSS._MainObjIntoPosition()) # recenter considering the entire code
         self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 

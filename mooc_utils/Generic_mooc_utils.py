@@ -61,7 +61,22 @@ class HighlightRectangle(BackgroundRectangle):
         mobject.set_z_index(mobject.z_index+0.1)
         
 class DynamicSplitScreen(Mobject):
-    '''Horizontal spliscreen that adapts dynamically to the content.'''
+    """Horizontal spliscreen that adapts dynamically to the content.
+    
+    The DSS is formed by two horizontal rectnagle, a mainRect and a secondaryRect
+    - The mainRect covers the entire screen and is intended to hold the code that
+    is written during the lecture
+    - The secondaryRect holds instead supporting material (e.g. formulas) needed to understand the code.
+    
+    The main animation of this object is bringIn/bringOut: BringIn slides the secondaryRect with its
+    material into frame, and moves the content of the mainRect accordingly so that it is still centered;
+    bringOut does the opposite.
+
+    To manage what objects are affected by the DSS, there are 2 methods: add_main_obj,
+    add_side_obj and the respective remove methods.
+
+    Since in many cases some parts of the content should not appear yet but the should be moved
+    """
     def __init__(
         self,
         main_color=BLUE,
@@ -150,68 +165,85 @@ class DynamicSplitScreen(Mobject):
         self.mainRect.resume_updating()
         self.last_shift_ = None
 
-    def get_final_mainObj_pos(self):
-        return [0, (-self.secondaryRect.height)/2, 0]
-
-    def bring_in(self):
-        if not self.brought_in_:
-            self.brought_in_=True
-            self.secondaryRect.shift(DOWN*self.secondaryRect.height)
-            if self.secondaryObj is not None:
-                self.secondaryObj.shift(DOWN*self.secondaryRect.height)
-            if self.mainObj is not None:
-                self.mainObj.shift(DOWN*self.secondaryRect.height/2)
+    # def bring_in(self):
+    #     if not self.brought_in_:
+    #         self.brought_in_=True
+    #         self.secondaryRect.shift(DOWN*self.secondaryRect.height)
+    #         if self.secondaryObj is not None:
+    #             self.secondaryObj.shift(DOWN*self.secondaryRect.height)
+    #         if self.mainObj is not None:
+    #             self.mainObj.shift(DOWN*self.secondaryRect.height/2)
     
-    def bring_out(self):
-        if self.brought_in_:
-            self.brought_in_=False
-            self.secondaryRect.shift(UP*self.secondaryRect.height)
-            if self.secondaryObj is not None:
-                self.secondaryObj.shift(UP*self.secondaryRect.height)
-            if self.mainObj is not None:
-                self.mainObj.shift(UP*self.secondaryRect.height/2)
+    # def bring_out(self):
+    #     if self.brought_in_:
+    #         self.brought_in_=False
+    #         self.secondaryRect.shift(UP*self.secondaryRect.height)
+    #         if self.secondaryObj is not None:
+    #             self.secondaryObj.shift(UP*self.secondaryRect.height)
+    #         if self.mainObj is not None:
+    #             self.mainObj.shift(UP*self.secondaryRect.height/2)
+
+    def _get_shift(self, consider_follow: Mobject = None):
+        if self.brought_in_: 
+            final_pos = np.array([0, (-self.secondaryRect.height)/2, 0])
+        else:
+            final_pos = ORIGIN
+        full_obj = Group()
+        if self.mainObj is not None:
+            full_obj.add(self.mainObj)
+
+        if consider_follow is not None:
+            full_obj.add(consider_follow)
+        elif self.followMainObj is not None:
+            # by default, consider the entire followobject
+            full_obj.add(self.followMainObj)
+
+        shift = final_pos[1] - full_obj.get_y()
+        return shift*UP
+    
+    def _MainObjIntoPosition(self, consider_follow: Mobject = None, **kwargs):
+        if self.mainObj is None and self.followMainObj is None:
+            return None
+        shift = self._get_shift(consider_follow)
+        
+        if self.followMainObj is not None:
+            self.followMainObj.shift(shift)
+        
+        if self.mainObj is not None:
+            return self.mainObj.animate(**kwargs).shift(shift)
+
+        return None
     
     def _MoveSecondaryRect(self, direction, **kwargs):
-        animations = [
-            self.secondaryRect.animate(**kwargs).shift(direction*self.secondaryRect.height),
-        ]
+        secondary_group = Group(self.secondaryRect)
         if self.secondaryObj is not None:
-            animations.append(
-                self.secondaryObj.animate(**kwargs).shift(direction*self.secondaryRect.height),
-            )
-        if self.mainObj is not None:
-            shift = self._get_shift()
-            animations.append(
-                self.mainObj.animate(**kwargs).shift(direction*shift)
-            )
-            if self.followMainObj is not None:
-                self.followMainObj.shift(direction*shift)
-
-        return AnimationGroup(*animations)
+            secondary_group.add(self.secondaryObj)
+        return secondary_group.animate(**kwargs).shift(direction*self.secondaryRect.height)
     
-    def _get_shift(self) -> float:
-        if self.brought_in_:
-            shift = self.secondaryRect.height*(0.5 + self.mainObj.get_y()/FRAME_HEIGHT)
-            self.last_shift_ = shift
-            return shift
-        elif self.last_shift_ is not None:
-            shift = self.last_shift_
-            self.last_shift_ = None
-            return shift
-        else:
-            return self.secondaryRect.height*0.5
-    
-    def bringIn(self, **kwargs):
+    def bringIn(self, consider_follow: Mobject = None, **kwargs):
         self.brought_in_=True
-        return self._MoveSecondaryRect(direction=DOWN, **kwargs)
+        secondary_shift = self._MoveSecondaryRect(direction=DOWN, **kwargs)
+        main_shift = self._MainObjIntoPosition(consider_follow, **kwargs)
+        if main_shift is None:
+            return secondary_shift
+        else: 
+            return AnimationGroup(secondary_shift, main_shift)
     
-    def bringOut(self, **kwargs):
+    def bringOut(self, consider_follow: Mobject = None, **kwargs):
         self.brought_in_=False
-        return self._MoveSecondaryRect(direction=UP, **kwargs)
+        secondary_shift = self._MoveSecondaryRect(direction=UP, **kwargs)
+        main_shift = self._MainObjIntoPosition(consider_follow, **kwargs)
+        if main_shift is None:
+            return secondary_shift
+        else: 
+            return AnimationGroup(secondary_shift, main_shift)
 
 
 class Cursor(SVGMobject):
-    '''Classic hand cursor for tutorial animations.'''
+    """Classic hand cursor for tutorial animations.
+    
+    Has a 'click' method animation anda modified 'move_to' so that motion is w.r.t the fingertip.
+    """
     def __init__(self, **kwargs):
         super().__init__(file_name=_CURSOR_ICON, height=(24/1080)*FRAME_HEIGHT, **kwargs)
 
