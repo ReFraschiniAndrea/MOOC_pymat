@@ -11,6 +11,7 @@ __all__ = [
 ]
 
 from manim import *
+from manim.typing import Vector3D
 
 FRAME_HEIGHT = 10.66  # In 4:3 frame height is 10.66, not 8!
 ASPECT_RATIO = 4/3
@@ -76,14 +77,20 @@ class DynamicSplitScreen(Mobject):
     add_side_obj and the respective remove methods.
 
     Since in many cases some parts of the content should not appear yet but the should be moved
+
+    -if `direction` is UP, then the secondary rectangle weell move in/move out from the top.
+    if it is instead DOWN, it does so from the bottom of the screen.
     """
     def __init__(
         self,
-        main_color=BLUE,
-        side_color=RED,
-        buff=SMALL_BUFF*2
+        main_color = BLUE,
+        side_color = RED,
+        buff = SMALL_BUFF*2,
+        direction : Vector3D = UP
     ):
         super().__init__()
+        self.DIRECTION_ = direction
+
         self.mainRect = Rectangle(
             color=main_color, 
             width=FRAME_WIDTH, 
@@ -97,21 +104,23 @@ class DynamicSplitScreen(Mobject):
             height= 2 * buff,
             fill_opacity=1,
             stroke_width=0
-        ).set_z_index(-1).move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+        ).set_z_index(-1).move_to(self.mainRect.get_edge_center(self.DIRECTION_), aligned_edge = -self.DIRECTION_)
         self.mainRect.save_state()
         self.secondaryRect.save_state()
 
         self.mainObj = None
         self.followMainObj = None
         self.secondaryObj = None
+        self.followSecondaryObj = None
         self.brought_in_ = False
         self.last_shift_ = None
         self.buff_ = buff
 
         self.mainRect.add_updater(
             lambda r: r.stretch_to_fit_height(
-                FRAME_HEIGHT/2 +self.secondaryRect.get_bottom()[1] + 1/1080*FRAME_HEIGHT
-                ).move_to([0, -FRAME_HEIGHT/2, 0], aligned_edge=DOWN)
+                self.secondaryRect.get_edge_center(-self.DIRECTION_)[1] * self.DIRECTION_[1]
+                + FRAME_HEIGHT/2 + 1/1080*FRAME_HEIGHT
+                ).move_to(-FRAME_HEIGHT/2 *self.DIRECTION_, aligned_edge=-self.DIRECTION_)
         )
         self.add(self.mainRect, self.secondaryRect)
 
@@ -123,38 +132,63 @@ class DynamicSplitScreen(Mobject):
         self.mainObj = None
         self.followMainObj = None
 
-    def add_side_obj(self, secondary_object: VMobject, center_horizontally: bool = True):
+    def add_side_obj(
+        self, secondary_object: VMobject,
+        follow_side_obj: Mobject = None,
+        consider_follow: Mobject = None,
+        center_horizontally: bool = True):
         """If the secondary rectangle is out of frame, resizes it and adds the object
         If it's in frame, the rectangle is not resized and it is assumed that the the
-        object is already in the correct position"""
+        object is already in the correct position
+        """
         self.remove_side_obj()
-        if self.brought_in_ == False:
-            self.secondaryRect.stretch_to_fit_height(secondary_object.height + 2 * self.buff_)
-            self.secondaryRect.move_to(self.mainRect.get_top(), aligned_edge=DOWN)
-            if center_horizontally:
-                secondary_object.move_to(self.secondaryRect)
-            else:
-                secondary_object.match_y(self.secondaryRect)
-        else:
-            self.secondaryRect.move_to([0, +FRAME_HEIGHT/2, 0], aligned_edge=UP)
+
+        if self.brought_in_:
+            self.secondaryRect.move_to(self.DIRECTION_ *FRAME_HEIGHT/2, aligned_edge=self.DIRECTION_)
             self.mainRect.update()
+        else:
+            # compute the new height of the secondary rectangle
+            if consider_follow is not None:
+                _sideObj = Group(secondary_object, consider_follow)
+            elif follow_side_obj is not None:
+                _sideObj = Group(secondary_object, follow_side_obj)
+            else:
+                _sideObj = secondary_object
+
+            self.secondaryRect.stretch_to_fit_height(_sideObj.height + 2 * self.buff_)
+            self.secondaryRect.move_to(self.mainRect.get_edge_center(self.DIRECTION_), aligned_edge = -self.DIRECTION_)
+
+            # compute shift to move the side object(s) into position
+            if center_horizontally:
+                _shift = self.secondaryRect.get_center() - _sideObj.get_center()
+            else:
+                _shift = (self.secondaryRect.get_y() - _sideObj.get_y())*UP
+            
+            # NOTE: might want to move explicitly move follow object too
+            _toMove = Group(secondary_object)
+            if consider_follow is not None: _toMove.add(consider_follow)
+            if follow_side_obj is not None: _toMove.add(follow_side_obj)
+            _toMove.shift(_shift)
+
         self.secondaryObj = secondary_object
+        self.followSecondaryObj = follow_side_obj
         self.add(self.secondaryObj)
 
     def add_empty_side_obj(self, height):
         """Height is intended to be the one of the objects that will appear."""
         self.remove_side_obj()
-        self.secondaryRect.stretch_to_fit_height(height + 2 * self.buff_)
+        self.secondaryRect.stretch_to_fit_height(height)
         if self.brought_in_ == False:
-            self.secondaryRect.move_to(self.mainRect.get_top(), aligned_edge=DOWN)
+            self.secondaryRect.move_to(self.mainRect.get_edge_center(self.DIRECTION_), aligned_edge = -self.DIRECTION_)
         else:
-            self.secondaryRect.move_to([0, +FRAME_HEIGHT/2, 0], aligned_edge=UP)
+            self.secondaryRect.move_to(self.DIRECTION_ *FRAME_HEIGHT/2, aligned_edge=self.DIRECTION_)
             self.mainRect.update()
     
     def remove_side_obj(self):
         if self.secondaryObj is not None:
             self.remove(self.secondaryObj)
             self.secondaryObj = None
+        self.followSecondaryObj = None
 
     def reset(self):
         self.remove_main_obj()
@@ -165,33 +199,15 @@ class DynamicSplitScreen(Mobject):
         self.mainRect.resume_updating()
         self.last_shift_ = None
 
-    # def bring_in(self):
-    #     if not self.brought_in_:
-    #         self.brought_in_=True
-    #         self.secondaryRect.shift(DOWN*self.secondaryRect.height)
-    #         if self.secondaryObj is not None:
-    #             self.secondaryObj.shift(DOWN*self.secondaryRect.height)
-    #         if self.mainObj is not None:
-    #             self.mainObj.shift(DOWN*self.secondaryRect.height/2)
-    
-    # def bring_out(self):
-    #     if self.brought_in_:
-    #         self.brought_in_=False
-    #         self.secondaryRect.shift(UP*self.secondaryRect.height)
-    #         if self.secondaryObj is not None:
-    #             self.secondaryObj.shift(UP*self.secondaryRect.height)
-    #         if self.mainObj is not None:
-    #             self.mainObj.shift(UP*self.secondaryRect.height/2)
-
     def _get_shift(self, consider_follow: Mobject = None):
         if self.brought_in_: 
-            final_pos = np.array([0, (-self.secondaryRect.height)/2, 0])
+            final_pos = -self.secondaryRect.height/2 * self.DIRECTION_
         else:
             final_pos = ORIGIN
+
         full_obj = Group()
         if self.mainObj is not None:
             full_obj.add(self.mainObj)
-
         if consider_follow is not None:
             full_obj.add(consider_follow)
         elif self.followMainObj is not None:
@@ -201,7 +217,7 @@ class DynamicSplitScreen(Mobject):
         shift = final_pos[1] - full_obj.get_y()
         return shift*UP
     
-    def _MainObjIntoPosition(self, consider_follow: Mobject = None, **kwargs):
+    def _MainObjIntoPosition(self, consider_follow: Mobject = None, animate: bool = True, **kwargs):
         if self.mainObj is None and self.followMainObj is None:
             return None
         shift = self._get_shift(consider_follow)
@@ -210,34 +226,54 @@ class DynamicSplitScreen(Mobject):
             self.followMainObj.shift(shift)
         
         if self.mainObj is not None:
-            return self.mainObj.animate(**kwargs).shift(shift)
+            if animate:
+                return self.mainObj.animate(**kwargs).shift(shift)
+            else:
+                self.mainObj.animate(**kwargs).shift(shift)
 
         return None
     
-    def _MoveSecondaryRect(self, direction, **kwargs):
+    def _MoveSecondaryRect(self, direction, animate: bool = True, **kwargs):
         secondary_group = Group(self.secondaryRect)
         if self.secondaryObj is not None:
             secondary_group.add(self.secondaryObj)
-        return secondary_group.animate(**kwargs).shift(direction*self.secondaryRect.height)
+
+        if self.followSecondaryObj is not None:
+            self.followSecondaryObj.shift(direction*self.secondaryRect.height)
+
+        if animate:
+            return secondary_group.animate(**kwargs).shift(direction*self.secondaryRect.height)
+        else:
+            secondary_group.shift(direction*self.secondaryRect.height)
+            return None
     
     def bringIn(self, consider_follow: Mobject = None, **kwargs):
+        """Bring secondary rectangle into frame"""
         self.brought_in_=True
-        secondary_shift = self._MoveSecondaryRect(direction=DOWN, **kwargs)
-        main_shift = self._MainObjIntoPosition(consider_follow, **kwargs)
-        if main_shift is None:
-            return secondary_shift
-        else: 
-            return AnimationGroup(secondary_shift, main_shift)
+        return self._Bring(-self.DIRECTION_, consider_follow,  **kwargs)
     
     def bringOut(self, consider_follow: Mobject = None, **kwargs):
+        """Bring secondary rectangle out of frame"""
         self.brought_in_=False
-        secondary_shift = self._MoveSecondaryRect(direction=UP, **kwargs)
-        main_shift = self._MainObjIntoPosition(consider_follow, **kwargs)
+        return self._Bring(self.DIRECTION_, consider_follow,  **kwargs)
+
+    def _Bring(self, direction, consider_follow: Mobject = None, animate: bool = True, **kwargs):
+        secondary_shift = self._MoveSecondaryRect(direction=direction, animate=animate, **kwargs)
+        main_shift = self._MainObjIntoPosition(consider_follow, animate=animate, **kwargs)
         if main_shift is None:
             return secondary_shift
         else: 
             return AnimationGroup(secondary_shift, main_shift)
 
+    def hard_bring_in(self, consider_follow: Mobject=None):
+        if not self.brought_in_:
+            self.brought_in_=True
+            self._Bring(-self.DIRECTION_, consider_follow, animate=False)
+
+    def hard_bring_out(self, consider_follow: Mobject=None):
+        if self.brought_in_:
+            self.brought_in_=False
+            self._Bring(self.DIRECTION_, consider_follow, animate=False)
 
 class Cursor(SVGMobject):
     """Classic hand cursor for tutorial animations.

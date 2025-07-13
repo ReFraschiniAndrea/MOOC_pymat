@@ -1,6 +1,7 @@
 #  compilated code
 *.pyc
 __pycache__
+.vscode
 # rendered videos and presentations
 *.mp4
 *.pptx

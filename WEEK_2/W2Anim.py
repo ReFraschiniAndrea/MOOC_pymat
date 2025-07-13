@@ -101,7 +101,7 @@ def points_from_data(data: np.ndarray, ax: Axes, **kwargs):
     return VGroup(Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data)))
 
 class LinearRegressionEquations(VMobject):
-    def __init__(self, x_i_color = BLUE, y_i_color=ORANGE):
+    def __init__(self, x_i_color = BLUE, y_i_color=ORANGE, central_buff=1):
         super().__init__()
         self.m_eq = MathTex(
             r'\hat{m} = '
@@ -121,7 +121,7 @@ class LinearRegressionEquations(VMobject):
         )
         self.q_eq[0][8:10].set_color(y_i_color)
         self.q_eq[0][18:20].set_color(x_i_color)
-        self.q_eq.next_to(self.m_eq, RIGHT, buff=0.5).align_to(self.m_eq, UP)
+        self.q_eq.next_to(self.m_eq, RIGHT, buff=central_buff).align_to(self.m_eq, UP)
         self.add(self.m_eq, self.q_eq)
         self.center()
  
