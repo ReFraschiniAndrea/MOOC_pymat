@@ -2,6 +2,14 @@ __all__ = [
     "COLAB_LIGHTGRAY",
     "COLAB_GRAY",
     "COLAB_DARKGRAY",
+    "COLAB_GREEN",
+    "COLAB_TEAL",
+    "COLAB_PINE",
+    "COLAB_PURPLE",
+    "COLAB_BLUE",
+    "COLAB_DEEPBLUE",
+    "COLAB_BROWN",
+    "COLAB_CRIMSON",
     "COLAB_FONT_SIZE",
     "ColabCode",
     "ColabCodeBlock",
@@ -16,11 +24,22 @@ from .custom_code import CustomCode, CodeWithLogo
 from typing import Any, List
 
 
-# Colab constants
+# Colab colors
 COLAB_LIGHTGRAY = "#f7f7f7" # Main color of colab cell
 COLAB_GRAY = "#eeeeee"  # Color of the left gutter of a colab cell
 COLAB_DARKGRAY ="#424242" # color of the run button of a colab cell
+COLAB_GREEN = "#007900"
+COLAB_TEAL = "#257693"
+COLAB_PINE = "#116644"
+COLAB_PURPLE = "#cf70e7"
+COLAB_BLUE = "#0431fa"
+COLAB_DEEPBLUE = "#001080"
+COLAB_BROWN = "#795e26"
+COLAB_CRIMSON = "#a31515"
+
 COLAB_FONT_SIZE = 12
+
+# colab environment constants
 _COLAB_LEFT_BUFF = 127/1440 * FRAME_WIDTH  # Distance of a colab cell from the left edge of the screen
 _COLAB_GUTTER_WIDTH = 50/1080 *FRAME_HEIGHT # Width of the left gutter
 _COLAB_BLOCK_WIDTH = 1300/1440 * FRAME_WIDTH

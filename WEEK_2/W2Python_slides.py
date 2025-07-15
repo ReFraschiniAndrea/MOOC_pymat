@@ -7,7 +7,7 @@ from mooc_utils.colab import *
 from W2Anim import *
 import matplotlib.pyplot as plt
 
-config.update(TEST_CONFIG)
+config.update(RELEASE_CONFIG)
 config.max_files_cached = 200  # this presentation is particularly long
 
 class W2Python_slides(MOOCSlide):
@@ -53,7 +53,7 @@ class W2Python_slides(MOOCSlide):
         ).set_z_index(2)
         slope_label = MathTex(r'\hat{m}', color=BLACK).scale(0.75).next_to(rise_over_run, UP).set_z_index(2)
         intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
-        intercept_label = MathTex(r'q', color=BLACK).scale(0.75).next_to(intercept_dot, LEFT)
+        intercept_label = MathTex(r'\hat{q}', color=BLACK).scale(0.75).next_to(intercept_dot, LEFT)
 
         self.play(
             Succession(
@@ -212,13 +212,33 @@ class W2Python_slides(MOOCSlide):
         self.play(cl_env.Run(cell=0))
 
         # SLIDE 11:  ===========================================================
-        # CLASS DEFINITION SNIPPET APPEARS AT TOP
+        # CLASS SCHEME APPEARS
         self.next_slide(
             notes=
             '''A class is more than just a data type: it defines the attributes, the characteristics that an object can have, but also the methods, the "actions" that we can perform on the and with the object.
             [CLICK]
             '''
         )
+        class_title = Text("Class", font=CODE_FONT, color = COLAB_TEAL, weight=BOLD).scale(1.3)
+        cs = VGroup(
+            Dot(color=COLAB_BROWN), 
+            Text("Attributes", font=CODE_FONT, color = COLAB_BROWN, weight=BOLD),
+            Arrow(ORIGIN,RIGHT*1.5, color=BLACK),
+            Text("Characteristics", font=CODE_FONT, color = BLACK),
+            Dot(color=COLAB_BLUE), 
+            Text("Methods", font=CODE_FONT, color = COLAB_BLUE, weight=BOLD),
+            Arrow(ORIGIN,RIGHT*1.5, color=BLACK),
+            Text('"Actions"', font=CODE_FONT, color = BLACK),
+        )
+        cs.arrange_in_grid(2, 4, buff = 0.5, cell_alignment=LEFT)
+
+        class_title.next_to(cs,UP, buff = 0.7)
+        
+        css = VGroup(class_title, cs).scale(0.8).move_to( (cl_env.cells[0].get_bottom() + DOWN * FRAME_HEIGHT/2)/2)
+        surrounding_css = SurroundingRectangle(VGroup(cs, class_title), fill_color=COLAB_LIGHTGRAY, fill_opacity=1, stroke_width=0.5,
+                                              stroke_color=BLACK, corner_radius=0.2, buff=0.5)
+        
+        self.play(FadeIn(surrounding_css, css))
 
         # SLIDE 14:  ===========================================================
         # INTO COLAB, CELL IS RUN
@@ -231,7 +251,7 @@ class W2Python_slides(MOOCSlide):
         hand_cursor = cl_env.cursor
         self.play(
             Succession(
-                # FadeOut(class_scheme),
+                FadeOut(surrounding_css, css),
                 ApplyMethod(hand_cursor.move_to, cl_env.PLUS_CODE_),
                 hand_cursor.Click()
             )
@@ -661,7 +681,7 @@ class W2Python_slides(MOOCSlide):
         )
 
         # SLIDE 39:  ===========================================================
-        # EMPTY RECTANGLE BROGHT IN ON TOP
+        # EMPTY RECTANGLE BROUGHT IN ON TOP
         # VECTORIZED OPERATIONS TITLE WRITTEN
         self.next_slide(
             notes=
@@ -691,6 +711,8 @@ class W2Python_slides(MOOCSlide):
         first_group.add(title)
         first_group.center()
 
+        mixed_sum_terms = sum_terms[2:].scale(0.8).arrange_in_grid(2, 1, buff=1, cell_alignment=LEFT).next_to(x_vector, LEFT, buff = 0.8)
+
         # DSS.add_empty_side_obj(first_group.height)
         # DSS.add_main_obj(linear_regression_code[:4], linear_regression_code[4:])
         # self.play(DSS.bringIn(consider_follow=linear_regression_code[4:6]))
@@ -699,11 +721,13 @@ class W2Python_slides(MOOCSlide):
         DSS2.add_empty_side_obj(FRAME_HEIGHT)
         DSS2.hard_bring_in()
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:])
+        mixed_sum_terms.shift(UP*FRAME_HEIGHT)
         self.add(DSS2); self.remove(DSS)
 
-        self.play(DSS2.bringOut())
-        # some cleanup while we can
-        self.clear(); self.add(DSS2)
+        self.play(
+            DSS2.bringOut(),
+            mixed_sum_terms.animate.shift(DOWN*FRAME_HEIGHT)
+        )
 
         self.play(Write(title))
 
@@ -728,17 +752,16 @@ class W2Python_slides(MOOCSlide):
             '''The operation x * y creates a new array, [CLICK]...
             '''
         )
-        sum_terms[2].next_to(xy_vector, RIGHT, buff=1)
         xy_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[2][2]), # *
-            HighlightRectangle(sum_terms[2][5:]),    # x_i y_i
+            HighlightRectangle(vector_labels[2][1]), # * in x*y
+            HighlightRectangle(mixed_sum_terms[0][5:]),    # x_i y_i
         )
 
         self.play(
             Create(xy_vector.get_lines()),
             FadeIn(vector_labels[2])
         )
-        self.play(Create(xy_term_highlights))
+        self.play(Create(xy_term_highlights[0]), Create(xy_term_highlights[1]))
 
         # SLIDE 42:  ===========================================================
         # X, Y TERMS ANIMATED INTO X*Y TERMS
@@ -771,18 +794,18 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:], consider_follow=linear_regression_code[4:6], center_horizontally=False)
-        DSS2.add_main_obj(VGroup(first_group, sum_terms[2]))
+        DSS2.add_main_obj(VGroup(first_group, mixed_sum_terms))
 
         self.play(FadeOut(xy_term_highlights))
         self.play(DSS2.bringIn())
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[4]))
 
         second_xy_term_highlights = VGroup(   
-            HighlightRectangle(sum_terms[2]),    # whole sum
+            HighlightRectangle(mixed_sum_terms[0]),    # whole sum
             HighlightRectangle(linear_regression_code[4]),    # line of code
         )
 
-        self.play(Create(second_xy_term_highlights))
+        self.play(Create(second_xy_term_highlights[0]), Create(second_xy_term_highlights[1]))
 
         # SLIDE 44:  ===========================================================
         # EMPTY X**2 APPEARS
@@ -800,20 +823,22 @@ class W2Python_slides(MOOCSlide):
 
         x2_vector.move_to(xy_vector)
         vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
-        sum_terms[3].next_to(x2_vector, RIGHT, buff=1)
         x2_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[3][1:]), # ^2
-            HighlightRectangle(sum_terms[3][5:]),    # x_i^2
+            HighlightRectangle(vector_labels[3][1:]), # **2
+            HighlightRectangle(mixed_sum_terms[1][6]),    # ^2 in the sum
         )
 
         self.play(
             Succession(
-                FadeOut(y_vector, xy_vector, *vector_labels[1:3], sum_terms[2]) ,
+                FadeOut(y_vector, xy_vector, *vector_labels[1:3]) ,
                 AnimationGroup(
                     Create(x2_vector.get_lines()),
-                    FadeIn(vector_labels[-1], sum_terms[3])
+                    FadeIn(vector_labels[-1])
                 ),
-                Create(x2_term_highlights)
+                AnimationGroup(
+                    Create(x2_term_highlights[0]),
+                    Create(x2_term_highlights[1])
+                )
             )
         )
         self.play(
@@ -838,16 +863,16 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(FadeOut(x2_term_highlights))
 
-        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1]))
+        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1], mixed_sum_terms))
         self.play(DSS2.bringIn())
 
         second_x2_term_highlights = VGroup(
-            HighlightRectangle(sum_terms[3], ORANGE),    # whole sum
-            HighlightRectangle(linear_regression_code[4], ORANGE),    # line of code
+            HighlightRectangle(mixed_sum_terms[1]),    # whole sum
+            HighlightRectangle(linear_regression_code[5]),    # line of code
         )
 
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[5]))
-        self.play(Create(second_x2_term_highlights))
+        self.play(Create(second_x2_term_highlights[0]), Create(second_x2_term_highlights[1]))
 
         # SLIDE 46:  ===========================================================
         # VECTORIZED OPERATIONS BROUGHT OUT OF FRAME
@@ -863,7 +888,7 @@ class W2Python_slides(MOOCSlide):
         DSS.reset()
         DSS.add_empty_side_obj(DSS2.mainRect.height)
         DSS.hard_bring_in()
-        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, sum_terms[3]))
+        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, mixed_sum_terms))
         DSS2.remove_side_obj(); self.add(DSS2); self.remove(DSS2)
         self.add(DSS)
 
@@ -878,7 +903,6 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''First, we compute the length of x, [CLICK] ...
-            [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[7]))
@@ -1335,110 +1359,118 @@ class W2Python_slides(MOOCSlide):
             '''Having in mind the initial question from the policymaker, we can
             conclude that temperature and humidity play opposing roles in
             determining fire risk, and understanding their relationship is
-            crucial for effective fire risk management. In general, linear
-            regression helps us to extract valuable insights from the data,
-            enabling us to quantify the relationships between variables. [END]
+            crucial for effective fire risk management. [CLICK]
             '''
         )
         self.play(rh_fwi_plot.animate.scale(0.65).move_to(HALF_SCREEN_RIGHT))
         temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_LEFT)
         self.play(FadeIn(temp_fwi_plot, shift=FRAME_WIDTH/4*LEFT))
-
-        LR_equations.restore()
+        
+        # SLIDE 78:  ===========================================================
+        # THE TWO PLOTS APPEAR SIDE BY SIDE
+        self.next_slide(
+            notes=
+            '''In general, linear
+            regression helps us to extract valuable insights from the data,
+            enabling us to quantify the relationships between variables. [END]
+            '''
+        )
         self.remove(LR_equations)
-        initial_graph.scale(0.6).to_edge(UP).shift(UP*1.5)
-        self.play(Group(rh_fwi_plot, temp_fwi_plot).animate.next_to(initial_graph, DOWN))
-        self.play(FadeIn(initial_graph))
+        initial_graph.remove(LR_equations)
+        LR_equations.restore().shift(DOWN*0.5)
+        initial_graph.scale(0.65)
+
+        # initial_graph.scale(0.6).to_edge(UP).shift(UP*1.5)
+        # self.play(Group(rh_fwi_plot, temp_fwi_plot).animate.next_to(initial_graph, DOWN))
+        # self.play(FadeIn(initial_graph))
+
+        self.play(
+            AnimationGroup(
+                AnimationGroup(
+                    temp_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], LEFT),
+                    rh_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], RIGHT),
+                ),
+                FadeIn(initial_graph, LR_equations),
+                lag_ratio=0.5
+            )
+        )
 
 
 
 class Test(Scene):
-    def construct(self):    
-        
-        DSS = DynamicSplitScreen(RED, GREEN)
-        lr = LinearRegressionEquations().scale(0.75)
-        linear_regression_code = ColabCode(
-            r'''
-            # Linear regression
-            def linear_regression(x, y):
-                sum_x = np.sum(x)
-                sum_y = np.sum(y)
-                sum_xy = np.sum(x * y)
-                sum_x2 = np.sum(x ** 2)
+    def construct(self):
+        LR_equations = LinearRegressionEquations().to_edge(UP).shift(UP*1.5)
+        LR_equations.save_state()
+        X_RANGE = (0, 1.5)
+        axs = Axes(
+            x_range=[X_RANGE[0], X_RANGE[1] + 0.1, 1],
+            y_range=[0, 1.2, 1],
+            x_length=9,
+            y_length=9*1.2/(X_RANGE[1]+0.1),
+            x_axis_config={'stroke_color':BLACK, 'include_ticks':False},
+            y_axis_config={'stroke_color':BLACK, 'include_ticks':False}
+        ).center().shift(DOWN*1.5)
+        ax_labels = custom_get_axis_labels(axs, MathTex('x', color=BLUE).scale(0.75), MathTex('y', color=ORANGE).scale(0.75))
+        dataset = generate_regression_dataset(func= lambda x: 1.5*(0.4*x-0.75)**3 + 0.8, x_range=(0.1, 1.5), n=20, sigma=0.15, seed=0)
+        dataset_points = points_from_data(dataset, ax=axs, color=PURPLE_A).set_z_index(1)
+        linear_fit = np.polynomial.polynomial.Polynomial.fit(dataset[:,0], dataset[:,1], 1).convert().coef
+        reg_line = RegressionLine(linear_fit[1], linear_fit[0], axs, x_range=X_RANGE)
 
-                n = len(x)
-                numerator = n*sum_xy - sum_x*sum_y
-                denominator = n*sum_x2 - sum_x**2
-                m = numerator / denominator
-                q = (sum_y - m*sum_x)/n
-                
-                return m, q
-            '''
-        ).center()
-        DSS.set_opacity(0.5)
-        self.add(DSS)
-        DSS.add_side_obj(lr)
-        DSS.add_main_obj(linear_regression_code.code[:6])
-        self.add(linear_regression_code.code[:6])
-        self.play(DSS.bringIn())
-        self.play(DSS.bringOut())
+        ror_dx = 0.25
+        ror_x = (X_RANGE[1] - X_RANGE[0])/2 - ror_dx/2
+        rise_over_run = Polygon(
+            reg_line.eval_to_point(ror_x),
+            axs.c2p(ror_x+ror_dx, reg_line.eval(ror_x), 0),
+            reg_line.eval_to_point(ror_x + ror_dx),
+            color = PURPLE_C,
+            fill_opacity=1,
+            stroke_width=0
+        ).set_z_index(2)
+        slope_label = MathTex(r'\hat{m}', color=BLACK).scale(0.75).next_to(rise_over_run, UP).set_z_index(2)
+        intercept_dot = Dot(axs.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
+        intercept_label = MathTex(r'q', color=BLACK).scale(0.75).next_to(intercept_dot, LEFT)
 
-        labels =[Text(lab, font=CODE_FONT, color=BLACK) for lab in ('x', 'y', 'x*y', 'x**2')]   
-        title = Title('Vectorized operations')     
-        x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-        y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-        xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-        x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]**2' for i in [0,1,2,'n']]).scale(0.6)
-        vector_labels = [Text(s, color=BLACK, font=CODE_FONT) for s in ['x', 'y', 'x*y', 'x**2']]
+        initial_graph = VGroup(axs, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations)
+        initial_graph.remove(LR_equations)
+        initial_graph.scale(0.65)
+        LR_equations.shift(DOWN*0.5)
 
-        y_vector.next_to(x_vector, RIGHT)
-        xy_vector.next_to(y_vector, RIGHT, buff=1)
-        vector_labels[0].next_to(x_vector, UP)
-        vector_labels[1].next_to(y_vector, UP).align_to(vector_labels[0], UP)
-        vector_labels[2].next_to(xy_vector, UP).align_to(vector_labels[1], DOWN)
-        first_group=VGroup(x_vector, y_vector, xy_vector, *vector_labels[:3]).center()
-        title.next_to(first_group,UP)
-        first_group.add(title)
+        dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
 
-        DSS.add_empty_side_obj(first_group.height + 2*DSS.buff_)
-        self.play(DSS.bringIn())
-        first_group.move_to(DSS.secondaryRect)
+        temp, RH, FWI = dataset[1:, 0], dataset[1:, 1], dataset[1:, -1]
 
-        self.play(Write(title))
-        self.play(Create(x_vector), Create(y_vector), Create(xy_vector.get_lines()),
-                  FadeIn(*vector_labels[:3]))
+        q, m = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+        ax.scatter(RH, FWI, color='blue', alpha=0.5, label='Data points')
+        ax.plot(RH, m*RH+q, color='red', label='Regression line')
+        ax.set_xlabel('RH')
+        ax.set_ylabel('FWI')
+        ax.set_title('Linear Regression: FWI vs RH')
+        ax.grid(True)
+        ax.legend()
+        # save figure as array
+        fig.canvas.draw()
+        buf1 = np.array(fig.canvas.buffer_rgba())
+        rh_fwi_plot = ImageMobject(buf1).scale_to_fit_width(6)
+        temp_fwi_plot = rh_fwi_plot.copy()
+        rh_fwi_plot.move_to(HALF_SCREEN_RIGHT)
+        temp_fwi_plot.move_to(HALF_SCREEN_LEFT)
 
-        # TRANSFORM WITH FADE???
+        self.add(rh_fwi_plot, temp_fwi_plot)
+        self.wait()
         self.play(
             AnimationGroup(
-                *[AnimationGroup(
-                    ReplacementTransform(y_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[-4:]),
-                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), xy_vector.get_entries((i, 1))[:4]),
-                    FadeIn(xy_vector.get_entries((i, 1))[4]),
-                    lag_ratio=0.2
-                ) if i !=4 else FadeIn(xy_vector.get_entries((i, 1)))
-                for i in range(1,6)],
-                lag_ratio=0.2
-            )
-        )
-        self.play(FadeOut(y_vector, xy_vector, *vector_labels[1:3]) )
-        x2_vector.move_to(xy_vector)
-        vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
-        self.play(FadeIn(x2_vector.get_lines(), vector_labels[-1]))
-        self.play(
-            AnimationGroup(
-                *[AnimationGroup(
-                    ReplacementTransform(x_vector.get_entries((i, 1)).copy().set_opacity(0), x2_vector.get_entries((i, 1))[:4]),
-                    FadeIn(x2_vector.get_entries((i, 1))[4:]),
-                    lag_ratio=0.2
-                ) if i !=4 else FadeIn(x2_vector.get_entries((i, 1)))
-                for i in range(1,6)],
-                lag_ratio=0.2
-            )
-        )
 
-        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title))
-        self.play(
-            DSS.bringOut(),
-            # VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1]).animate.shift(UP*DSS.secondaryRect.height)
-        )
+            AnimationGroup(
+
+            temp_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], LEFT),
+            rh_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], RIGHT),
+            ),
+            FadeIn(initial_graph, LR_equations),
+            lag_ratio=0.5
+            )
+            )
+        # self.play(FadeIn(initial_graph, LR_equations))
+        self.wait()
+
+
