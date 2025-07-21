@@ -1,0 +1,132 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{bm}
+\usepackage{graphicx}
+
+\usepackage[ruled,vlined]{algorithm2e}
+
+\geometry{a4paper, margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    stringstyle=\color{green},
+    commentstyle=\color{gray},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    captionpos=b
+}
+
+\newcommand{\py}[1]{\texttt{\lstinline!#1!}}
+
+\title{Additional material Week 3}
+
+\begin{document}
+
+\section{Question 1}
+\subsection{Statement}
+Linear regression can always produce a fitting line given a set of data points $(x_i, y_i)$. How can we assess how well is the regression line fitting the available data? Try to think of a quantitative way to evaluate the goodness of the fit and apply it to the ALgerian forest dataset.
+
+\subsection{Theory}
+The most straightforward way to evaluate the goodness of the fit is to examine the \emph{sum of the squares of the residuals}, which we denoted with $E$ and is the "score" that we minimized to find the line in the first place:
+\begin{equation}
+    E = \sum_{i=1}^n r_i^2 = \sum_{i=1}^n (\widehat{y_i} - y_i)^2
+\end{equation}
+
+In general, the lower the value of $E$, the better the fit. However, the absolute value of $E$ depends on the scaling of the variables involved: scaling the dataset up will increase $E$, even though intuitively the goodness of the fit should remain the same. This makes it difficult to directly compare models with different units or scales.  
+
+To address this, we standardize the residuals, which requires computing a reference value. In practice we choose the \emph{total sum of squares} $SS_{tot}$, defined as the sum of the squared differences between the $y$ values and their means $\bar{y} = \frac{1}{n}\sum_{i=1}^{n} y_i$.
+\begin{equation}
+    SS_{tot}=\sum_{i=1}^{n} (y_i -\bar{y})^2
+\end{equation}
+
+$SS_{tot}$ represents the variance intrinsic to the data; moreover, it can be seen as the "score" $E$ associated with a baseline regression model with $m=0, q=\bar{y}$, that is a model that always predicts the same value, equal to the mean of the dataset, no matter the input $x_i$.
+
+
+
+\subsection{Python solution}
+To compute the coefficient of determination for our dataset, we need to compute $E$ and $SS_{tot}$ explicitly; to do this, we can use the concept of \emph{vectorized operations} that we learned during the lecture. In particular, we use the fact that adding a constant to a vector or multiplying it by a constant is treated in a vectorized manner, i.e.  the opration is applied to all terms of the array.
+
+We will define a function for each term: for $SS_{tot}$ we first need to compute the mean $\bar{y}$, while for the error $E$ we need the predicted values $\widehat{y_i} = \hat{m} x_i + \hat{q}$.
+\lstinputlisting[language=Python, firstline=18, lastline=27]{W2_Q2_r_squared.py}
+
+The mean $\bar{y}$ can also be computed directly with the \py{np.mean} function: \py{y_bar = np.mean(y)}.
+Finally, we write one last function applying the definition of $R^2$.
+\lstinputlisting[language=Python, firstline=29, lastline=33]{W2_Q2_r_squared.py}
+
+Listing \ref{q1pycode} shows the final Python code for the solution.
+\lstinputlisting[language=Python, caption={Python code solution for the Question}, label=q1pycode]{W2_Q2_r_squared.py}
+
+\subsection{Matlab solution}
+To compute the coefficient of determination for our dataset, we need to compute $E$ and $SS_{tot}$ explicitly; to do this, we can use the concept of \emph{vectorized operations} that we learned during the lecture. In particular,adding a constant to a vector and multiplying it by a constant are treated in a vectorized manner, i.e. the opration is applied to all terms of the array. To specify that an operation should be vectorized, remember to put the \py{.} before it.
+
+We will define a function for each term: for $SS_{tot}$ we first need to compute the mean $\bar{y}$, while for the error $E$ we need the predicted values $\widehat{y_i} = \hat{m} x_i + \hat{q}$.
+\lstinputlisting[language=Matlab, firstline=1, lastline=10]{W2_Q1_r_squared.m}
+
+The mean $\bar{y}$ can also be computed directly with the \py{mean} function: \py{y_bar = mean(y);}.
+Finally, we write one last function applying the definition of $R^2$.
+\lstinputlisting[language=Matlab, firstline=12, lastline=16]{W2_Q1_r_squared.m}
+
+Listing \ref{q1matcode} shows the final Matlab code for the solution.
+\lstinputlisting[language=Matlab, caption={Matlab code solution for the Question}, label=q1matcode]{W2_Q1_r_squared.m}
+
+\subsection{Comments}
+0.33059760059566334
+Coefficient of determination for RH-FWI regression: 0.1647176771914015
+
+\section{Question 2}
+\subsection{Statement}
+Consider the Algerian Forest datasets that we used during the lecture and try to perform multiple linear regression to explain how the Fire Weather Index is affected by Temperature and Relative humidity at the same time.
+In particular, pay attention to how the formulas for the coefficients, and consequently the linear regression function, must be modified to take into account multiple variables.
+
+\subsection{Theory}
+First, recall the one dimensional case: we want to find a linear function, that is a line, that models the relation between a variable $x$ and some quantity $y$:
+\begin{equation}
+    y = f(x) = mx +q
+\end{equation}
+We defined the best fitting line as the one that minimizes the sum of squared residuals, where the residual is the error between the actual value $y_i$ and the prediction of our model $\widehat{y_i} = mx_i +q$
+\begin{equation}
+    E = \sum_{i=1}^n r_i^2 = \sum_{i=1}^n (\widehat{y_i} - y_i)^2
+\end{equation}
+The formulas for $m$ and $q$ are then obtained by setting the partial derivatives of $E$ with respect to $m$ and $q$ to zero.
+
+Considering multiple variables $x_1, x_2, \dots, x_p$ is conceptually the same. Now we are looking for a linear functions of $p$ variables to model the relation:
+\begin{equation}
+    y = f(x_1, x_2, \dots, x_p) = m_1 x_1 + m_2 x_2+ \dots +  m_p x_p + q
+\end{equation}
+Geometrically, this function corresponds to a plane if $p=2$ and more generally to a hyperplane if $p>2$.
+The best fitting plane is the one tha minimizes the sum of squared residuals $E$. The $p+1$ unknown coefficients $m_1, \dots, m_p, q$ are obtained by imposing all partial derivatives of $E$ to zero, i.e. $\nabla E = 0$; this corresponds to a linear system of $p+1$ equations:
+
+\begin{align}
+    \frac{\partial E}{\partial m_j} &= \sum_{i=1}^n 2 (\widehat{y_i} - y_i) \frac{\partial \widehat{y_i}}{\partial m_j} &= \sum_{i=1}^n 2 (\widehat{y_i} - y_i) (x_j)_i \ \ \text{for} \ j=1, \dots, p \\
+    \frac{\partial E}{\partial q} &= \sum_{i=1}^n 2 (\widehat{y_i} - y_i) \frac{\partial \widehat{y_i}}{\partial q} &= \sum_{i=1}^n 2 (\widehat{y_i} - y_i)
+\end{align}
+
+To write this linear system more compactly, we will use vector notation: we denote with $X \in \mathbb{R}^{n \times p}$ the matrix holding the data points, i.e. $X_{i,j}=(x_j)_i$, with $Y \in \mathbb{R}^n$ the vector holding the variable to predict and with $\widehat{Y}$ the vector of predicted values: $(\widehat{Y})_i = m_1 (x_1)_i + \dots + m_p (x_p)_i$. Then it is possible to show that:
+
+\begin{equation}
+    \widehat{Y} = X m + q
+\end{equation}
+
+It is then possible to show that the condition $\nabla E = 0$ is equivalent to the following linear system:
+\begin{equation}
+    X^T X m = X^T Y
+\end{equation}
+
+\subsection{Python solution}
+To code the previous formulas we are going to use more functionalities of the \py{numpy} module: we wil use \py{np.array} to construct the matrix of our linear system, and \py{np.linalg.solve} to solve it.
+
+
+\end{document}
+

@@ -14,3 +14,8 @@ slides
 renumber_slides.py
 crop_images.py
 Video_player_app.py
+# Latex output
+*.aux
+*.log
+*.dvi
+*.pdf

@@ -1121,8 +1121,8 @@ class W2Matlab_slides(MOOCSlide):
         self.play(LR_example_code.IntoMatlab(mat_env))
         mat_env.add_output(
             'Linear model results:\n'
-            'Slope (m): 1.421975321551814\n'
-            'Y-intercept (q): -36.219188539161344'
+            'Slope (m): 1.421975\n'
+            'Y-intercept (q): -36.219189'
         )
         self.play(mat_env.Run())
 
