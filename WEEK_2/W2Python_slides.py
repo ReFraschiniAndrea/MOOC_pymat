@@ -19,9 +19,9 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''Let's explore how linear regression can be implemented in Python.
-            Our ultimate goal is to answer key questions, such
-            as: To what extent do variables like temperature and humidity affect
-            the risk of wildfires? [CLICK]
+            Our ultimate goal is to answer key questions, such as: To what
+            extent do variables like temperature and humidity affect the risk of
+            wildfires? [CLICK]
             '''
         )
         LR_equations = LinearRegressionEquations().to_edge(UP).shift(UP*1.5)
@@ -55,15 +55,22 @@ class W2Python_slides(MOOCSlide):
         intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
         intercept_label = MathTex(r'\hat{q}', color=BLACK).scale(0.75).next_to(intercept_dot, LEFT)
 
+        initial_graph = VGroup(ax, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations).scale(0.75).shift(DOWN*0.35)
+        surrounding_rect = SurroundingRectangle(initial_graph, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,
+                                              stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
+        cl_env = ColabEnv(r'Assets\W2\colabSLR.png')
+
         self.play(
             Succession(
+                FadeIn(cl_env),
+                Wait(0.5),
+                FadeIn(surrounding_rect),
                 FadeIn(ax, ax_labels, dataset_points),
                 Create(reg_line),
                 FadeIn(rise_over_run, slope_label,intercept_dot, intercept_label),
                 FadeIn(LR_equations)
             )
         )
-        initial_graph = VGroup(ax, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations)
 
         # SLIDE 02:  ===========================================================
         # COLAB NOTEBOOK FADES IN
@@ -74,14 +81,11 @@ class W2Python_slides(MOOCSlide):
             clicking on the folder icon on the left, [CLICK]
             '''
         )
-        cl_env = ColabEnv(r'Assets\W2\colabSLR.png')
         hand_cursor = Cursor()
         self.play(
             Succession(
-                FadeOut(initial_graph),
-                Wait(0.2),
-                FadeIn(cl_env),
-                Wait(1),
+                FadeOut(initial_graph, surrounding_rect),
+                Wait(0.5),
                 GrowFromCenter(hand_cursor)
             )
         )
@@ -116,7 +120,8 @@ class W2Python_slides(MOOCSlide):
         # NEW CODE CELL IS CREATED AND ZOOMED IN
         self.next_slide(
             notes=
-            '''next, we start coding. The first step is to import the modules we are going to use in the project. [CLICK]
+            '''next, we start coding. The first step is to import the modules we
+            are going to use in the project. [CLICK]
             '''
         )
         empty_cell = ColabCodeBlock(code='')
@@ -187,18 +192,17 @@ class W2Python_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''The output of the function is stored in a variable named
-            my_dataset, 
-            [CLICK] ...
+            my_dataset, [CLICK] ...
             '''
         )
         my_dataset_highlight = HighlightRectangle(import_code[5][:10])
         self.play(Create(my_dataset_highlight))
 
-        # SLIDE 10:  ===========================================================
+        # SLIDE 11:  ===========================================================
         # INTO COLAB, CODE IS RUN
         self.next_slide(
             notes=
-            '''...which is an instance of the class DataFrame from pandas. 
+            '''...which is an instance of the class DataFrame from pandas.
             [CLICK]
             '''
         )
@@ -211,12 +215,11 @@ class W2Python_slides(MOOCSlide):
         self.play(import_code.IntoColab(cl_env))
         self.play(cl_env.Run(cell=0))
 
-        # SLIDE 11:  ===========================================================
+        # SLIDE 12:  ===========================================================
         # CLASS SCHEME APPEARS
         self.next_slide(
             notes=
-            '''A class is more than just a data type: it defines the attributes, the characteristics that an object can have, but also the methods, the "actions" that we can perform on the and with the object.
-            [CLICK]
+            '''A class is more than just a data type: [CLICK] ...
             '''
         )
         class_title = Text("Class", font=CODE_FONT, color = COLAB_TEAL, weight=BOLD).scale(1.3)
@@ -238,14 +241,37 @@ class W2Python_slides(MOOCSlide):
         surrounding_css = SurroundingRectangle(VGroup(cs, class_title), fill_color=COLAB_LIGHTGRAY, fill_opacity=1, stroke_width=0.5,
                                               stroke_color=BLACK, corner_radius=0.2, buff=0.5)
         
-        self.play(FadeIn(surrounding_css, css))
+        self.play(FadeIn(surrounding_css, class_title))
 
-        # SLIDE 14:  ===========================================================
+        # SLIDE 12:  ===========================================================
+        # CLASS SCHEME APPEARS
+        self.next_slide(
+            notes=
+            '''...it defines the attributes,
+            the characteristics that an object can have, 
+            [CLICK] ...
+            '''
+        )
+        self.play(FadeIn(cs[:4]))
+
+        # SLIDE 12:  ===========================================================
+        # CLASS SCHEME APPEARS
+        self.next_slide(
+            notes=
+            '''...but also the methods,
+            the "actions" that we can perform on the and with the object.
+            [CLICK]
+            '''
+        )
+        self.play(FadeIn(cs[4:]))
+
+        # SLIDE 13:  ===========================================================
         # INTO COLAB, CELL IS RUN
         # NEW CELL APPEARS, OUT OF COLAB AGAIN
         self.next_slide(
             notes=
-            '''Let's explore our dataset using both attributes and methods. [CLICK]
+            '''Let's explore our dataset using both attributes and methods.
+            [CLICK]
             '''
         )
         hand_cursor = cl_env.cursor
@@ -263,7 +289,7 @@ class W2Python_slides(MOOCSlide):
         self.play(cl_env.OutofColab(new_empty_cell))
         self.remove(hand_cursor)
 
-        # SLIDE 15:  ===========================================================
+        # SLIDE 14:  ===========================================================
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -279,7 +305,7 @@ class W2Python_slides(MOOCSlide):
         ).center()
         self.play(dataset_size_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 16:  ===========================================================
+        # SLIDE 15:  ===========================================================
         # PRINT SHAPE LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -288,7 +314,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(dataset_size_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 17:  ===========================================================
+        # SLIDE 16:  ===========================================================
         # INTO COLAB, CELL IS RUN, OUTPUT APPEARS
         self.next_slide(
             notes=
@@ -301,7 +327,7 @@ class W2Python_slides(MOOCSlide):
         cl_env.cells[0].add_output('(59,  4)')
         self.play(cl_env.Run())
 
-        # SLIDE 18:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # RETURN TO OUT OF COLAB
         # HEAD CODE IS WRITTEN
         self.next_slide(
@@ -322,7 +348,7 @@ class W2Python_slides(MOOCSlide):
         self.play(FadeIn(DSS.mainRect))
         self.play(dataset_head_code.TypeLetterbyLetter(lag_ratio=0))
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # DISPLAY HEAD TABLE AFTER RUNNNING CODE
         self.next_slide(
             notes=
@@ -353,7 +379,7 @@ class W2Python_slides(MOOCSlide):
         cl_env.cells[1].add_output(VGroup(head_text, head_table))
         self.play(cl_env.Run(1, new_cursor=False))
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # FOCUS ON THE TABLE
         self.next_slide(
             notes=
@@ -364,7 +390,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(cl_env.focus_output(cell=1 ,scale=0.5, alignment=LEFT))
 
-        # SLIDE 21:  ===========================================================
+        # SLIDE 20:  ===========================================================
         # HIGHLIGHT TEMPERATURE COLUMN
         self.next_slide(
             notes=
@@ -384,7 +410,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[0], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 21:  ===========================================================
         # HIGHLIGHT RELATIVE HUMIDITY COLUMN
         self.next_slide(
             notes=
@@ -397,7 +423,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[1], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # HIGHLIGHT BUILD-UP INDEX COLUMN
         self.next_slide(
             notes=
@@ -411,7 +437,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[2], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # HIGHLIGHT FIRE WEATHER INDEX COLUMN
         self.next_slide(
             notes=
@@ -425,7 +451,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[3], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # BRACES UNDER COLUMNS APPEAR WITH x_i, y_i labels
         self.next_slide(
             notes=
@@ -455,7 +481,7 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # NEW EMPTY EMPTY SCREEN FADES IN
         # # LINEAR REGRESSION WRITTEN
         self.next_slide(
@@ -489,7 +515,7 @@ class W2Python_slides(MOOCSlide):
         DSS.mainRect.set_z_index(-1)
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 27:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # SCHEMATIC DRAWING OF THE FUNCTION IS BROUGHT IN
         self.next_slide(
             notes=
@@ -504,7 +530,7 @@ class W2Python_slides(MOOCSlide):
         self.play(DSS.bringIn())
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 28:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # X INPUT WITH ITS ARRAY APPEARS
         self.next_slide(
             notes=
@@ -519,7 +545,7 @@ class W2Python_slides(MOOCSlide):
         
         self.play(FadeIn(x_vector, fscheme.InputArrows[0], fscheme.InputLabels[0]))
 
-        # SLIDE 29:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # Y INPUT WITH ITS ARRAY APPEARS
         self.next_slide(
             notes=
@@ -529,7 +555,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(FadeIn(y_vector, fscheme.InputArrows[1], fscheme.InputLabels[1]))
         
-        # SLIDE 30:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # OUTPUTS M,Q APPEAR
         # RETURN LINE IS WRITTEN
         self.next_slide(
@@ -542,8 +568,10 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         fscheme.add_outputs("m", "q")
-        m_label = MathTex(r"\hat{m}", color=BLACK).next_to(fscheme.OutputLabels[0], RIGHT, buff=1)
-        q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1)
+        m_label = MathTex(r"\hat{m}", color=BLACK).next_to(fscheme.OutputLabels[0], RIGHT, buff=1).scale(1.2)
+        m_label.shift((fscheme.OutputLabels[0].get_y()-m_label[0][1].get_y())*UP)
+        q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1).scale(1.2)
+        q_label.shift((fscheme.OutputLabels[1].get_y()-q_label[0][1].get_y())*UP).match_x(m_label)
 
         short_linear_regression_code = ColabCode(
             r'''
@@ -561,7 +589,7 @@ class W2Python_slides(MOOCSlide):
         )
 
         self.play
-        # SLIDE 31:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # LINEAR REGRESSION FORMULAS APPEAR
         self.next_slide(
             notes=
@@ -582,14 +610,15 @@ class W2Python_slides(MOOCSlide):
         self.play(DSS.bringIn())
         DSS.add_main_obj(linear_regression_code[:2], linear_regression_code[2:])
 
-        # SLIDE 32:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # ALL SUMS ARE HIGHLIGHTED
         self.next_slide(
             notes=
             '''First we will compute the results of each sum, and then we will
             combine the results. Before starting the implementation, it's worth
-            noting that some sums are repeated. The sum over y_i appears twice, and the sum over x_i even three times! We can take advantage
-            of this, and compute these terms once and reuse the results wherever
+            noting that some sums are repeated. The sum over y_i appears twice,
+            and the sum over x_i even three times! We can take advantage of
+            this, and compute these terms once and reuse the results wherever
             needed. [CLICK]
             '''
         ) 
@@ -601,14 +630,11 @@ class W2Python_slides(MOOCSlide):
             HighlightRectangle(LR_equations.m_sum_y, PINK),
             HighlightRectangle(LR_equations.q_sum_y, PINK),
             HighlightRectangle(LR_equations.m_sum_x_sq, ORANGE),
-        )  
-        # sum_y_highlights = VGroup(sums_highlights[2], sums_highlights[6])
-        # sum_x_highlights = VGroup(sums_highlights[i] for i in [0,1,5])
-        # sum_xy_x2_highlights =VGroup(sums_highlights[i] for i in [3,4])
+        )
         
         self.play(FadeIn(sums_highlights))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 32:  ===========================================================
         # THE NON RPEATED SUM TERMS ARE EXTRACTED FROM THE EQUATIONS
         self.next_slide(
             notes=
@@ -620,7 +646,7 @@ class W2Python_slides(MOOCSlide):
         sum_terms = LR_equations.get_sums_without_repetition().arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
         self.play(LR_equations.ExtractSumTerms(target=sum_terms))
 
-        # SLIDE 36:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # SAMPLE SUM FOR LOOP CODE IS WRITTEN
         self.next_slide(
             notes=
@@ -645,7 +671,7 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 37:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # SAMPLE SUM FOR LOOP CODE TRANSFORMS INTO NP.SUM(X)
         self.next_slide(
             notes=
@@ -667,7 +693,7 @@ class W2Python_slides(MOOCSlide):
             Create(code_sum_highlights[1]),
         )
 
-        # SLIDE 38:  ===========================================================
+        # SLIDE 35:  ===========================================================
         # NP.SUM(Y) LINE WRITTEN
         self.next_slide(
             notes=
@@ -680,7 +706,7 @@ class W2Python_slides(MOOCSlide):
             Create(code_sum_highlights[3]),
         )
 
-        # SLIDE 39:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # EMPTY RECTANGLE BROUGHT IN ON TOP
         # VECTORIZED OPERATIONS TITLE WRITTEN
         self.next_slide(
@@ -711,27 +737,16 @@ class W2Python_slides(MOOCSlide):
         first_group.add(title)
         first_group.center()
 
-        mixed_sum_terms = sum_terms[2:].scale(0.8).arrange_in_grid(2, 1, buff=1, cell_alignment=LEFT).next_to(x_vector, LEFT, buff = 0.8)
-
-        # DSS.add_empty_side_obj(first_group.height)
-        # DSS.add_main_obj(linear_regression_code[:4], linear_regression_code[4:])
-        # self.play(DSS.bringIn(consider_follow=linear_regression_code[4:6]))
-        # first_group.move_to(DSS.secondaryRect)
         DSS2 = DynamicSplitScreen(WHITE, COLAB_LIGHTGRAY, direction=DOWN, buff = 0.5)
         DSS2.add_empty_side_obj(FRAME_HEIGHT)
         DSS2.hard_bring_in()
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:])
-        mixed_sum_terms.shift(UP*FRAME_HEIGHT)
         self.add(DSS2); self.remove(DSS)
 
-        self.play(
-            DSS2.bringOut(),
-            mixed_sum_terms.animate.shift(DOWN*FRAME_HEIGHT)
-        )
-
+        self.play(DSS2.bringOut())
         self.play(Write(title))
 
-        # SLIDE 40:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # X, Y COLUMN VECTORS APPEAR
         self.next_slide(
             notes=
@@ -745,13 +760,18 @@ class W2Python_slides(MOOCSlide):
             FadeIn(*vector_labels[:2])
         )
         
-        # SLIDE 41:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # EMPTY X*Y VECTOR APPEARS
         self.next_slide(
             notes=
             '''The operation x * y creates a new array, [CLICK]...
             '''
         )
+        mixed_sum_terms = sum_terms[2:].scale(0.8)
+        mixed_sum_terms[0].next_to(x_vector, LEFT, buff = 0.8)
+        mixed_sum_terms[1].align_to(mixed_sum_terms[0], DL)
+        self.add(mixed_sum_terms); self.remove(mixed_sum_terms)
+
         xy_term_highlights = VGroup(
             HighlightRectangle(vector_labels[2][1]), # * in x*y
             HighlightRectangle(mixed_sum_terms[0][5:]),    # x_i y_i
@@ -759,11 +779,12 @@ class W2Python_slides(MOOCSlide):
 
         self.play(
             Create(xy_vector.get_lines()),
-            FadeIn(vector_labels[2])
+            FadeIn(vector_labels[2]),
+            FadeIn(mixed_sum_terms[0])
         )
         self.play(Create(xy_term_highlights[0]), Create(xy_term_highlights[1]))
 
-        # SLIDE 42:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # X, Y TERMS ANIMATED INTO X*Y TERMS
         self.next_slide(
             notes=
@@ -785,7 +806,7 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 43:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # NP.SUM(X * Y) LINE WRITTEN
         self.next_slide(
             notes=
@@ -794,7 +815,7 @@ class W2Python_slides(MOOCSlide):
             '''
         )
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:], consider_follow=linear_regression_code[4:6], center_horizontally=False)
-        DSS2.add_main_obj(VGroup(first_group, mixed_sum_terms))
+        DSS2.add_main_obj(VGroup(first_group, mixed_sum_terms[0]))
 
         self.play(FadeOut(xy_term_highlights))
         self.play(DSS2.bringIn())
@@ -807,7 +828,7 @@ class W2Python_slides(MOOCSlide):
 
         self.play(Create(second_xy_term_highlights[0]), Create(second_xy_term_highlights[1]))
 
-        # SLIDE 44:  ===========================================================
+        # SLIDE 41:  ===========================================================
         # EMPTY X**2 APPEARS
         # ANIMATE X TERMS INTO X**2 TERMS
         self.next_slide(
@@ -824,16 +845,17 @@ class W2Python_slides(MOOCSlide):
         x2_vector.move_to(xy_vector)
         vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
         x2_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[3][1:]), # **2
-            HighlightRectangle(mixed_sum_terms[1][6]),    # ^2 in the sum
+            HighlightRectangle(vector_labels[3][1:], ORANGE), # **2
+            HighlightRectangle(mixed_sum_terms[1][6], ORANGE),    # ^2 in the sum
         )
 
         self.play(
             Succession(
-                FadeOut(y_vector, xy_vector, *vector_labels[1:3]) ,
+                FadeOut(y_vector, xy_vector, *vector_labels[1:3], mixed_sum_terms[0]),
                 AnimationGroup(
                     Create(x2_vector.get_lines()),
-                    FadeIn(vector_labels[-1])
+                    FadeIn(vector_labels[-1]),
+                    FadeIn(mixed_sum_terms[1])
                 ),
                 AnimationGroup(
                     Create(x2_term_highlights[0]),
@@ -853,7 +875,7 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 45:  ===========================================================
+        # SLIDE 42:  ===========================================================
         # NP.SUM(X**2) LINE WRITTEN
         self.next_slide(
             notes=
@@ -863,18 +885,18 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(FadeOut(x2_term_highlights))
 
-        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1], mixed_sum_terms))
+        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1], mixed_sum_terms[1]))
         self.play(DSS2.bringIn())
 
         second_x2_term_highlights = VGroup(
-            HighlightRectangle(mixed_sum_terms[1]),    # whole sum
-            HighlightRectangle(linear_regression_code[5]),    # line of code
+            HighlightRectangle(mixed_sum_terms[1], ORANGE),    # whole sum
+            HighlightRectangle(linear_regression_code[5], ORANGE),    # line of code
         )
 
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[5]))
         self.play(Create(second_x2_term_highlights[0]), Create(second_x2_term_highlights[1]))
 
-        # SLIDE 46:  ===========================================================
+        # SLIDE 43:  ===========================================================
         # VECTORIZED OPERATIONS BROUGHT OUT OF FRAME
         # 'm', 'q' EQUATIONS BROUGHT BACK IN
         self.next_slide(
@@ -888,7 +910,7 @@ class W2Python_slides(MOOCSlide):
         DSS.reset()
         DSS.add_empty_side_obj(DSS2.mainRect.height)
         DSS.hard_bring_in()
-        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, mixed_sum_terms))
+        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, mixed_sum_terms[1]))
         DSS2.remove_side_obj(); self.add(DSS2); self.remove(DSS2)
         self.add(DSS)
 
@@ -898,7 +920,7 @@ class W2Python_slides(MOOCSlide):
         DSS.add_main_obj(linear_regression_code[:6], follow_obj=linear_regression_code[6:])
         self.play(DSS.bringIn())
 
-        # SLIDE 47:  ===========================================================
+        # SLIDE 44:  ===========================================================
         # N = LEN(X) WRITTEN
         self.next_slide(
             notes=
@@ -907,17 +929,16 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[7]))
 
-        # SLIDE 47:  ===========================================================
+        # SLIDE 45:  ===========================================================
         # NUMERATOR LINE WRITTEN
         self.next_slide(
             notes=
-            '''...and then the numerator of the expression giving m.
-            [CLICK]
+            '''...and then the numerator of the expression giving m. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[8]))
 
-        # SLIDE 48:  ===========================================================
+        # SLIDE 46:  ===========================================================
         # DENOMINATOR LINE WRITTEN
         self.next_slide(
             notes=
@@ -926,7 +947,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[9]))
 
-        # SLIDE 49:  ===========================================================
+        # SLIDE 47:  ===========================================================
         # NUMERATOR/DENOMINATOR LINE WRITTEN
         self.next_slide(
             notes=
@@ -936,7 +957,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[10]))
 
-        # SLIDE 50:  ===========================================================
+        # SLIDE 48:  ===========================================================
         # Q LINE WRITTEN
         # RETURN M, Q LINE WRITTEN
         self.next_slide(
@@ -954,7 +975,7 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 51:  ===========================================================
+        # SLIDE 49:  ===========================================================
         # BRING OUT TOP RECTANGLE TO LEAVE ONLY THE FUNCTION AS THE FOCUS
         self.next_slide(
             notes=
@@ -965,7 +986,7 @@ class W2Python_slides(MOOCSlide):
         DSS.add_main_obj(linear_regression_code[:])
         self.play(DSS.bringOut())
         
-        # SLIDE 56:  ===========================================================
+        # SLIDE 50:  ===========================================================
         # INTO COLAB, FUNCTION DEFINITION CELL IS RUN
         self.next_slide(
             notes=
@@ -978,7 +999,7 @@ class W2Python_slides(MOOCSlide):
         self.play(linear_regression_code.IntoColab(cl_env))
         self.play(cl_env.Run())
 
-        # SLIDE 57:  ===========================================================
+        # SLIDE 51:  ===========================================================
         # NEW EMPTY SCREEN FADES IN
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
@@ -1007,7 +1028,7 @@ class W2Python_slides(MOOCSlide):
 
         self.play(LR_example_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 58:  ===========================================================
+        # SLIDE 52:  ===========================================================
         # X = TEMPERATURE CODE LINE APPEARS
         self.next_slide(
             notes=
@@ -1017,7 +1038,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 59:  ===========================================================
+        # SLIDE 53:  ===========================================================
         # HIGHLIGHT 'TEMPERATURE'
         self.next_slide(
             notes=
@@ -1030,7 +1051,7 @@ class W2Python_slides(MOOCSlide):
 
         self.play(Create(temperature_highlight))
         
-        # SLIDE 60:  ===========================================================
+        # SLIDE 54:  ===========================================================
         # HIGHLIGHT VALUES
         self.next_slide(
             notes=
@@ -1039,7 +1060,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(ReplacementTransform(temperature_highlight, values_highlight))
         
-        # SLIDE 61:  ===========================================================
+        # SLIDE 55:  ===========================================================
         # Y = FWI CODE LINE APPEARS
         self.next_slide(
             notes=
@@ -1049,7 +1070,7 @@ class W2Python_slides(MOOCSlide):
         self.play(FadeOut(values_highlight))
         self.play(LR_example_code.TypeLetterbyLetter(lines=[2]))
 
-        # SLIDE 62:  ===========================================================
+        # SLIDE 56:  ===========================================================
         # LINEAR REGRESSION FUNCTION CALL LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -1062,7 +1083,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[4]))
 
-        # SLIDE 63:  ===========================================================
+        # SLIDE 57:  ===========================================================
         # PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
@@ -1072,7 +1093,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
 
-        # SLIDE 64:  ===========================================================
+        # SLIDE 58:  ===========================================================
         # 'f' F-STRINGS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -1086,12 +1107,12 @@ class W2Python_slides(MOOCSlide):
 
         self.play(Create(h) for h in f_string_highlights)
 
-        # SLIDE 65:  ===========================================================
+        # SLIDE 59:  ===========================================================
         # 'm', 'q' IN F-STRINGS HIGHLIGHTED
         self.next_slide(
             notes=
-            '''...you allow Python to
-            interpret variables inside curly braces directly within the string. [CLICK]
+            '''...you allow Python to interpret variables inside curly braces
+            directly within the string. [CLICK]
             '''
         )
         mq_f_string_highlights = VGroup(
@@ -1101,7 +1122,7 @@ class W2Python_slides(MOOCSlide):
 
         self.play(ReplacementTransform(fh, dot_h) for fh, dot_h in zip(f_string_highlights, mq_f_string_highlights))
 
-        # SLIDE 66:  ===========================================================
+        # SLIDE 60:  ===========================================================
         # INTO COLAB
         # CELL IS RUN, RESULT OUTPUT APPEARS
         self.next_slide(
@@ -1121,7 +1142,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(cl_env.Run(1, new_cursor=False))
 
-        # SLIDE 67:  ===========================================================
+        # SLIDE 61:  ===========================================================
         # RETURN TO EMPTY SCREEN
         # WRITE # PLOTTING
         self.next_slide(
@@ -1151,7 +1172,7 @@ class W2Python_slides(MOOCSlide):
         cl_env.clear(self)
         self.play(plotting_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 68:  ===========================================================
+        # SLIDE 62:  ===========================================================
         # PLT.FIGURE LINE WRITTEN
         self.next_slide(
             notes=
@@ -1175,7 +1196,7 @@ class W2Python_slides(MOOCSlide):
         DSS.add_main_obj(plotting_code[:2], follow_obj=plotting_code[2:])
         self.play(DSS.bringIn(consider_follow = plotting_code[2:4]))
 
-        # SLIDE 69:  ===========================================================
+        # SLIDE 63:  ===========================================================
         # PLT.SCATTER LINE WRITTEN
         self.next_slide(
             notes=
@@ -1189,7 +1210,7 @@ class W2Python_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 70:  ===========================================================
+        # SLIDE 64:  ===========================================================
         # PLOT LINE APPEARS
         self.next_slide(
             notes=
@@ -1204,7 +1225,7 @@ class W2Python_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[3]))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 71:  ===========================================================
+        # SLIDE 65:  ===========================================================
         # X, Y LABEL LINES AND RESULT SHOWN
         self.next_slide(
             notes=
@@ -1220,7 +1241,7 @@ class W2Python_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 72:  ===========================================================
+        # SLIDE 66:  ===========================================================
         # GRID, TITLE LEGEND LINES AND RESULT SHOWN
         self.next_slide(
             notes=
@@ -1236,7 +1257,7 @@ class W2Python_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[7, 8, 9]))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 73:  ===========================================================
+        # SLIDE 67:  ===========================================================
         # LABEL KEYWORDS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -1251,7 +1272,7 @@ class W2Python_slides(MOOCSlide):
         ]
         self.play(*[Create(highlight) for highlight in plot_label_highlights])
 
-        # SLIDE 74:  ===========================================================
+        # SLIDE 68:  ===========================================================
         # INTO COLAB
         # CELL IS RUN, FINAL PLOT APPEARS
         self.next_slide(
@@ -1274,7 +1295,7 @@ class W2Python_slides(MOOCSlide):
         cl_env.cells[0].add_output(temp_fwi_plot)
         self.play(cl_env.Run())
         
-        # SLIDE 75:  ===========================================================
+        # SLIDE 69:  ===========================================================
         # FOCUS ON PLOT
         self.next_slide(
             notes=
@@ -1285,7 +1306,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(cl_env.focus_output(0, scale=0.7))
 
-        # SLIDE 76:  ===========================================================
+        # SLIDE 70:  ===========================================================
         # PLOT CODE COMES BACK IN
         # 'TEMPERATURE' IS REPLACED WITH 'RH' IN THE CODE
         self.next_slide(
@@ -1341,7 +1362,7 @@ class W2Python_slides(MOOCSlide):
         self.remove(cl_env.cells[1].output) # it gets shown too early
         self.play(cl_env.Run(1, new_cursor=False))
 
-        # SLIDE 77:  ===========================================================
+        # SLIDE 71:  ===========================================================
         # FOCUS ON THE SECOND PLOT
         self.next_slide(
             notes=
@@ -1352,7 +1373,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(cl_env.focus_output(cell=1, scale=0.7))
 
-        # SLIDE 78:  ===========================================================
+        # SLIDE 72:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
@@ -1366,31 +1387,24 @@ class W2Python_slides(MOOCSlide):
         temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_LEFT)
         self.play(FadeIn(temp_fwi_plot, shift=FRAME_WIDTH/4*LEFT))
         
-        # SLIDE 78:  ===========================================================
+        # SLIDE 73:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
-            '''In general, linear
-            regression helps us to extract valuable insights from the data,
-            enabling us to quantify the relationships between variables. [END]
+            '''In general, linear regression helps us to extract valuable
+            insights from the data, enabling us to quantify the relationships
+            between variables. [END]
             '''
         )
-        self.remove(LR_equations)
-        initial_graph.remove(LR_equations)
-        LR_equations.restore().shift(DOWN*0.5)
-        initial_graph.scale(0.65)
-
-        # initial_graph.scale(0.6).to_edge(UP).shift(UP*1.5)
-        # self.play(Group(rh_fwi_plot, temp_fwi_plot).animate.next_to(initial_graph, DOWN))
-        # self.play(FadeIn(initial_graph))
+        wf_fact = WildfireFactorsScheme(icons_height=0.6).scale(0.9)
 
         self.play(
             AnimationGroup(
                 AnimationGroup(
-                    temp_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], LEFT),
-                    rh_fwi_plot.animate.scale(0.6).next_to(initial_graph[0], RIGHT),
+                    temp_fwi_plot.animate.scale(0.8).next_to(wf_fact.circles[0], LEFT, buff=0.5).shift(DOWN*0.5),
+                    rh_fwi_plot.animate.scale(0.8).next_to(wf_fact.circles[0], RIGHT, buff=0.5).shift(DOWN*0.5),
                 ),
-                FadeIn(initial_graph, LR_equations),
+                FadeIn(wf_fact),
                 lag_ratio=0.5
             )
         )

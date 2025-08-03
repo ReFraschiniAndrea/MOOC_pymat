@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from mooc_utils import *
-from mooc_utils.colab import ColabCodeWithLogo, COLAB_LIGHTGRAY
+from mooc_utils.colab import ColabCodeWithLogo, ColabCode, COLAB_LIGHTGRAY
 from mooc_utils.matlab import MatlabCodeWithLogo
 from W2Anim import *
 
@@ -95,10 +95,9 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
         # LINEAR REGRESSION COEFFICIENTS FORMULA REPLACES 'E'
         self.next_slide(
             notes=
-            '''... and that the coefficients of this line can be found
-            through appropriate calculations.
-            We then saw how to implement these calculations in Python and MATLAB.
-            [CLICK]
+            '''... and that the coefficients of this line can be found through
+            appropriate calculations. We then saw how to implement these
+            calculations in Python and MATLAB. [CLICK]
             '''
         )
         LR_equations = LinearRegressionEquations().scale(0.8).move_to(minim_problem)
@@ -156,8 +155,8 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             '''
         )
         dot_operator_highlights = VGroup(
-            HighlightRectangle(sum_matlab_code.codeMobject[4][17:19]),
-            HighlightRectangle(sum_matlab_code.codeMobject[6][17:19]),
+            HighlightRectangle(sum_matlab_code.codeMobject[4][5:7]),
+            HighlightRectangle(sum_matlab_code.codeMobject[6][5:7]),
         )
 
         self.play(Create(dot_operator_highlights))
@@ -171,8 +170,8 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             '''
         )
         numpy_highlights = VGroup(
-            HighlightRectangle(sum_python_code.codeMobject[4][21]),
-            HighlightRectangle(sum_python_code.codeMobject[6][21:23]),
+            HighlightRectangle(sum_python_code.codeMobject[4][8]),
+            HighlightRectangle(sum_python_code.codeMobject[6][8:10]),
         )
 
         self.play(
@@ -188,8 +187,8 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             sum function from the NumPy module, [CLICK] ...
             '''
         )
-        sum_highlights_py = VGroup(HighlightRectangle(sum_python_code.codeMobject[i*2][12:18]) for i in range(4))
-        sum_highlights_mat = VGroup(HighlightRectangle(sum_matlab_code.codeMobject[i*2][12:15]) for i in range(4))
+        sum_highlights_py = VGroup(HighlightRectangle(sum_python_code.codeMobject[i*2][:6]) for i in range(4))
+        sum_highlights_mat = VGroup(HighlightRectangle(sum_matlab_code.codeMobject[i*2][:3]) for i in range(4))
         
         self.play(FadeOut(numpy_highlights))
         self.play(Create(sum_highlights_py))
@@ -213,8 +212,8 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             notes=
             '''We then implemented a function that takes as input two arrays
             containing the x- and y-coordinates of the available data points,
-            and computes the coefficients m and q of the regression line.
-            To define functions, the syntax differs slightly between the two
+            and computes the coefficients m and q of the regression line. To
+            define functions, the syntax differs slightly between the two
             languages: [CLICK]
             '''
         )
@@ -249,8 +248,8 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             '''
         )
         py_func_highlights = VGroup(
-            HighlightRectangle(python_function_code.codeMobject[0][12:15]),
-            HighlightRectangle(python_function_code.codeMobject[2][16:]),
+            HighlightRectangle(python_function_code.codeMobject[0][:3]),
+            HighlightRectangle(python_function_code.codeMobject[2]),
         )
 
         self.play(Create(py_func_highlights))
@@ -264,7 +263,7 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             the function header. [CLICK]
             '''
         )
-        mat_func_highlights = HighlightRectangle(matlab_function_code.codeMobject[0][12:27])
+        mat_func_highlights = HighlightRectangle(matlab_function_code.codeMobject[0][:13])
         
         self.play(FadeOut(py_func_highlights))
         self.play(FadeIn(mat_func_highlights))
@@ -275,7 +274,7 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
             notes=
             '''Using the functions we implemented on a dataset that includes
             detailed features related to a set of forest fires recorded in
-            Algeria,  [CLICK]
+            Algeria, [CLICK]
             '''
         )
         algerian_dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
@@ -396,205 +395,43 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
         self.play(Create(rh_reg_line))
 
         # SLIDE 15:  ===========================================================
-        # PLOT OF DATASET BECOMES 3D
+        # HEAD TABLE WITH BUI HIGHLIGHTED REAPPEARS
         self.next_slide(
             notes=
-            '''But what happens if we consider both temperature and humidity?
-            [CLICK]
+            '''As an exercise, you can try to compute the regression line for
+            the Build-Up Index, which is the last quantity in the dataset that
+            we did not consider. [CLICK]
             '''
         )
-        dxs = np.linspace(rh_range[0], rh_range[1], 17)
-        dys = np.linspace(t_range[0], t_range[1], 17)
-        plane = VGroup( l for x, y in zip(dxs, dys) for l in(
-            Line(ax_3d.c2p(x, t_range[0], fwi_range[0]), ax_3d.c2p(x, t_range[1], fwi_range[0]), stroke_color=BLACK, stroke_width=0.2),
-            Line(ax_3d.c2p(rh_range[0], y, fwi_range[0]), ax_3d.c2p(rh_range[1], y, fwi_range[0]), stroke_color=BLACK, stroke_width=0.2)
-            ) 
-        )
-        CAMERA_ROTATION_ANGLE = 40*DEGREES
-        phi, theta, _, _, zoom = self.camera.get_value_trackers()
-        self.play(FadeOut(ax_rh.background_lines, ax_rh.x_axis.numbers, ax_rh.y_axis.numbers, rh_reg_line))
+        self.play(FadeOut(ax_3d.x_axis, ax_3d.z_axis, ax_rh.background_lines, ax_rh.x_axis.numbers, ax_rh.y_axis.numbers, dataset_3d,
+                        threeD_labels[0], threeD_labels[2], rh_reg_line))
+        
+        self.set_camera_orientation(phi=0, theta=-90 * DEGREES, gamma=0, zoom=1)
+        BUI_highlight = HighlightRectangle(head_table.get_columns()[3][1:], color = ORANGE)
+
         self.play(
-            phi.animate.set_value(80*DEGREES),
-            theta.animate.set_value(-90*DEGREES + CAMERA_ROTATION_ANGLE),
-            zoom.animate.set_value(0.5),
-            Create(ax_3d.y_axis), Create(plane),
-            threeD_labels[0].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
-            threeD_labels[2].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS),
-            FadeIn(threeD_labels[1].rotate(CAMERA_ROTATION_ANGLE, Z_AXIS)),
-            AnimationGroup(
-                dataset_3d[i].animate.rotate(CAMERA_ROTATION_ANGLE, Z_AXIS).move_to(ax_3d.c2p(RH[i], temperature[i], FWI[i])) for i in range(len(RH))
-            ),
+            Succession(
+                Wait(0.5),
+                FadeIn(head_table),
+                Wait(0.5),
+                Create(BUI_highlight)
+            )
         )
 
         # SLIDE 16:  ===========================================================
-        # SIMPLE LINEAR REGRESSION FORMULA APPEARS AT TOP
-        self.next_slide(
-            notes=
-            '''So far, we've focused on "simple" linear regression, where we
-            have a single independent variable, x [CLICK]
-            '''
-        )
-        linear_relation = MathTex(
-            r'y = f(x) = {{mx+q}}',
-            color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE}
-        ).to_edge(UP).shift(UP)
-
-        self.add_fixed_in_frame_mobjects(linear_relation)
-        self.play(FadeIn(linear_relation))
-
-        # SLIDE 17:  ===========================================================
-        # MULTIPLE LINEAR REGRESSION REPLACES SIMPLE ONE
-        # REGRESSION PLANE APPEARS
-        self.next_slide(
-            notes=
-            '''But in many cases, we have multiple independent variables—let's
-            call them x1, x2, all the way up to xp. In this situation, the
-            regression model includes p coefficients, [CLICK]
-            '''
-        )
-        multiple_linear_relation = MathTex(
-            r'y= f(x_1, x_2, \dots, \x_p) = {{ m_1 x_1 + m_2 x_2 + \dots + m_p x_p + q}}',
-            color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE}
-        ).move_to(linear_relation)
-
-        # regression plane
-        X = np.column_stack((RH, temperature))
-        X = np.c_[X, np.ones(X.shape[0])]  # add bias term
-        beta_hat = np.linalg.lstsq(X, FWI, rcond=None)[0]
-        reg_plane = lambda x, y: beta_hat[0]*x + beta_hat[1]*y + beta_hat[2]
-        reg_plane_plot = ax_3d.plot_surface(reg_plane,
-                                            u_range=rh_range, v_range=t_range,
-                                            checkerboard_colors=(BLUE, BLUE), fill_opacity=0.7, resolution=16)
-
-        self.add_fixed_in_frame_mobjects(multiple_linear_relation)
-        self.remove(multiple_linear_relation)  # not very elegant, but otherwise the equation will be displayed early.
-        self.play(
-            AnimationGroup(
-                FadeOut(linear_relation[2], linear_relation[4:6]), # f argument, m*x
-                AnimationGroup(
-                    ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
-                    ReplacementTransform(linear_relation[3], multiple_linear_relation[7]), # )=
-                    ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
-                ),
-                FadeIn(multiple_linear_relation[2:7],  multiple_linear_relation[8:14]),
-                lag_ratio=0.5
-            )
-        )
-        self.begin_ambient_camera_rotation(rate=0)  # so that manim checks z-depth every frame
-        self.play(Create(reg_plane_plot))
-        self.wait(0.5)
-        
-        # SLIDE 18:  ===========================================================
-        # HIGHLIGHT 'm_i' COEFFICIENTS
-        self.next_slide(
-            notes=
-            '''m1 through mp, one for each independent variable [CLICK]
-            '''
-        )
-        m_i_highlights = VGroup(
-            HighlightRectangle(multiple_linear_relation[8]),
-            HighlightRectangle(multiple_linear_relation[10][1:]),
-            HighlightRectangle(multiple_linear_relation[12][-2:]),
-        )
-
-        self.add_fixed_in_frame_mobjects(m_i_highlights)
-        self.play(Create(m_i_highlights))
-
-        # SLIDE 19:  ===========================================================
-        # HIGHLIGHT 'q'
-        self.next_slide(
-            notes=
-            '''along with an intercept q. [CLICK]
-            '''
-        )
-        q_highlight = HighlightRectangle(multiple_linear_relation[-1][-1])
-
-        self.add_fixed_in_frame_mobjects(q_highlight)
-        self.play(Create(q_highlight))
-
-        # SLIDE 20:  ===========================================================
-        # FORMULA FOR Y HAT PREDICTION APPEARS
-        # LINES FROM DATA TO PREDICTIONS ARE DRAWN
-        self.next_slide(
-            notes=
-            '''Just like in simple linear regression, in multiple linear
-            regression, we calculate yi hat, which is the model's prediction for
-            the i-th data point. [CLICK]
-            '''
-        )
-        prediction_eq = MathTex(r'{{\widehat{y_i}}} = m_1 (x_1)_i + \dots + m_p (x_p)_i',
-                                color=BLACK, tex_to_color_map={'(x_1)_i':BLUE, '(x_p)_i':BLUE}
-                                ).next_to(multiple_linear_relation, DOWN)
-        prediction_eq[0].set_color(ORANGE)
-        predictions = reg_plane(RH, temperature)
-        prediction_dots = VGroup(Dot(ax_3d.c2p(rh, t, pred), color=TEAL).rotate(PI/2, X_AXIS).rotate(CAMERA_ROTATION_ANGLE, Z_AXIS)
-                                  for t, rh, pred in zip(temperature, RH, predictions))
-        residual_lines = VGroup(Line3D(data.get_center(), pred.get_center(), color=TEAL) for data, pred in zip(dataset_3d, prediction_dots))
-
-        self.play(FadeOut(m_i_highlights, q_highlight))
-        self.add_fixed_in_frame_mobjects(prediction_eq)
-        self.play(FadeIn(prediction_eq))
-        self.play(
-            AnimationGroup(
-                *[Succession(
-                    Create(l), GrowFromCenter(p),
-                    lag_ratio=0.5
-                )
-                for l, p in zip(residual_lines, prediction_dots)],
-                lag_ratio=0.2,
-                run_time=2
-            )
-        )
-        self.stop_ambient_camera_rotation()
-
-        # SLIDE 21:  ===========================================================
-        # FORMULA FOR E APPEARS
-        self.next_slide(
-            notes=
-            '''And again, the "best" fitting model is the one that minimizes the
-            sum of the squares of the residuals, just as we defined before.
-            Solving this minimization problem involves solving a linear system
-            of equations. [CLICK]
-            '''
-        )
-        residual_eq = MathTex(r'{{r_i}} = {{y_i}} - {{\widehat{y_i}}}', color=BLACK).move_to(multiple_linear_relation)
-        residual_eq[2].set_color(ORANGE)
-        residual_eq[4].set_color(ORANGE)
-        minim_problem = MathTex(r'\widehat{m_1}, \dots, \widehat{m_p} = \operatorname*{argmin}_{m_1,\dots, m_p} \sum_{i=1}^n (r_i)^2', color=BLACK).next_to(residual_eq, DOWN)
-        
-        self.play(FadeOut(multiple_linear_relation, prediction_eq))
-        self.add_fixed_in_frame_mobjects(residual_eq, minim_problem)
-        self.play(FadeIn(residual_eq, minim_problem))
-
-        # SLIDE 22:  ===========================================================
-        # MULTIPLE LINEAR REGRESSION TITLE APPEARS
-        self.next_slide(
-            notes=
-            '''In the supplementary material, you can explore this technique
-            further, in its extended form known as "multiple linear regression".
-            '''
-        )
-        mlr_title = Text('Multiple Linear Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
-
-        self.play(FadeOut(residual_eq, minim_problem))
-        self.wait(0.5)
-        self.add_fixed_in_frame_mobjects(mlr_title)
-        self.play(Write(mlr_title))
-
-        # SLIDE 23:  ===========================================================
         # RETURN TO SIMPLE LINEAR REGRESSION PLOT
         self.next_slide(
             notes=
-            '''But a key question that we didn't address is the following: how
+            '''Now, a key question that we didn't address is the following: how
             well the regression line is fitting the available data? In other
             words, how effectively does the regression line explain the
             relationship between x and y? [CLICK]
             '''
         )
-        self.play(FadeOut(ax_3d, plane, threeD_labels, dataset_3d, reg_plane_plot, prediction_dots, residual_lines, mlr_title))
+        self.play(FadeOut(head_table, BUI_highlight))
         self.clear()
-        self.set_camera_orientation(phi=0, theta=-90 * DEGREES, gamma=0, zoom=1)
         
+        ax.save_state()
         ax.center()
         linear_dataset_1 = generate_regression_dataset(reg_line.eval, 20, x_range=X_RANGE, sigma=0.04, seed=1)
         tight_dataset = points_from_data(linear_dataset_1, ax, **point_config)
@@ -604,14 +441,13 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
         
         self.play(FadeIn(ax, tight_dataset, tight_reg_line))
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # TWO LINEAR REGRESSION PLOTS SIDE BY SIDE
         self.next_slide(
             notes=
             '''It is clear that the data on the left are better fitted by a line
             compared to the data on the right. But how can we quantify this
-            intuition?  You can find the answer in the supplementary material.
-            And now, it's your turn. [END]
+            intuition? [CLICK]
             '''
         )
         ax_2 = ax.copy().move_to(HALF_SCREEN_RIGHT)
@@ -621,10 +457,205 @@ class W2TWrapup_slides(ThreeDMOOCSlide):
         loose_reg_line = RegressionLine(_loose_fit[1],  _loose_fit[0], ax_2, x_range=X_RANGE)
         loose_reg_line.suspend_updating()
         loose_plot = VGroup(ax_2, loose_dataset, loose_reg_line).move_to(HALF_SCREEN_RIGHT)
+        tight_plot = VGroup(ax, tight_dataset, tight_reg_line)
 
         self.play(
             Succession(
-                VGroup(ax, tight_dataset, tight_reg_line.line).animate.scale(0.6).move_to(HALF_SCREEN_LEFT),
+                tight_plot.animate.scale(0.6).move_to(HALF_SCREEN_LEFT),
                 FadeIn(loose_plot.scale(0.6), shift= RIGHT*FRAME_WIDTH/2)
+            )
+        )
+
+        # SLIDE 18:  ===========================================================
+        # COEFFICIENT OF DETERMINATION TITLE APPEARS
+        self.next_slide(
+            notes=
+            '''One commnly used metric for this purpose is the Coefficient of
+            determination, [CLICK] ...
+            '''
+        )
+        title = Text('Coefficient of Determination', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        self.play(Write(title))
+
+        # SLIDE 19:  ===========================================================
+        # FORMULA FOR R2 APPEARS
+        self.next_slide(
+            notes=
+            '''... or R squared, which is defined as 1 - E / E bar, [CLICK] ...
+            '''
+        )
+        r2_formula = MathTex(r'R^2 = 1 - \frac{E}{\bar{E}}', color=BLACK)
+
+        self.play(FadeOut(tight_plot, loose_plot))
+        self.play(FadeIn(r2_formula))
+
+        # SLIDE 20:  ===========================================================
+        # E DEFINITION APPEARS
+        self.next_slide(
+            notes=
+            '''...where E is the sum of squared residuals that we defined
+            before, [CLICK] ...
+            '''
+        )
+        E_formula = MathTex(r'E = \sum_{i=1}^n r_i^2 = \sum_{i=1}^n (\widehat{y_i} - y_i)^2', color=BLACK,
+                            tex_to_color_map={'y_i':ORANGE, r'\widehat{y_i}': ORANGE})
+        
+        self.play(r2_formula.animate.shift(UP))
+        E_formula.next_to(r2_formula, DOWN, buff=0.5)
+        self.play(FadeIn(E_formula))
+
+        # SLIDE 21:  ===========================================================
+        # DEFINITIONS OF E BAR AND OF Y BAR APPEAR
+        self.next_slide(
+            notes=
+            '''...and E bar is the sum of the squares of the distances of the
+            data points from the mean of y, denoted as y bar. [CLICK]
+            '''
+        )
+        Ebar_formula = MathTex(r'\bar{E} = \sum_{i=1}^n (\widehat{y_i} - \bar{y})^2, \ \bar{y} = \frac{1}{n}\sum_{i=1}^{n} y_i', color=BLACK,
+                               tex_to_color_map={'y_i':ORANGE, r'\widehat{y_i}': ORANGE})
+        Ebar_formula.next_to(E_formula, DOWN, buff=0.5)
+        
+        self.play(FadeIn(Ebar_formula))
+
+        # SLIDE 22:  ===========================================================
+        # R^2 IN [0, 1] APPEARS
+        self.next_slide(
+            notes=
+            '''R2 is a value between 0 and 1 that measures the fraction of the
+            variability in the data that is explained by the model. [CLICK]
+            '''
+        )
+        r2_formula_ext = MathTex(r'R^2 = 1 - \frac{E}{\bar{E}} \in [0, 1]', color=BLACK)
+
+        self.play(
+            AnimationGroup(
+                FadeOut(E_formula, Ebar_formula),
+                ReplacementTransform(r2_formula[0], r2_formula_ext[0][:9]),
+                FadeIn(r2_formula_ext[0][9:]),
+                lag_ratio=0.5
+            )
+        )
+
+        # SLIDE 23:  ===========================================================
+        # GRAPH WITH POOR FIT APPEARS
+        self.next_slide(
+            notes=
+            '''If R2 is close to 0, it indicates a poor fit of the data, [CLICK]
+            '''
+        )
+        ax.restore()
+        dataset_poor = generate_regression_dataset(reg_line.eval, 20, x_range=X_RANGE, sigma=0.15, seed=3)
+        r2_showcase_points = points_from_data(dataset_poor, ax, **point_config).set_z_index(1)
+        reg_line = RegressionLine(*linear_reg_coeffs(dataset_poor), ax, x_range=X_RANGE)
+        reg_line.add_dataset(r2_showcase_points)
+        counter = R2Counter(reg_line, r2_showcase_points, num_decimal_places=3).set_color(BLACK).move_to(title)
+        
+        self.play(
+            AnimationGroup(
+                FadeOut(title, r2_formula_ext[0][3:]),
+                AnimationGroup(
+                    ReplacementTransform(r2_formula_ext[0][:2], counter.label[0]),  # ugh, to avoid wrong interpolation
+                    ReplacementTransform(r2_formula_ext[0][2], counter.label[1]),
+                ),
+                FadeIn(ax, r2_showcase_points, reg_line, reg_line.proj_lines, reg_line.proj_points),
+                FadeIn(counter.value),
+                lag_ratio=0.5
+            )
+        )
+
+        # SLIDE 24:  ===========================================================
+        # LINE IS ANIMATED TO WORST CASE SCENARIO
+        self.next_slide(
+            notes=
+            '''...and in the worst case scenario, a baseline model which always
+            predicts y bar will have R2 = 0. [CLICK]
+            '''
+        )
+        dataset_worst = generate_regression_dataset(lambda x: 0.7 +0*x, 20, x_range=X_RANGE, sigma=0.2, seed=3)
+
+        def MoveDatasetAndLine(rline: RegressionLine, points: VGroup, new_dataset: np.ndarray, new_coeffs = None):
+            if new_coeffs  is None:
+                new_coeffs = linear_reg_coeffs(new_dataset)
+            return AnimationGroup(
+                AnimationGroup(
+                    points[i].animate.move_to(rline.ax.c2p(*new_dataset[i]))
+                    for i in range(len(r2_showcase_points))
+                ),
+                rline.slope.animate.set_value(new_coeffs[0]),
+                rline.intercept.animate.set_value(new_coeffs[1])
+            )
+        
+        self.play(MoveDatasetAndLine(reg_line, r2_showcase_points, dataset_worst, new_coeffs=(0, np.mean(dataset_worst[:, 1]))))
+
+        intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
+        intercept_label = MathTex(r'\bar{y}', color=BLACK).scale(LABELS_SIZE).next_to(intercept_dot, LEFT)
+
+        self.play(
+            GrowFromCenter(intercept_dot),
+            FadeIn(intercept_label)
+        )
+
+        # SLIDE 25:  ===========================================================
+        # LINE IS ANIMATED TO CASE WITH GOOD FIT
+        self.next_slide(
+            notes=
+            '''Vice versa, if R2 is close to 1 it indicates a good fit. [CLICK]
+            '''
+        )
+        dataset_good = generate_regression_dataset(lambda x: 0.35*x +0.35, 20, x_range=X_RANGE, sigma=0.05, seed=3)
+        
+        self.play(FadeOut(intercept_dot, intercept_label))
+        self.play(MoveDatasetAndLine(reg_line, r2_showcase_points, dataset_good))
+
+        # SLIDE 26:  ===========================================================
+        # PERFECT FIT CASE IS SHOWN
+        self.next_slide(
+            notes=
+            '''In the best case, the predicted values exactly match the observed
+            values, which results E=0 and R2 = 1. [CLICK]
+            '''
+        )
+        dataset_best = generate_regression_dataset(reg_line.eval, 20, x_range=X_RANGE, sigma=0.0, seed=3)
+
+        self.play(MoveDatasetAndLine(reg_line, r2_showcase_points, dataset_best))
+
+        # SLIDE 27:  ===========================================================
+        # 
+        self.next_slide(
+            notes=
+            '''Try yourself to implement a function that computes the
+            coefficient of determination and evaluate which one among
+            temperature, relative humidity and buildup index regression lines
+            has the best fit. [END]
+            '''
+        )
+        sample_r2_code_py = ColabCodeWithLogo(
+            r'''
+            def R2(x, y):
+                E = ...
+                E_bar = ...
+                r_2 = ...
+                return r_2
+            ''',
+            logo_pos=LEFT
+        )
+        sample_r2_code_mat = MatlabCodeWithLogo(
+            r'''
+            function r2 = R2(x, y):
+                E = ...
+                E_bar = ...
+                r_2 = ...
+            end
+            ''',
+            logo_pos=LEFT
+        ).next_to(sample_r2_code_py, DOWN, buff=1).align_to(sample_r2_code_py, LEFT)
+        Group(sample_r2_code_py, sample_r2_code_mat).center()
+
+        self.play(FadeOut(ax, reg_line, r2_showcase_points, reg_line.proj_lines, reg_line.proj_points, counter))
+        self.play(
+            Succession(
+                Wait(0.5),
+                FadeIn(sample_r2_code_py, sample_r2_code_mat)
             )
         )

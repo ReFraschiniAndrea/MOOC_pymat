@@ -68,6 +68,13 @@ def E(m, q, data_points):
     E = np.sum(np.square((m*x +q) - y))
     return E
 
+def R2(m, q, data_points):
+    SSres = E(m, q, data_points)
+    y = data_points[:, 1]
+    SStot = np.sum(np.square(y - np.mean(y)))
+    r2 = 1 - SSres/SStot
+    return max(0, min(1, r2))
+
 
 class ECounter(Variable):
     def __init__(self, regression_line: RegressionLine, data: np.ndarray, num_decimal_places = 2, **kwargs):
@@ -82,6 +89,25 @@ class ECounter(Variable):
                 E(regression_line.slope.get_value(), regression_line.intercept.get_value(), data)
             )
         )
+
+class R2Counter(Variable):
+    def __init__(self, regression_line: RegressionLine, data: VGroup, num_decimal_places = 2, **kwargs):
+        self.data = data
+        self.regLine = regression_line
+        super().__init__(
+            R2(regression_line.slope.get_value(), regression_line.intercept.get_value(), self._data_coords()),
+            'R^2',
+            num_decimal_places=num_decimal_places,
+            color=BLACK,
+            **kwargs)
+        self.value.add_updater(
+            lambda v: v.set_value(
+                R2(regression_line.slope.get_value(), regression_line.intercept.get_value(), self._data_coords())
+            )
+        )
+    
+    def _data_coords(self):
+        return np.stack([self.regLine.ax.p2c(p.get_center()) for p in self.data], axis=0)[:,:2]
 
 def generate_regression_dataset(
     func: callable,
@@ -158,13 +184,6 @@ class LinearRegressionEquations(VMobject):
                 FadeOut(self),
                 *[ReplacementTransform(sums[s].copy(), target[t])
                 for s, t in sums2target_map.items()]
-                # ReplacementTransform(sums[0].copy().set_opacity(0), target[0]),
-                # ReplacementTransform(sums[1].copy().set_opacity(0), target[0]),
-                # ReplacementTransform(sums[2].copy().set_opacity(0), target[0]),
-                # ReplacementTransform(sums[3].copy().set_opacity(0), target[1]),
-                # ReplacementTransform(sums[4].copy().set_opacity(0), target[1]),
-                # ReplacementTransform(sums[5].copy().set_opacity(0), target[2]),
-                # ReplacementTransform(sums[6].copy().set_opacity(0), target[3]),
             )
         )
 
@@ -172,3 +191,23 @@ def mq_throgh_points(p1, p2):
     m = (p2[1]-p1[1])/(p2[0]-p1[0])
     q = p1[1] -m*p1[0]
     return m, q
+
+def linear_reg_coeffs(dataset: np.ndarray):
+    coeffs = np.polynomial.polynomial.Polynomial.fit(dataset[:, 0], dataset[:, 1], 1).convert().coef
+    return coeffs[1], coeffs[0]
+
+class WildfireFactorsScheme(VGroup):
+    def __init__(self, icons_height, **kwargs):
+        self.tri = Triangle().scale(3).center()
+        self.circles = VGroup(Circle(stroke_color=BLACK, fill_color=WHITE, radius= icons_height*2 + 0.5, stroke_width=6, fill_opacity=0).move_to(self.tri.get_vertices()[i]) for i in range(3))
+        
+        self.wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0])
+        self.high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[1])
+        self.humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[2])
+        
+        self.causal_arrows = VGroup(
+            Line(self.tri.get_vertices()[0], self.tri.get_vertices()[1], color=BLACK, stroke_width=6, buff=icons_height*2 + 0.5),
+            Line(self.tri.get_vertices()[0], self.tri.get_vertices()[2], color=BLACK, stroke_width=6, buff=icons_height*2 + 0.5),
+        )
+
+        super().__init__(self.causal_arrows, self.circles, self.wildfire_icon, self.high_temp_icon, self.humidty_icon, **kwargs)

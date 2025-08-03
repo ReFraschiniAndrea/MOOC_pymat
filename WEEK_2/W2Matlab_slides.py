@@ -18,9 +18,9 @@ class W2Matlab_slides(MOOCSlide):
         self.next_slide(
             notes=
             '''Let's explore how linear regression can be implemented in Matlab.
-            Our ultimate goal is to answer key questions, such
-            as: To what extent do variables like temperature and humidity affect
-            the risk of wildfires? [CLICK]
+            Our ultimate goal is to answer key questions, such as: To what
+            extent do variables like temperature and humidity affect the risk of
+            wildfires? [CLICK]
             '''
         )
         LR_equations = LinearRegressionEquations().to_edge(UP).shift(UP*1.5)
@@ -54,15 +54,22 @@ class W2Matlab_slides(MOOCSlide):
         intercept_dot = Dot(ax.c2p(0, reg_line.intercept.get_value()), color=PURPLE_C)
         intercept_label = MathTex(r'\hat{q}', color=BLACK).scale(0.75).next_to(intercept_dot, LEFT)
 
+        initial_graph = VGroup(ax, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations).scale(0.75).shift(DOWN*0.35)
+        surrounding_rect = SurroundingRectangle(initial_graph, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,
+                                              stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
+        mat_env = MatlabEnv(r'Assets\W2\matlab_empty.png')
+
         self.play(
             Succession(
+                FadeIn(mat_env),
+                Wait(0.5),
+                FadeIn(surrounding_rect),
                 FadeIn(ax, ax_labels, dataset_points),
                 Create(reg_line),
                 FadeIn(rise_over_run, slope_label,intercept_dot, intercept_label),
                 FadeIn(LR_equations)
             )
         )
-        initial_graph = VGroup(ax, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations)
 
         # SLIDE 02:  ===========================================================
         # MATLAB ENVIRONMENT FADES IN
@@ -74,11 +81,10 @@ class W2Matlab_slides(MOOCSlide):
             [CLICK]...
             '''
         )
-        mat_env = MatlabEnv(r'Assets\W2\matlab_empty.png')
         hand_cursor = Cursor()
         self.play(
             Succession(
-                FadeOut(initial_graph),
+                FadeOut(initial_graph, surrounding_rect),
                 Wait(0.2),
                 FadeIn(mat_env),
                 Wait(1),
@@ -540,8 +546,10 @@ class W2Matlab_slides(MOOCSlide):
             '''
         )
         fscheme.add_outputs("m", "q")
-        m_label = MathTex(r"\hat{m}", color=BLACK).next_to(fscheme.OutputLabels[0], RIGHT, buff=1)
-        q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1)
+        m_label = MathTex(r"\hat{m}", color=BLACK).next_to(fscheme.OutputLabels[0], RIGHT, buff=1).scale(1.2)
+        m_label.shift((fscheme.OutputLabels[0].get_y()-m_label[0][1].get_y())*UP)
+        q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1).scale(1.2)
+        q_label.shift((fscheme.OutputLabels[1].get_y()-q_label[0][1].get_y())*UP).match_x(m_label)
 
         self.play(FadeIn(fscheme.OutputArrows, fscheme.OutputLabels, m_label, q_label))
 
@@ -596,8 +604,9 @@ class W2Matlab_slides(MOOCSlide):
             notes=
             '''First we will compute the results of each sum, and then we will
             combine the results. Before starting the implementation, it's worth
-            noting that some sums are repeated. The sum over y_i appears twice, and the sum over x_i even three times! We can take advantage
-            of this, and compute these terms once and reuse the results wherever
+            noting that some sums are repeated. The sum over y_i appears twice,
+            and the sum over x_i even three times! We can take advantage of
+            this, and compute these terms once and reuse the results wherever
             needed. [CLICK]
             '''
         ) 
@@ -613,7 +622,7 @@ class W2Matlab_slides(MOOCSlide):
         
         self.play(FadeIn(sums_highlights))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # THE NON RPEATED SUM TERMS ARE EXTRACTED FROM THE EQUATIONS
         self.next_slide(
             notes=
@@ -625,7 +634,7 @@ class W2Matlab_slides(MOOCSlide):
         sum_terms = LR_equations.get_sums_without_repetition().arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
         self.play(LR_equations.ExtractSumTerms(target=sum_terms))
 
-        # SLIDE 36:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # SAMPLE SUM FOR LOOP CODE IS WRITTEN
         self.next_slide(
             notes=
@@ -650,7 +659,7 @@ class W2Matlab_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 37:  ===========================================================
+        # SLIDE 35:  ===========================================================
         # SAMPLE SUM FOR LOOP CODE TRANSFORMS INTO SUM(X)
         self.next_slide(
             notes=
@@ -672,7 +681,7 @@ class W2Matlab_slides(MOOCSlide):
             Create(code_sum_highlights[1]),
         )
 
-        # SLIDE 38:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # SUM(Y) LINE WRITTEN
         self.next_slide(
             notes=
@@ -685,7 +694,7 @@ class W2Matlab_slides(MOOCSlide):
             Create(code_sum_highlights[3]),
         )
 
-        # SLIDE 39:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # EMPTY RECTANGLE BROUGHT IN ON TOP
         # VECTORIZED OPERATIONS TITLE WRITTEN
         self.next_slide(
@@ -716,23 +725,17 @@ class W2Matlab_slides(MOOCSlide):
         first_group.add(title)
         first_group.center()
         
-        mixed_sum_terms = sum_terms[2:].scale(0.8).arrange_in_grid(2, 1, buff=1, cell_alignment=LEFT).next_to(x_vector, LEFT, buff = 0.8)
 
         DSS2 = DynamicSplitScreen(MATLAB_LIGHTGRAY, WHITE, direction=DOWN, buff = 0.5)
         DSS2.add_empty_side_obj(FRAME_HEIGHT)
         DSS2.hard_bring_in()
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:])
-        mixed_sum_terms.shift(UP*FRAME_HEIGHT)
         self.add(DSS2); self.remove(DSS)
 
-        self.play(
-            DSS2.bringOut(),
-            mixed_sum_terms.animate.shift(DOWN*FRAME_HEIGHT)
-        )
-
+        self.play(DSS2.bringOut())
         self.play(Write(title))
 
-        # SLIDE 40:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # X, Y COLUMN VECTORS APPEAR
         self.next_slide(
             notes=
@@ -746,13 +749,17 @@ class W2Matlab_slides(MOOCSlide):
             FadeIn(*vector_labels[:2])
         )
         
-        # SLIDE 41:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # EMPTY X*Y VECTOR APPEARS
         self.next_slide(
             notes=
             '''The operation x .* y creates a new array, [CLICK]...
             '''
         )
+        mixed_sum_terms = sum_terms[2:].scale(0.8)
+        mixed_sum_terms[0].next_to(x_vector, LEFT, buff = 0.8)
+        mixed_sum_terms[1].align_to(mixed_sum_terms[0], DL)
+        self.add(mixed_sum_terms); self.remove(mixed_sum_terms)
         xy_term_highlights = VGroup(
             HighlightRectangle(vector_labels[2][1:3]),      # .* in x.*y
             HighlightRectangle(mixed_sum_terms[0][5:]),     # x_i y_i
@@ -760,11 +767,12 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(
             Create(xy_vector.get_lines()),
-            FadeIn(vector_labels[2])
+            FadeIn(vector_labels[2]),
+            FadeIn(mixed_sum_terms[0])
         )
         self.play(Create(xy_term_highlights[0]), Create(xy_term_highlights[1]))
 
-        # SLIDE 42:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # X, Y TERMS ANIMATED INTO X*Y TERMS
         self.next_slide(
             notes=
@@ -786,7 +794,7 @@ class W2Matlab_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 43:  ===========================================================
+        # SLIDE 41:  ===========================================================
         # '.*' HIGHLIGHTED
         self.next_slide(
             notes=
@@ -797,7 +805,7 @@ class W2Matlab_slides(MOOCSlide):
         dot_star_highlight = HighlightRectangle(vector_labels[2][1])
         self.play(Transform(xy_term_highlights[0], dot_star_highlight))
 
-        # SLIDE 44:  ===========================================================
+        # SLIDE 42:  ===========================================================
         # SUM(X .* Y) LINE WRITTEN
         self.next_slide(
             notes=
@@ -806,7 +814,7 @@ class W2Matlab_slides(MOOCSlide):
             '''
         )
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:], consider_follow=linear_regression_code[4:6], center_horizontally=False)
-        DSS2.add_main_obj(VGroup(first_group, mixed_sum_terms))
+        DSS2.add_main_obj(VGroup(first_group, mixed_sum_terms[0]))
 
         self.play(FadeOut(xy_term_highlights))
         self.play(DSS2.bringIn())
@@ -819,7 +827,7 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(Create(second_xy_term_highlights[0]), Create(second_xy_term_highlights[1]))
 
-        # SLIDE 45:  ===========================================================
+        # SLIDE 43:  ===========================================================
         # EMPTY X^2 APPEARS
         # ANIMATE X TERMS INTO X^2 TERMS
         self.next_slide(
@@ -836,16 +844,17 @@ class W2Matlab_slides(MOOCSlide):
         x2_vector.move_to(xy_vector)
         vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
         x2_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[3][1:]), # .^2
-            HighlightRectangle(mixed_sum_terms[1][6]),    # ^2 in the sum
+            HighlightRectangle(vector_labels[3][1:], ORANGE), # .^2
+            HighlightRectangle(mixed_sum_terms[1][6], ORANGE),    # ^2 in the sum
         )
 
         self.play(
             Succession(
-                FadeOut(y_vector, xy_vector, *vector_labels[1:3]) ,
+                FadeOut(y_vector, xy_vector, *vector_labels[1:3], mixed_sum_terms[0]) ,
                 AnimationGroup(
                     Create(x2_vector.get_lines()),
-                    FadeIn(vector_labels[-1])
+                    FadeIn(vector_labels[-1]),
+                    FadeIn(mixed_sum_terms[1])
                 ),
                 AnimationGroup(
                     Create(x2_term_highlights[0]),
@@ -865,7 +874,7 @@ class W2Matlab_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 46:  ===========================================================
+        # SLIDE 44:  ===========================================================
         # SUM(X^2) LINE WRITTEN
         self.next_slide(
             notes=
@@ -875,18 +884,18 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(FadeOut(x2_term_highlights))
 
-        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1], mixed_sum_terms))
+        DSS2.add_main_obj(VGroup(title, x_vector, x2_vector, vector_labels[0], vector_labels[-1], mixed_sum_terms[1]))
         self.play(DSS2.bringIn())
 
         second_x2_term_highlights = VGroup(
-            HighlightRectangle(mixed_sum_terms[1]),    # whole sum
-            HighlightRectangle(linear_regression_code[5]),    # line of code
+            HighlightRectangle(mixed_sum_terms[1], ORANGE),    # whole sum
+            HighlightRectangle(linear_regression_code[5], ORANGE),    # line of code
         )
 
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[5]))
         self.play(Create(second_x2_term_highlights[0]), Create(second_x2_term_highlights[1]))
 
-        # SLIDE 47:  ===========================================================
+        # SLIDE 45:  ===========================================================
         # VECTORIZED OPERATIONS BROUGHT OUT OF FRAME
         # 'm', 'q' EQUATIONS BROUGHT BACK IN
         self.next_slide(
@@ -900,7 +909,7 @@ class W2Matlab_slides(MOOCSlide):
         DSS.reset()
         DSS.add_empty_side_obj(DSS2.mainRect.height)
         DSS.hard_bring_in()
-        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, mixed_sum_terms))
+        DSS.add_side_obj( VGroup(x_vector, x2_vector, vector_labels[0], vector_labels[-1], title, mixed_sum_terms[1]))
         DSS2.remove_side_obj(); self.add(DSS2); self.remove(DSS2)
         self.add(DSS)
 
@@ -910,7 +919,7 @@ class W2Matlab_slides(MOOCSlide):
         DSS.add_main_obj(linear_regression_code[:6], follow_obj=linear_regression_code[6:])
         self.play(DSS.bringIn())
 
-        # SLIDE 48:  ===========================================================
+        # SLIDE 46:  ===========================================================
         # N = LEN(X) WRITTEN
         self.next_slide(
             notes=
@@ -919,17 +928,16 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[7]))
 
-        # SLIDE 48:  ===========================================================
+        # SLIDE 47:  ===========================================================
         # NUMERATOR LINE WRITTEN
         self.next_slide(
             notes=
-            '''...and then the numerator of the expression giving m.
-            [CLICK]
+            '''...and then the numerator of the expression giving m. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[8]))
 
-        # SLIDE 49:  ===========================================================
+        # SLIDE 48:  ===========================================================
         # DENOMINATOR LINE WRITTEN
         self.next_slide(
             notes=
@@ -938,7 +946,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[9]))
 
-        # SLIDE 50:  ===========================================================
+        # SLIDE 49:  ===========================================================
         # NUMERATOR/DENOMINATOR LINE WRITTEN
         self.next_slide(
             notes=
@@ -948,7 +956,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[10]))
 
-        # SLIDE 51:  ===========================================================
+        # SLIDE 50:  ===========================================================
         # Q LINE WRITTEN
         # END LINE WRITTEN
         self.next_slide(
@@ -966,7 +974,7 @@ class W2Matlab_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 52:  ===========================================================
+        # SLIDE 51:  ===========================================================
         # BRING OUT TOP RECTANGLE TO LEAVE ONLY THE FUNCTION AS THE FOCUS
         self.next_slide(
             notes=
@@ -977,7 +985,7 @@ class W2Matlab_slides(MOOCSlide):
         DSS.add_main_obj(linear_regression_code[:])  # NOTE: need [:] because the bounding box got messed up
         self.play(DSS.bringOut())
         
-        # SLIDE 57:  ===========================================================
+        # SLIDE 52:  ===========================================================
         # SWITCH BACK TO WEEK2 SCRIPT
         self.next_slide(
             notes=
@@ -1005,7 +1013,7 @@ class W2Matlab_slides(MOOCSlide):
         self.add(mat_env); mat_env.clear(self)
         self.wait(0.5)
 
-        # SLIDE 58:  ===========================================================
+        # SLIDE 53:  ===========================================================
         # OUT OF MATLAB
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
@@ -1035,7 +1043,7 @@ class W2Matlab_slides(MOOCSlide):
         DSS.reset(); self.add(DSS); mat_env.clear(self)
         self.play(LR_example_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 59:  ===========================================================
+        # SLIDE 54:  ===========================================================
         # X = TEMPERATURE CODE LINE APPEARS
         self.next_slide(
             notes=
@@ -1045,7 +1053,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 60:  ===========================================================
+        # SLIDE 55:  ===========================================================
         # HIGHLIGHT 'TEMPERATURE'
         self.next_slide(
             notes=
@@ -1057,7 +1065,7 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(Create(temperature_highlight))
         
-        # SLIDE 61:  ===========================================================
+        # SLIDE 56:  ===========================================================
         # Y = FWI CODE LINE APPEARS
         self.next_slide(
             notes=
@@ -1068,7 +1076,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(FadeOut(temperature_highlight))
         self.play(LR_example_code.TypeLetterbyLetter(lines=[2]))
 
-        # SLIDE 62:  ===========================================================
+        # SLIDE 57:  ===========================================================
         # LINEAR REGRESSION FUNCTION CALL LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -1081,7 +1089,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[4]))
 
-        # SLIDE 63:  ===========================================================
+        # SLIDE 58:  ===========================================================
         # PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
@@ -1091,14 +1099,14 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
 
-        # SLIDE 64:  ===========================================================
+        # SLIDE 59:  ===========================================================
         # '%f' F-STRINGS HIGHLIGHTED
         self.next_slide(
             notes=
             '''In MATLAB, the "fprintf" function is used to format and display
-            output. The "%f" specifies that the variable should be displayed
-            as a floating-point number. In this case,
-            `m` and `q` are the variables being printed. [CLICK]
+            output. The "%f" specifies that the variable should be displayed as
+            a floating-point number. In this case, `m` and `q` are the variables
+            being printed. [CLICK]
             '''
         )
         perc4f_highlights = VGroup(
@@ -1108,7 +1116,7 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(Create(h) for h in perc4f_highlights)
 
-        # SLIDE 65:  ===========================================================
+        # SLIDE 60:  ===========================================================
         # INTO MATLAB, CODE IS RUN, RESULT OUTPUT APPEARS
         self.next_slide(
             notes=
@@ -1126,7 +1134,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(mat_env.Run())
 
-        # SLIDE 66:  ===========================================================
+        # SLIDE 61:  ===========================================================
         # RETURN TO EMPTY SCREEN
         # WRITE % PLOTTING
         self.next_slide(
@@ -1157,7 +1165,7 @@ class W2Matlab_slides(MOOCSlide):
         mat_env.clear(self)
         self.play(plotting_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 67:  ===========================================================
+        # SLIDE 62:  ===========================================================
         # FIGURE LINE WRITTEN
         self.next_slide(
             notes=
@@ -1166,7 +1174,7 @@ class W2Matlab_slides(MOOCSlide):
         )
         self.play(plotting_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 68:  ===========================================================
+        # SLIDE 63:  ===========================================================
         # SCATTER LINE WRITTEN, RESULT SHOWN
         self.next_slide(
             notes=
@@ -1182,7 +1190,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
         self.play(DSS.bringIn(consider_follow = plotting_code[3:5]))
 
-        # SLIDE 69:  ===========================================================
+        # SLIDE 64:  ===========================================================
         # HOLD ON AND PLOT LINES APPEAR, RESULT SHOWN
         self.next_slide(
             notes=
@@ -1196,7 +1204,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[3, 4]))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 70:  ===========================================================
+        # SLIDE 65:  ===========================================================
         # X, Y LABEL LINES AND RESULT SHOWN
         self.next_slide(
             notes=
@@ -1210,7 +1218,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[6, 7], lag_ratio=0))
         self.play(FadeIn(new_plot_2), FadeOut(DSS.secondaryObj))
 
-        # SLIDE 71:  ===========================================================
+        # SLIDE 66:  ===========================================================
         # GRID, TITLE LEGEND LINES AND RESULT SHOWN
         self.next_slide(
             notes=
@@ -1224,7 +1232,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(plotting_code.TypeLetterbyLetter(lines=[8, 9, 10]))
         self.play(FadeIn(new_plot_3), FadeOut(new_plot_2))
 
-        # SLIDE 72:  ===========================================================
+        # SLIDE 67:  ===========================================================
         # INTO MATLAB, CODE IS RUN, FINAL PLOT APPEARS
         self.next_slide(
             notes=
@@ -1250,7 +1258,7 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(mat_env.Run())
 
-        # SLIDE 73:  ===========================================================
+        # SLIDE 68:  ===========================================================
         # PLOT CODE COMES BACK IN
         # 'TEMPERATURE' IS REPLACED WITH 'RH' IN THE CODE
         # RETURN TO MATLAB ENV
@@ -1290,7 +1298,7 @@ class W2Matlab_slides(MOOCSlide):
         
         self.play(replacement_code.IntoMatlab(mat_env, target_cell=0))
 
-        # SLIDE 74:  ===========================================================
+        # SLIDE 69:  ===========================================================
         # CODE IS RUN, SECOND PLOT APPEARS
         self.next_slide(
             notes=
@@ -1303,7 +1311,7 @@ class W2Matlab_slides(MOOCSlide):
 
         self.play(mat_env.Run())
 
-        # SLIDE 75:  ===========================================================
+        # SLIDE 70:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
@@ -1323,29 +1331,26 @@ class W2Matlab_slides(MOOCSlide):
         
         self.play(FadeIn(Group(temp_fwi_plot, second_window), shift=FRAME_WIDTH/4*LEFT))
 
-        # SLIDE 75:  ===========================================================
+        # SLIDE 71:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
-            '''In general, linear
-            regression helps us to extract valuable insights from the data,
-            enabling us to quantify the relationships between variables. [END]
+            '''In general, linear regression helps us to extract valuable
+            insights from the data, enabling us to quantify the relationships
+            between variables. [END]
             '''
         )
-        self.remove(LR_equations)
-        initial_graph.remove(LR_equations)
-        LR_equations.restore().shift(DOWN*0.5)
-        initial_graph.scale(0.65)
         mat_env.remove(mat_env.output)  # so that it is not faded out later
+        wf_fact = WildfireFactorsScheme(icons_height=0.6).scale(0.9)
 
         self.play(
             AnimationGroup(
                 AnimationGroup(
-                    Group(temp_fwi_plot, second_window).animate.scale(0.6).next_to(initial_graph, LEFT),
-                    mat_env.output.animate.scale(0.6).next_to(initial_graph, RIGHT),
+                    Group(temp_fwi_plot, second_window).animate.scale(0.8).next_to(wf_fact.circles[0], LEFT, buff=0.5).shift(DOWN*0),
+                    mat_env.output.animate.scale(0.8).next_to(wf_fact.circles[0], RIGHT, buff=0.5).shift(DOWN*0),
                     FadeOut(mat_env)
                 ),
-                FadeIn(initial_graph, LR_equations),
+                FadeIn(wf_fact),
                 lag_ratio=0.5
             )
         )

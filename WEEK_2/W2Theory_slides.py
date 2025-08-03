@@ -35,31 +35,21 @@ class W2Theory_slides(MOOCSlide):
             influence the risk of wildfires? [CLICK]
             '''
         )
-        tri = Triangle().scale(3).center()
-        circles = [Circle(stroke_color=BLACK, fill_color=WHITE, radius= ICONS_HEIGHT*2 + 0.5, stroke_width=6, fill_opacity=0).move_to(tri.get_vertices()[i]) for i in range(3)]
-        
-        wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[0])
-        high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[1])
-        humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[2])
-       
-        causal_arrows = VGroup(
-            Line(tri.get_vertices()[0], tri.get_vertices()[1], color=BLACK, stroke_width=6, buff=ICONS_HEIGHT*2 + 0.5),
-            Line(tri.get_vertices()[0], tri.get_vertices()[2], color=BLACK, stroke_width=6, buff=ICONS_HEIGHT*2 + 0.5),
-        )
+        wf_fact = WildfireFactorsScheme(icons_height=ICONS_HEIGHT)
 
         self.play(
             Succession(
-                AnimationGroup(Create(circles[0]), FadeIn(wildfire_icon)),
+                AnimationGroup(Create(wf_fact.circles[0]), FadeIn(wf_fact.wildfire_icon)),
                 Wait(0.5),
-                AnimationGroup(Create(circles[1]), FadeIn(high_temp_icon)),
-                AnimationGroup(Create(circles[2]), FadeIn(humidty_icon)),
-                FadeIn(causal_arrows)
+                AnimationGroup(Create(wf_fact.circles[1]), FadeIn(wf_fact.high_temp_icon)),
+                AnimationGroup(Create(wf_fact.circles[2]), FadeIn(wf_fact.humidty_icon)),
+                FadeIn(wf_fact.causal_arrows)
             )
         )
 
         # SLIDE 03:  ===========================================================
         # HUMIDITY AND FIRE RISK ICONS MOVE TO APPEARING AXES
-        # GRAPH WITH NEGATIVE CORRELATION APPEARS
+        # ARROW INDICATING NEGATIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''For example, we might expect that, the higher the humidity in the
@@ -82,11 +72,11 @@ class W2Theory_slides(MOOCSlide):
         )
 
         forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 0.3, 0))
-        dry_icon = humidty_icon.copy().set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
+        dry_icon = wf_fact.humidty_icon.copy().set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
         self.play(
-            FadeOut(*circles, causal_arrows, high_temp_icon),
-            wildfire_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0)),
-            humidty_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0)),
+            FadeOut(wf_fact.circles, wf_fact.causal_arrows, wf_fact.high_temp_icon),
+            wf_fact.wildfire_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0)),
+            wf_fact.humidty_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0)),
             )
         self.play(
             Create(ax),
@@ -96,14 +86,14 @@ class W2Theory_slides(MOOCSlide):
 
         rising_arrow = SVGMobject(r"Assets\W2\rising_arrow_icon.svg") 
         rising_arrow.set_color(BLUE).stretch_to_fit_width(rising_arrow.width*1.5).scale(1.3)
-        rising_arrow.flip(RIGHT).rotate(PI/4).center()
+        rising_arrow.rotate(-PI/4).center()
 
         self.wait(0.3)
-        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(DL), run_time = 1.5))
+        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(UL), run_time = 1.5))
 
         # SLIDE 04:  ===========================================================
         # TEMPERATURE ICON REPLACES HUMIDITY ONE
-        # GRAPH WITH POSITIVE CORRELATION APPEARS
+        # ARROW INDICATING POSITIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''Similarly, we expect that high temperature increases the risk of
@@ -111,17 +101,17 @@ class W2Theory_slides(MOOCSlide):
             '''
         )
         low_temp_icon = SVGMobject(r'Assets\W2\low_temperature_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT).move_to(dry_icon)
-        high_temp_icon.scale_to_fit_height(ICONS_HEIGHT).move_to(humidty_icon)
+        wf_fact.high_temp_icon.scale_to_fit_height(ICONS_HEIGHT).move_to(wf_fact.humidty_icon)
         self.play(
             FadeOut(rising_arrow),
             ReplacementTransform(dry_icon, low_temp_icon),
-            ReplacementTransform(humidty_icon, high_temp_icon),
+            ReplacementTransform(wf_fact.humidty_icon, wf_fact.high_temp_icon),
             Transform(variable_ax_lab[0], Text('Temperature', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2).move_to(variable_ax_lab[0]))
         )
 
         rising_arrow.flip(RIGHT)
         self.wait(0.3)
-        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(UL), run_time = 1.5))
+        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(DL), run_time = 1.5))
 
         # SLIDE 05:  ===========================================================
         # DATA POINTS APPEAR
@@ -185,7 +175,7 @@ class W2Theory_slides(MOOCSlide):
         reg_line.suspend_updating()
         LR_title = Text('Linear Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
 
-        self.play(FadeOut(wildfire_icon, forest_icon, low_temp_icon, high_temp_icon, variable_ax_lab))
+        self.play(FadeOut(wf_fact.wildfire_icon, forest_icon, low_temp_icon, wf_fact.high_temp_icon, variable_ax_lab))
         self.play(ReplacementTransform(log_plot, reg_line))
         self.play(
             AnimationGroup(
@@ -329,6 +319,7 @@ class W2Theory_slides(MOOCSlide):
 
         # SLIDE 14:  ===========================================================
         # EVERYTHING FADES OUT TO LEAVE AXES EMPTY
+        # POINT CLOUD APPEARS
         self.next_slide(
             notes=
             '''Let us now see how to find a line from a cloud of points. [CLICK]
@@ -345,8 +336,7 @@ class W2Theory_slides(MOOCSlide):
         )
 
         # SLIDE 15:  ===========================================================
-        # AXES WITH TWO LONE POINTS APPEARS
-        # UNIQUE LINE BETWEEN THEM IS DRAWN
+        # UNIQUE LINE BETWEEN TWO OF THE POINTS IS DRAWN
         self.next_slide(
             notes=
             '''We know that for two distinct points, there is exactly one line
@@ -357,11 +347,14 @@ class W2Theory_slides(MOOCSlide):
             *mq_throgh_points(dataset[5], dataset[15]),
             axes=ax, x_range=X_RANGE, color=BLUE).set_length(5)
         
+        dataset_points[5].save_state()
+        dataset_points[15].save_state()
+        
         self.play(
             AnimationGroup(
                 AnimationGroup(
-                    Indicate(dataset_points[5], scale_factor=1.5, run_time=1.5),
-                    Indicate(dataset_points[15], scale_factor=1.5, run_time=1.5),
+                    dataset_points[5].animate.scale(1.5).set_color(YELLOW),
+                    dataset_points[15].animate.scale(1.5).set_color(YELLOW),
                 ),
             Create(passing_line, run_time=1),
             lag_ratio=1/6
@@ -369,13 +362,17 @@ class W2Theory_slides(MOOCSlide):
         )
 
         # SLIDE 16:  ===========================================================
-        # LINE DISAPPEARS, WHOLE POINT CLOUD APPEARS
+        # LINE DISAPPEARS
         self.next_slide(
             notes=
             '''But what happens when there are many points? [CLICK]
             '''
         )
-        self.play(FadeOut(passing_line))
+        self.play(
+            FadeOut(passing_line),
+            dataset_points[5].animate.restore(),
+            dataset_points[15].animate.restore(),
+        )
 
         # SLIDE 17:  ===========================================================
         # MANY CANDIDATE LINES APPEAR
@@ -551,7 +548,7 @@ class W2Theory_slides(MOOCSlide):
             '''which is the sum of squared residuals. [CLICK]
             '''
         )
-        E_counter = ECounter(reg_line, dataset, num_decimal_places=2).move_to(E_formula).set_color(BLACK)
+        E_counter = ECounter(reg_line, dataset, num_decimal_places=2).move_to(E_formula).set_color(BLACK) # set color is necessary
         self.play(
             AnimationGroup(
                 ReplacementTransform(E_formula[0][:2], E_counter.label),
