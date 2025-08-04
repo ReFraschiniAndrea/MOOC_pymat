@@ -12,7 +12,7 @@ config.update(RELEASE_CONFIG)
 LABELS_SIZE=0.75
 ICONS_HEIGHT = 0.6
 
-class W2TWrapup_slides(ThreeDMOOCSlide):
+class W2Wrapup_slides(ThreeDMOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
         # AXES WITH FIRE INDEX AND TEMPERATURE ICONS APPEAR

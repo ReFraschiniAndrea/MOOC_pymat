@@ -12,7 +12,7 @@ end
 function r_2 = R2(x, y)
     e_bar = E_bar(y);
     error = E(x, y);
-    r_2 = 1 - error / ss_tot;
+    r_2 = 1 - error / e_bar;
 end
 
 my_dataset = readtable('Algerian_forest_dataset.csv');
