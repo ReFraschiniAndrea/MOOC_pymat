@@ -196,12 +196,21 @@ def linear_reg_coeffs(dataset: np.ndarray):
     coeffs = np.polynomial.polynomial.Polynomial.fit(dataset[:, 0], dataset[:, 1], 1).convert().coef
     return coeffs[1], coeffs[0]
 
+class WildFireIcon(VGroup):
+    def __init__(self):
+        self.forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg')
+        u = self.forest_icon.height
+        self.fire_icon = SVGMobject(r"Assets\W2\flame_icon.svg").scale_to_fit_height(u*0.6).shift(UP*u*0.3 + LEFT*u*0.2)
+        self.fire_icon_2= SVGMobject(r"Assets\W2\flame_icon.svg").flip().scale_to_fit_height(u*0.45).shift(DOWN*u*0 + RIGHT*u*0.4)
+        super().__init__(self.forest_icon, self.fire_icon, self.fire_icon_2)
+
 class WildfireFactorsScheme(VGroup):
     def __init__(self, icons_height, **kwargs):
-        self.tri = Triangle().scale(3).center()
+        self.tri = Triangle().scale(3).flip(axis=RIGHT).center()
         self.circles = VGroup(Circle(stroke_color=BLACK, fill_color=WHITE, radius= icons_height*2 + 0.5, stroke_width=6, fill_opacity=0).move_to(self.tri.get_vertices()[i]) for i in range(3))
         
-        self.wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0])
+        # self.wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0])
+        self.wildfire_icon = WildFireIcon().scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0] + UP*0.1)
         self.high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[1])
         self.humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[2])
         
@@ -211,3 +220,9 @@ class WildfireFactorsScheme(VGroup):
         )
 
         super().__init__(self.causal_arrows, self.circles, self.wildfire_icon, self.high_temp_icon, self.humidty_icon, **kwargs)
+
+class Test(Scene):
+    def construct(self):
+        w = WildfireFactorsScheme(0.6)
+        self.add(w)
+        

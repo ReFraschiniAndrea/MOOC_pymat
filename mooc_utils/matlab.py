@@ -158,11 +158,14 @@ class MatlabEnv(Mobject):
             scene.remove(self.output)
             self.output = None
     
+    def remove_cursor(self):
+        self.cursor.move_to((-20,-20,0))
+    
     def clear(self, scene: Scene):
         while len(self.cells) > 0:
             self.remove_cell(scene)
         self.remove_output(scene)
-        self.cursor.move_to([-20,-20, 0])
+        self.remove_cursor()
         scene.remove(self.cursor)
 
     def OutofMatlab(self, cell: MatlabCodeBlock, fullscreen=True, **kwargs):
@@ -195,10 +198,11 @@ class MatlabEnv(Mobject):
         self.add(self.output)
         
     def Run(self):
-        self.cursor.move_to(self.RUN_BUTTON_)
+        self.cursor.move_to(ORIGIN)
         if self.output is not None:
             return Succession(
                 GrowFromCenter(self.cursor),
+                ApplyMethod(self.cursor.move_to, self.RUN_BUTTON_),
                 self.cursor.Click(),
                 FadeIn(self.output, run_time=0),
                 Wait(0.1)

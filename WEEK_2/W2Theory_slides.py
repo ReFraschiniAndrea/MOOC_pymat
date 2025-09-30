@@ -39,10 +39,10 @@ class W2Theory_slides(MOOCSlide):
 
         self.play(
             Succession(
-                AnimationGroup(Create(wf_fact.circles[0]), FadeIn(wf_fact.wildfire_icon)),
-                Wait(0.5),
                 AnimationGroup(Create(wf_fact.circles[1]), FadeIn(wf_fact.high_temp_icon)),
                 AnimationGroup(Create(wf_fact.circles[2]), FadeIn(wf_fact.humidty_icon)),
+                Wait(0.5),
+                AnimationGroup(Create(wf_fact.circles[0]), FadeIn(wf_fact.wildfire_icon)),
                 FadeIn(wf_fact.causal_arrows)
             )
         )
@@ -71,13 +71,13 @@ class W2Theory_slides(MOOCSlide):
             Text('Fire risk', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2)
         )
 
-        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 0.3, 0))
         dry_icon = wf_fact.humidty_icon.copy().set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
         self.play(
             FadeOut(wf_fact.circles, wf_fact.causal_arrows, wf_fact.high_temp_icon),
             wf_fact.wildfire_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0)),
             wf_fact.humidty_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0)),
             )
+        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(wf_fact.wildfire_icon.forest_icon.height).move_to(ax.c2p(-0.1, 0.3, 0))
         self.play(
             Create(ax),
             FadeIn(forest_icon, dry_icon),

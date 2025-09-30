@@ -39,8 +39,8 @@ class W2Wrapup_slides(ThreeDMOOCSlide):
             Text('Fire risk', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2)
         )
 
-        wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0))
-        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 0.3, 0))
+        wildfire_icon = WildFireIcon().scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0))
+        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(wildfire_icon.forest_icon.height).move_to(ax.c2p(-0.1, 0.3, 0))
         low_temp_icon = SVGMobject(r'Assets\W2\low_temperature_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
         high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0))
 
@@ -462,7 +462,7 @@ class W2Wrapup_slides(ThreeDMOOCSlide):
         self.play(
             Succession(
                 tight_plot.animate.scale(0.6).move_to(HALF_SCREEN_LEFT),
-                FadeIn(loose_plot.scale(0.6), shift= RIGHT*FRAME_WIDTH/2)
+                FadeIn(loose_plot.scale(0.6))
             )
         )
 
@@ -512,7 +512,7 @@ class W2Wrapup_slides(ThreeDMOOCSlide):
             data points from the mean of y, denoted as y bar. [CLICK]
             '''
         )
-        Ebar_formula = MathTex(r'\bar{E} = \sum_{i=1}^n (\widehat{y_i} - \bar{y})^2, \ \bar{y} = \frac{1}{n}\sum_{i=1}^{n} y_i', color=BLACK,
+        Ebar_formula = MathTex(r'\bar{E} = \sum_{i=1}^n (y_i - \bar{y})^2, \ \bar{y} = \frac{1}{n}\sum_{i=1}^{n} y_i', color=BLACK,
                                tex_to_color_map={'y_i':ORANGE, r'\widehat{y_i}': ORANGE})
         Ebar_formula.next_to(E_formula, DOWN, buff=0.5)
         
@@ -621,7 +621,7 @@ class W2Wrapup_slides(ThreeDMOOCSlide):
         self.play(MoveDatasetAndLine(reg_line, r2_showcase_points, dataset_best))
 
         # SLIDE 27:  ===========================================================
-        # 
+        # CODE SNIPPETS AS SOLUTION EXAMPLES APPEAR
         self.next_slide(
             notes=
             '''Try yourself to implement a function that computes the

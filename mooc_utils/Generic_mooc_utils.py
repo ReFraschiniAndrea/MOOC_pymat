@@ -40,9 +40,7 @@ class Title(Text):
     def __init__(self, text: str):
         super().__init__(
             text, color=BLACK,
-            font_size=64, font=SANS_SERIF_FONT, weight=LIGHT,
-            # stroke_width=0,
-            stroke_color=BLACK)
+            font_size=64, font=SANS_SERIF_FONT, weight=LIGHT)
         self.to_edge(UP).shift(UP*0.5)
 
 class HighlightRectangle(BackgroundRectangle):
@@ -282,6 +280,7 @@ class Cursor(SVGMobject):
     """
     def __init__(self, **kwargs):
         super().__init__(file_name=_CURSOR_ICON, height=(24/1080)*FRAME_HEIGHT, **kwargs)
+        self.stroke_width = 0  # avoid some bugs
 
     def Click(self):
         # return self.animate(rate_func=there_and_back, run_time=0.1).scale(0.8)
@@ -338,12 +337,12 @@ class FunctionAbstraction(VMobject):
         )
         self.add(self.Window, self.LaptopIcon)
 
-    def _get_spacing(self, n):
-        return 0.6*self.Window.height / (n-1) if n > 1 else 0
+    def _get_spacing(self, n: int, relative_offset: float = 0.6):
+        return relative_offset*self.Window.height / (n-1) if n > 1 else 0
 
-    def add_inputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF):
+    def add_inputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6):
         n_inputs = len(labels)
-        spacing = self._get_spacing(n_inputs)
+        spacing = self._get_spacing(n_inputs, relative_offset)
         self.InputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
         self.InputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, LEFT, buff=0)
         self.InputLabels = VGroup(
@@ -355,9 +354,9 @@ class FunctionAbstraction(VMobject):
         
         self.add(self.InputArrows, self.InputLabels)
 
-    def add_outputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF):
+    def add_outputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6):
         n_inputs = len(labels)
-        spacing = self._get_spacing(n_inputs)
+        spacing = self._get_spacing(n_inputs, relative_offset)
         self.OutputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
         self.OutputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, RIGHT, buff=0)
         self.OutputLabels = VGroup(

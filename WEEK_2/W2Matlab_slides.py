@@ -17,8 +17,7 @@ class W2Matlab_slides(MOOCSlide):
         # FORMULAS FOR m, q  APPEAR
         self.next_slide(
             notes=
-            '''Let's explore how linear regression can be implemented in Matlab.
-            Our ultimate goal is to answer key questions, such as: To what
+            '''Our ultimate goal is to answer to the question:  To what
             extent do variables like temperature and humidity affect the risk of
             wildfires? [CLICK]
             '''
@@ -333,6 +332,7 @@ class W2Matlab_slides(MOOCSlide):
         head_table.scale(0.25).next_to(head_text, DOWN, buff= 0.05).align_to(head_text, LEFT)
 
         mat_env.remove_output(self)
+        mat_env.remove_cursor()
         self.play(FadeOut(dataset_head_code_highlights[2]))
         self.play(dataset_head_code.IntoMatlab(mat_env))
         mat_env.add_output(VGroup(head_text, head_table), scene=self)
@@ -450,6 +450,7 @@ class W2Matlab_slides(MOOCSlide):
             '''
         )
         hand_cursor = Cursor()
+        mat_env.remove_cursor()
         self.play(FadeOut(mat_env.output, *full_labels, *colored_dots, *column_highlights, x_brace, y_brace))
         self.play(
             Succession(
@@ -545,7 +546,7 @@ class W2Matlab_slides(MOOCSlide):
             lines, namely m and q. [CLICK]
             '''
         )
-        fscheme.add_outputs("m", "q")
+        fscheme.add_outputs("m", "q", relative_offset=0.3)
         m_label = MathTex(r"\hat{m}", color=BLACK).next_to(fscheme.OutputLabels[0], RIGHT, buff=1).scale(1.2)
         m_label.shift((fscheme.OutputLabels[0].get_y()-m_label[0][1].get_y())*UP)
         q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1).scale(1.2)
@@ -708,7 +709,7 @@ class W2Matlab_slides(MOOCSlide):
         self.play(FadeOut(*code_sum_highlights))
         self.play(DSS.bringOut())
 
-        title = Text('Vectorized operations', font=SANS_SERIF_FONT, weight=LIGHT, font_size=64, color=BLACK, stroke_color=BLACK)
+        title = Text('Vectorized operations', font=SANS_SERIF_FONT, weight=LIGHT, font_size=64, color=BLACK)
         x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
         y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
         xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
@@ -1329,7 +1330,7 @@ class W2Matlab_slides(MOOCSlide):
             fill_opacity=1,
             stroke_width=0.5, stroke_color=BLACK).set_z_index(-1)
         
-        self.play(FadeIn(Group(temp_fwi_plot, second_window), shift=FRAME_WIDTH/4*LEFT))
+        self.play(FadeIn(Group(temp_fwi_plot, second_window)))
 
         # SLIDE 71:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
