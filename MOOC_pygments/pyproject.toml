@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MOOC_pygments"
+version = "0.1"
+description = "Custom Pygments styles and lexers for Matlab and Python."
+
+[tool.setuptools]
+py-modules  = ["ColabStyle", "MatlabStyle", "ColabPythonLexer", "CustomMatlabLexer"]
+
+[project.entry-points."pygments.styles"]
+colab = 'ColabStyle:ColabStyle'
+matlab = 'MatlabStyle:MatlabStyle'
+
+[project.entry-points."pygments.lexers"]
+colabpython = 'ColabPythonLexer:ColabPythonLexer'
+custommatlab = 'CustomMatlabLexer:CustomMatlabLexer'

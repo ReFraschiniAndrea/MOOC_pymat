@@ -2,60 +2,54 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from manim_slides import Slide
+from mooc_utils import *
 from W2Anim import *
-from Generic_mooc_utils import HighlightRectangle
 
-config.renderer='cairo'
-config.background_color = WHITE
-config.pixel_width=1440
-config.pixel_height=1080
-# config.pixel_width=960
-# config.pixel_height=720
+config.update(RELEASE_CONFIG)
 
 LABELS_SIZE=0.75
 ICONS_HEIGHT = 0.6
 
-class W2Theory_slides(Slide):
+class W2Theory_slides(MOOCSlide):
     def construct(self):
-        self.wait_time_between_slides = 0.05
-        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
-        # 
+        # VIDEO OF A WILDFIRE IS SHOWN
         self.next_slide(
             notes=
-            '''To what extent do environmental variables, such as temperature
-            and humidity, influence the risk of wildfires? This might be the
-            policymaker's question about wildfires, which are a serious
-            environmental and economic concern. Therefore, understanding their
-            causes is crucial for prevention and mitigation. [CLICK]
+            '''Wildfires are a serious environmental and economical concern, and
+            understanding their causes is crucial for prevention and mitigation.
+            [CLICK]
             '''
         )
-        tri = Triangle().scale(3).center()
-        circles = [Circle(stroke_color=BLACK, fill_color=WHITE, radius= ICONS_HEIGHT*2 + 0.5, stroke_width=6, fill_opacity=0).move_to(tri.get_vertices()[i]) for i in range(3)]
-        
-        wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[0])
-        high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[1])
-        humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT*4).move_to(tri.get_vertices()[2])
-       
-        causal_arrows = VGroup(
-            Arrow(circles[1].get_top(), wildfire_icon.get_critical_point(DL), color=BLACK),
-            Arrow(circles[2].get_top(), wildfire_icon.get_critical_point(DR), color=BLACK),
+        placeholder = Text('Placeholder: wildfire video', color=BLACK)
+        self.add(placeholder)
+        self.wait(.1)
+        self.remove(placeholder)
+
+        # SLIDE 02:  ===========================================================
+        # ICON WITH CAUSE-EFFECT HYPOTHESIS APPEAR
+        self.next_slide(
+            notes=
+            '''A question raised by policymakers could then be: to what extent
+            do environmental variables, such as temperature and humidity,
+            influence the risk of wildfires? [CLICK]
+            '''
         )
+        wf_fact = WildfireFactorsScheme(icons_height=ICONS_HEIGHT)
 
         self.play(
             Succession(
-                AnimationGroup(Create(circles[1]), FadeIn(high_temp_icon)),
-                AnimationGroup(Create(circles[2]), FadeIn(humidty_icon))
+                AnimationGroup(Create(wf_fact.circles[1]), FadeIn(wf_fact.high_temp_icon)),
+                AnimationGroup(Create(wf_fact.circles[2]), FadeIn(wf_fact.humidty_icon)),
+                Wait(0.5),
+                AnimationGroup(Create(wf_fact.circles[0]), FadeIn(wf_fact.wildfire_icon)),
+                FadeIn(wf_fact.causal_arrows)
             )
         )
-        self.wait(1)
-        self.play(Create(circles[0]), FadeIn(wildfire_icon))
-        self.play(FadeIn(causal_arrows))
 
-        # SLIDE 02:  ===========================================================
-        # HUMIDITY AND FIRE RISK ICONS
-        # GRAPH WITH NEGATIVE CORRELATION APPEARS
+        # SLIDE 03:  ===========================================================
+        # HUMIDITY AND FIRE RISK ICONS MOVE TO APPEARING AXES
+        # ARROW INDICATING NEGATIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''For example, we might expect that, the higher the humidity in the
@@ -73,41 +67,33 @@ class W2Theory_slides(Slide):
         ).center()
         ax.set_z_index(-1)
         variable_ax_lab = ax.get_axis_labels(
-            Text('Humidity' , color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2),
-            Text('Fire risk', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2)
+            Text('Humidity' , color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2),
+            Text('Fire risk', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2)
         )
 
-        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 0.3, 0))
-        dry_icon = humidty_icon.copy().set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
+        dry_icon = wf_fact.humidty_icon.copy().set_color(RED).scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(0.3, -0.1, 0))
         self.play(
-            FadeOut(*circles, causal_arrows, high_temp_icon),
-            wildfire_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0)),
-            humidty_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0)),
+            FadeOut(wf_fact.circles, wf_fact.causal_arrows, wf_fact.high_temp_icon),
+            wf_fact.wildfire_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(-0.1, 1, 0)),
+            wf_fact.humidty_icon.animate.scale_to_fit_height(ICONS_HEIGHT).move_to(ax.c2p(X_RANGE[1]-0.1, -0.1, 0)),
             )
+        forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg').scale_to_fit_height(wf_fact.wildfire_icon.forest_icon.height).move_to(ax.c2p(-0.1, 0.3, 0))
         self.play(
             Create(ax),
             FadeIn(forest_icon, dry_icon),
             FadeIn(variable_ax_lab)
         )
 
-        t = ValueTracker(X_RANGE[0]+0.1)
-        negative_corr_func = lambda t: 0.2*1/(t + 0.1) + 0.1
-        tracing_dot = Dot(color=BLUE).add_updater(
-            lambda m: m.move_to(ax.c2p(t.get_value(), negative_corr_func(t.get_value()), 0))
-        )
-        tracing_dot.update()
-        trace = TracedPath(tracing_dot.get_center, stroke_color=BLUE, stroke_width=4)
+        rising_arrow = SVGMobject(r"Assets\W2\rising_arrow_icon.svg") 
+        rising_arrow.set_color(BLUE).stretch_to_fit_width(rising_arrow.width*1.5).scale(1.3)
+        rising_arrow.rotate(-PI/4).center()
 
-        self.play(GrowFromCenter(tracing_dot), run_time=0.5)
-        self.add(trace)
         self.wait(0.3)
-        self.play(t.animate(run_time=1.5).set_value(X_RANGE[1]))
-        trace.clear_updaters()
-        self.wait(0.5)
+        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(UL), run_time = 1.5))
 
-        # SLIDE 03:  ===========================================================
+        # SLIDE 04:  ===========================================================
         # TEMPERATURE ICON REPLACES HUMIDITY ONE
-        # GRAPH WITH POSITIVE CORRELATION APPEARS
+        # ARROW INDICATING POSITIVE CORRELATION APPEARS
         self.next_slide(
             notes=
             '''Similarly, we expect that high temperature increases the risk of
@@ -115,56 +101,46 @@ class W2Theory_slides(Slide):
             '''
         )
         low_temp_icon = SVGMobject(r'Assets\W2\low_temperature_icon.svg').set_color(BLUE).scale_to_fit_height(ICONS_HEIGHT).move_to(dry_icon)
-        high_temp_icon.scale_to_fit_height(ICONS_HEIGHT).move_to(humidty_icon)
+        wf_fact.high_temp_icon.scale_to_fit_height(ICONS_HEIGHT).move_to(wf_fact.humidty_icon)
         self.play(
-            FadeOut(tracing_dot, trace),
+            FadeOut(rising_arrow),
             ReplacementTransform(dry_icon, low_temp_icon),
-            ReplacementTransform(humidty_icon, high_temp_icon),
-            Transform(variable_ax_lab[0], Text('Temperature', color=BLACK, font='Microsoft JhengHei', weight=LIGHT).scale(LABELS_SIZE/2).move_to(variable_ax_lab[0]))
+            ReplacementTransform(wf_fact.humidty_icon, wf_fact.high_temp_icon),
+            Transform(variable_ax_lab[0], Text('Temperature', color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).scale(LABELS_SIZE/2).move_to(variable_ax_lab[0]))
         )
 
-        positive_corr_func = lambda t: 0.4*t**2 +0.2
-        tracing_dot.clear_updaters().add_updater(
-            lambda m: m.move_to(ax.c2p(t.get_value(), positive_corr_func(t.get_value()), 0))
-        )
-        t.set_value(X_RANGE[0]+0.1)
-        tracing_dot.update()
-        trace2 = TracedPath(tracing_dot.get_center, stroke_color=BLUE, stroke_width=4)
-
-        self.play(GrowFromCenter(tracing_dot), run_time=0.5)
-        self.add(trace2)
+        rising_arrow.flip(RIGHT)
         self.wait(0.3)
-        self.play(t.animate(run_time=1.5).set_value(X_RANGE[1]))
-        trace2.clear_updaters()
-        self.wait(0.5)
+        self.play(GrowFromPoint(rising_arrow, rising_arrow.get_critical_point(DL), run_time = 1.5))
 
-        # SLIDE 04:  ===========================================================
+        # SLIDE 05:  ===========================================================
         # DATA POINTS APPEAR
         self.next_slide(
             notes=
             '''To answer this question quantitatively, we use real-world data
             that captures key environmental factors, such as daily temperature,
-            humidity, and wildfire occurrence. [CLICK] 
+            humidity, and wildfire occurrence. [CLICK]
             '''
         )
         dataset = generate_regression_dataset(func= lambda x: 1.5*(0.4*x-0.75)**3 + 0.8, x_range=(0.1, 1.5), n=20, sigma=0.15, seed=0)
         dataset_points = points_from_data(dataset, ax=ax, color=PURPLE_A).set_z_index(1)
         
-        self.play(FadeOut(tracing_dot, trace2))
+        self.play(FadeOut(rising_arrow))
         self.play(
             AnimationGroup(
                 *[GrowFromCenter(p) for p in dataset_points],
                 run_time=2, lag_ratio=0.5)
         )
 
-        # SLIDE 04:  ===========================================================
+        # SLIDE 06:  ===========================================================
         # SOME NON LINEAR MODELS APPEAR
         self.next_slide(
             notes=
             '''The policymaker might ask: "Is there a consistent relationship
             between environmental variables and wildfire risk?" This can be seen
             from a mathematical point of view: identify a model that predicts
-            fire risk based on temperature and humidity. [CLICK]
+            fire risk based on temperature and humidity. This curve is our
+            model. [CLICK]
             '''
         )
         # fit a parabolic model, an exponential one and a cubic one
@@ -184,24 +160,22 @@ class W2Theory_slides(Slide):
         self.wait(1)
         self.play(ReplacementTransform(cubic_plot, log_plot))
 
-        # SLIDE 05:  ===========================================================
+        # SLIDE 07:  ===========================================================
         # REGRESSED LINE APPEARS
         # LINEAR REGRESSION TITLE APPEARS
         self.next_slide(
             notes=
-            '''Among different possible models, in this project, we will
-            introduce linear regression, to determine linear relationships
-            between variables. One key reason for the popularity of linear
-            regression is its interpretability.
-            The key question is: "How can I construct this line mathematically?"
+            '''Among different possible models we will introduce linear
+            regression, to determine linear relationships between variables. The
+            key question is: "How can I construct this line mathematically?"
             [CLICK]
             '''
         )
         reg_line = RegressionLine(linear_fit[1], linear_fit[0], ax, x_range=X_RANGE)
         reg_line.suspend_updating()
-        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        LR_title = Text('Linear Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
 
-        self.play(FadeOut(wildfire_icon, forest_icon, low_temp_icon, high_temp_icon, variable_ax_lab))
+        self.play(FadeOut(wf_fact.wildfire_icon, forest_icon, low_temp_icon, wf_fact.high_temp_icon, variable_ax_lab))
         self.play(ReplacementTransform(log_plot, reg_line))
         self.play(
             AnimationGroup(
@@ -211,15 +185,15 @@ class W2Theory_slides(Slide):
             )
         )
 
-        # SLIDE 06:  ===========================================================
+        # SLIDE 08:  ===========================================================
         # Y=F(X) APPEARS
         # EMPTY AXIS APPEARS
         # X AND Y LABELS ARE DUPLICATEED FROM Y=F(X) TO AXIS LABELS
         self.next_slide(
             notes=
-            '''Linear regression is a fundamental statistical technique used to
-            model the relationship between an independent variable x, and a
-            dependent variable y. [CLICK]
+            '''Thanks to its easy interpretability, linear regression is a
+            popular statistical technique used to model the relationship between
+            an independent variable x, and a dependent variable y. [CLICK]
             '''
         )
         generic_relation = MathTex(r'y = {{f(x)}}', color=BLACK,
@@ -239,15 +213,14 @@ class W2Theory_slides(Slide):
             )
         )
 
-        # SLIDE 07:  ===========================================================
+        # SLIDE 09:  ===========================================================
         # LINEAR RELATION EQUATION APPEARS
         # LINE IS DRAWN IN THE AXIS
         self.next_slide(
             notes=
-            '''This technique assumes that the relationship between the
-            dependent and independent variables is described by the equation y
-            equals m times x plus q.
-            The coefficients m and q have clear and intuitive meanings. [CLICK]
+            ''' This technique assumes that the relationship between the
+            variables is described by the equation y=mx+q. The coefficients m
+            and q have clear and intuitive meanings. [CLICK]
             '''
         )
         linear_relation = MathTex(r'y = {{m x}} + {{q}}', color=BLACK,
@@ -261,7 +234,7 @@ class W2Theory_slides(Slide):
             )
         self.play(Create(reg_line))
 
-        # SLIDE 08:  ===========================================================
+        # SLIDE 10:  ===========================================================
         # 'q' HIGHLIGHTED IN THE EQUATION AND ON THE GRAPH
         self.next_slide(
             notes=
@@ -282,7 +255,7 @@ class W2Theory_slides(Slide):
         )
         self.play(Create(h) for h in q_higlights)
 
-        # SLIDE 09:  ===========================================================
+        # SLIDE 11:  ===========================================================
         # 'm' HIGHLIGHTED IN THE EQUATION
         # RISE OVER RUN IS DRAWN TO EXPLAIN 'm'
         self.next_slide(
@@ -314,12 +287,12 @@ class W2Theory_slides(Slide):
         )
         self.play(Create(h) for h in m_highlights)
 
-        # SLIDE 10:  ===========================================================
+        # SLIDE 12:  ===========================================================
         # RISE OVER RUN TRIANGLE APPEARS
         # DELTA_X LABEL APPEARS
         self.next_slide(
             notes=
-            '''... if the independent variable x increases by a certain amount
+            '''...if the independent variable x increases by a certain amount
             delta_x, [CLICK] ...
             '''
         )
@@ -334,18 +307,19 @@ class W2Theory_slides(Slide):
         self.play(FadeOut(*m_highlights))
         self.play(FadeIn(ror_brace_x, ror_x_lab))
 
-        # SLIDE 11:  ===========================================================
+        # SLIDE 13:  ===========================================================
         # DELTA_Y LABEL APPEARS
         self.next_slide(
             notes=
-            '''... the predicted dependent variable y will increase by
-            m*delta_x. [CLICK]
+            '''...the predicted dependent variable y will increase by m*delta_x.
+            [CLICK]
             '''
         )
         self.play(FadeIn(ror_brace_y, ror_y_lab))
 
-        # SLIDE 11:  ===========================================================
+        # SLIDE 14:  ===========================================================
         # EVERYTHING FADES OUT TO LEAVE AXES EMPTY
+        # POINT CLOUD APPEARS
         self.next_slide(
             notes=
             '''Let us now see how to find a line from a cloud of points. [CLICK]
@@ -353,10 +327,16 @@ class W2Theory_slides(Slide):
         )
         self.play(FadeOut(reg_line, rise_over_run, ror_brace_x, ror_brace_y, ror_x_lab, ror_y_lab,
                           slope_label, intercept_label, intercept_dot))
+        self.wait(0.2)
+        self.play(
+            AnimationGroup(
+                *[GrowFromCenter(dataset_points[i]) for i in range(len(dataset_points))],
+                run_time=2, lag_ratio=0.5
+            )
+        )
 
-        # SLIDE 12:  ===========================================================
-        # AXES WITH TWO LONE POINTS APPEARS
-        # UNIQUE LINE BETWEEN THEM IS DRAWN
+        # SLIDE 15:  ===========================================================
+        # UNIQUE LINE BETWEEN TWO OF THE POINTS IS DRAWN
         self.next_slide(
             notes=
             '''We know that for two distinct points, there is exactly one line
@@ -366,34 +346,43 @@ class W2Theory_slides(Slide):
         passing_line = RegressionLine(
             *mq_throgh_points(dataset[5], dataset[15]),
             axes=ax, x_range=X_RANGE, color=BLUE).set_length(5)
-        self.play(GrowFromCenter(dataset_points[5]), GrowFromCenter(dataset_points[15]))
-        self.wait(1)
-        self.play(Create(passing_line))
+        
+        dataset_points[5].save_state()
+        dataset_points[15].save_state()
+        
+        self.play(
+            AnimationGroup(
+                AnimationGroup(
+                    dataset_points[5].animate.scale(1.5).set_color(YELLOW),
+                    dataset_points[15].animate.scale(1.5).set_color(YELLOW),
+                ),
+            Create(passing_line, run_time=1),
+            lag_ratio=1/6
+            )
+        )
 
-        # SLIDE 13:  ===========================================================
-        # LINE DISAPPEARS, WHOLE POINT CLOUD APPEARS
+        # SLIDE 16:  ===========================================================
+        # LINE DISAPPEARS
         self.next_slide(
             notes=
             '''But what happens when there are many points? [CLICK]
             '''
         )
-        self.play(FadeOut(passing_line))
         self.play(
-            AnimationGroup(
-                *[GrowFromCenter(dataset_points[i]) for i in range(len(dataset_points)) if i not in (5, 15)],
-                run_time=2, lag_ratio=0.5
-            )
+            FadeOut(passing_line),
+            dataset_points[5].animate.restore(),
+            dataset_points[15].animate.restore(),
         )
 
-
-        # SLIDE 14:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # MANY CANDIDATE LINES APPEAR
         self.next_slide(
             notes=
             '''In this case, there are many lines that pass through pairs of
             points, but none of them will perfectly represent all the points in
-            our dataset. So how do we choose the most representative line? How
-            do we define which line is the "best" among them? [CLICK]
+            our dataset. So how do we choose the most representative line? The
+            idea is to associate a score to each possible line. The most
+            representative line is the one with the lowest score. [CLICK]
             '''
         )
         RNG = np.random.default_rng(seed=1)
@@ -407,29 +396,21 @@ class W2Theory_slides(Slide):
         lines.add(reg_line)
         self.play(Create(lines, lag_ratio=0.2))
 
-        # SLIDE 15:  ===========================================================
-        # ONLY ONE LINE FOR EXPLANATION REMAINS
-        self.next_slide(
-            notes=
-            '''To find the "best"-fitting line, we must first define what we
-            mean by "best". [CLICK]
-            '''
-        )
-        self.play(FadeOut(lines[:-1]))
-
-        # SLIDE 16:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # LABELS FOR P1, P2, Pi APPEAR IN SUCCESSION
         # ONLY LABEL OF Pi REMAINS
         self.next_slide(
             notes=
-            '''Let (x_1, y_1) be the first data point, (x_2, y_2) the second,
-            and so on for all n points. [CLICK]
+            ''' Let us see how to compute the score. Given a generic line, Let
+            (x_1, y_1) be the first data point, (x_2, y_2) the second, and so on
+            for all n points. [CLICK]
             '''
         )
+        self.play(FadeOut(lines[:-1]))
         p = {
             '1' : dataset_points[0],
             '2' : dataset_points[3],
-            'i' : dataset_points[9]
+            'i' : dataset_points[7]
         }
         lines_to_points = [ax.get_lines_to_point(point.get_center(), color=point.get_color()) for point in p.values()]
         point_labels = [
@@ -450,7 +431,7 @@ class W2Theory_slides(Slide):
             )
         )
 
-        # SLIDE 17:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # PREDICTION FORMULA APPEARS
         # POINT REPRESENTING PREDICTION APPEARS
         self.next_slide(
@@ -464,22 +445,22 @@ class W2Theory_slides(Slide):
         predicted_point = reg_line.proj_points[0]
         predicted_point_line = reg_line.proj_lines[0]
 
-        prediction_eq = MathTex(r'{{\hat{y_i}}} =m {{x_i}} + q', color=BLACK,
+        prediction_eq = MathTex(r'{{\widehat{y_i}}} =m {{x_i}} + q', color=BLACK,
                                 tex_to_color_map={'x_i':BLUE}).move_to(LR_title)
         prediction_eq[0].set_color(ORANGE)
 
         prediction_horiz_line = ax.get_horizontal_line(reg_line.proj_points[0].get_center(), color=p['i'].get_color())
-        prediction_label = MathTex(r'\hat{y_i}', color=ORANGE).scale(LABELS_SIZE).next_to(prediction_horiz_line, LEFT)
+        prediction_label = MathTex(r'\widehat{y_i}', color=ORANGE).scale(LABELS_SIZE*0.9).next_to(prediction_horiz_line, LEFT)
 
         self.play(ReplacementTransform(linear_relation, prediction_eq))
         self.play(
             GrowFromCenter(predicted_point),
             Create(predicted_point_line),
             Create(prediction_horiz_line),
-            ReplacementTransform(prediction_eq[0].copy(), prediction_label)
+            ReplacementTransform(prediction_eq[0].copy(), prediction_label[0])
         )
 
-        # SLIDE 18:  ===========================================================
+        # SLIDE 20:  ===========================================================
         # RESIDUAL BRACE WITH LABEL APPEARS
         self.next_slide(
             notes=
@@ -487,10 +468,10 @@ class W2Theory_slides(Slide):
             the error between the actual and predicted values. [CLICK]
             '''
         )
-        residual_eq = MathTex(r'{{r_i}} = {{y_i}} - {{\hat{y_i}}}', color=BLACK).next_to(prediction_eq, DOWN)
+        residual_eq = MathTex(r'{{r_i}} = {{y_i}} - {{\widehat{y_i}}}', color=BLACK).next_to(prediction_eq, DOWN)
         residual_eq[2].set_color(ORANGE)
         residual_eq[4].set_color(ORANGE)
-        residual_brace = BraceBetweenPoints(predicted_point.get_center(), p['i'].get_center(), LEFT, color=BLACK, sharpness=1).set_z_index(2)
+        residual_brace = BraceBetweenPoints(predicted_point.get_center(), p['i'].get_center(), RIGHT, color=BLACK, sharpness=1).set_z_index(2)
         residual_label = MathTex(r'r_i', color=BLACK).scale(LABELS_SIZE).set_z_index(2)
         residual_brace.put_at_tip(residual_label)
         
@@ -500,7 +481,7 @@ class W2Theory_slides(Slide):
             ReplacementTransform(residual_eq[0].copy(), residual_label)
         )
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 21:  ===========================================================
         # LINES BETWEEN ALL DATA POINTS AND THE LINE APPEAR
         self.next_slide(
             notes=
@@ -522,15 +503,15 @@ class W2Theory_slides(Slide):
             )
         )
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # FORMULA FOR SQUARED ERROR APPEARS
         # 'E' IS HIGHLIGHTED
         self.next_slide(
             notes=
             '''More precisely, we look for the line that minimizes the sum of
-            the squares of the residuals, that we denote by E.
-            E is a number that quantifies the total error between observed and
-            predicted data. [CLICK]
+            the squares of the residuals, that we denote by E. E is our score
+            that quantifies the total error between observed and predicted data.
+            [CLICK]
             '''
         )
         E_formula = MathTex(r'E = \sum_{i=1}^n r_i^2 = r_1^2 + r_2^2 + \dots + r_n^2', color=BLACK).move_to(prediction_eq)
@@ -538,13 +519,13 @@ class W2Theory_slides(Slide):
         self.play(FadeIn(E_formula[0][:11]))
         self.play(ReplacementTransform(reg_line.proj_lines.copy(), E_formula[0][11:], lag_ratio=0.1, run_time=3))
 
-        # SLIDE 21:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # COUNTERS FOR 'm' AND 'q' APPEAR
         # 'm' AND 'q' VARY, CHANGING THE LINE
         self.next_slide(
             notes=
             '''By varying m and q, we obtain different lines. For each
-            combination of m and q, we can compute the corresponding error E,
+            combination of m and q, we can compute the corresponding score E,
             [CLICK] ...
             '''
         )
@@ -560,14 +541,14 @@ class W2Theory_slides(Slide):
         self.play(reg_line.slope.animate(rate_func=there_and_back, run_time=2).set_value(0.7))
         self.play(reg_line.intercept.animate(rate_func=there_and_back, run_time=2).set_value(0.05))
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # E COUNTER APPEARS
         self.next_slide(
             notes=
             '''which is the sum of squared residuals. [CLICK]
             '''
         )
-        E_counter = ECounter(reg_line, dataset, num_decimal_places=2).move_to(E_formula).set_color(BLACK)
+        E_counter = ECounter(reg_line, dataset, num_decimal_places=2).move_to(E_formula).set_color(BLACK) # set color is necessary
         self.play(
             AnimationGroup(
                 ReplacementTransform(E_formula[0][:2], E_counter.label),
@@ -579,13 +560,13 @@ class W2Theory_slides(Slide):
             )
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # LINE CHANGES AGAIN WITH m AND q, DISPLAYING THE CORRESPONDING E VALUE
         self.next_slide(
             notes=
-            '''Out of the infinitely many lines generated by varying m and q,
-            we will select the one that minimizes E, achieving the best fit to
-            the data. [CLICK]
+            '''Out of the infinitely many lines generated by varying m and q, we
+            will select the one that minimizes E, achieving the best fit to the
+            data. [CLICK]
             '''
         )
         self.play(
@@ -607,8 +588,30 @@ class W2Theory_slides(Slide):
             reg_line.slope.animate.set_value(linear_fit[1]),
             reg_line.intercept.animate.set_value(linear_fit[0])
         )
+        self.wait(0.5)
 
-        # SLIDE 24:  ===========================================================
+        m_hat = MathTex(r'\hat{m}', color=BLACK).align_to(m_counter.label, DL)
+        q_hat = MathTex(r'\hat{q}', color=BLACK).align_to(q_counter.label, DL)
+        linear_fit_eq = MathTex(r'\widehat{y_i} = \hat{m} x + \hat{q}', color=BLACK).center().shift(UP*2)
+        linear_fit_eq[0][:3].set_color(ORANGE)
+        linear_fit_eq[0][6].set_color(BLUE)
+        # new_line = reg_line.line.copy().set_color(YELLOW).set_stroke(width=5).set_z_index(-0.5)
+        new_line = reg_line.line.copy().set_color("#5EFF1F").set_stroke(width=5).set_z_index(-0.5)
+        reg_line.line.set_z_index(-0.75)
+
+        self.play(
+            Create(new_line),
+            ReplacementTransform(m_counter.label[0], m_hat[0][1]), FadeIn(m_hat[0][0]),
+            ReplacementTransform(q_counter.label[0], q_hat[0][1]), FadeIn(q_hat[0][0]),
+        )
+        self.remove(reg_line.line)
+        self.play(
+            ReplacementTransform(m_counter.label[0].copy(), linear_fit_eq[0][4:6]),
+            ReplacementTransform(q_counter.label[0].copy(), linear_fit_eq[0][8:]),
+            FadeIn(linear_fit_eq[0][:4], linear_fit_eq[0][6:8])
+        )
+
+        # SLIDE 26:  ===========================================================
         # GRAPH FADES OUT
         # MINIMIZATION PROBLEM FORMULATION APPEARS
         self.next_slide(
@@ -616,14 +619,16 @@ class W2Theory_slides(Slide):
             '''Mathematically, the regression line is defined as the one
             obtained with the coefficients m and q that minimize the quantity E.
             This is the mathematical definition that we give to the expression
-            "best-fitting line" that we have used before. [CLICK]
+            "best-fitting line". [CLICK]
             '''
         )
-        minim_problem = MathTex(r'\min_{m,q} \sum_{i=1}^n (r_i)^2', color=BLACK).move_to(E_counter)
-        self.play(FadeOut(m_counter, q_counter, E_counter))
-        self.play(FadeIn(minim_problem))
+        minim_problem = MathTex(r'\min_{m,q} E', color=BLACK).move_to(E_counter)
+        self.play(FadeOut(m_counter, q_counter, m_hat, q_hat, E_counter.value, E_counter.label[1]))
+        self.play(
+            ReplacementTransform(E_counter.label[0], minim_problem[0][-1]),
+            FadeIn(minim_problem[0][:-1]))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # LEAST SQUARES TITLE APPEARS
         # 'SQUARED' HIGHLIGHTED IN FORMULA
         self.next_slide(
@@ -632,37 +637,54 @@ class W2Theory_slides(Slide):
             focuses on minimizing the "squares" of the residuals. [CLICK]
             '''
         )
-        ls_title = Text('Least Squares Regression', font_size=64, color=BLACK, font='Microsoft JhengHei', weight=LIGHT).to_edge(UP).shift(UP*0.5)
-        self.play(FadeOut(ax, x_lab, y_lab, reg_line, reg_line.proj_lines, reg_line.proj_points, dataset_points))
+        ls_title = Text('Least Squares Regression', font_size=64, color=BLACK, font=SANS_SERIF_FONT, weight=LIGHT).to_edge(UP).shift(UP*0.5)
+        self.play(FadeOut(ax, x_lab, y_lab, new_line, reg_line.proj_lines, reg_line.proj_points, dataset_points, linear_fit_eq))
         self.play(
             minim_problem.animate.center(),
             Write(ls_title)
         )
+        minim_problem.save_state()
+        extended_minim_problem = MathTex(r'\min_{m,q} E = \min_{m,q} \sum_{i=1}^n (r_i)^2', color=BLACK)
+        extended_minim_problem.shift(minim_problem[0][0].get_center() - extended_minim_problem[0][0].get_center()).match_x(minim_problem)
 
-        # SLIDE 26:  ===========================================================
+        self.play(
+            AnimationGroup(
+                Transform(minim_problem[0], extended_minim_problem[0][:7]),
+                FadeIn(extended_minim_problem[0][7:]),
+                lag_ratio=0.5
+            )
+        )
+
+        # SLIDE 28:  ===========================================================
         # PARTIAL DERIVATIVES OF E SET TO ZERO APPEAR
         self.next_slide(
             notes=
             '''To find the values of m and q, we must ensure that the derivative
             of E with respect to both unknown coefficients is equal to zero,
-            that is to say no further improvement is possible.
-            By performing the necessary calculations, we find that the
-            coefficients satisfying these conditions are given [CLICK] ...
+            that is to say no further improvement is possible. By performing the
+            necessary calculations, we find that the coefficients satisfying
+            these conditions are given [CLICK] ...
             '''
         )
 
         necessary_condition = MathTex(r'\frac{\partial E}{\partial m}=0, \ \frac{\partial E}{\partial q}=0', color=BLACK)
         imply = MathTex(r'\Rightarrow', color=BLACK).rotate(-PI/2)
-        self.play(minim_problem.animate.shift(UP))
+        self.play(
+            AnimationGroup(
+                FadeOut(extended_minim_problem[0][7:]),
+                minim_problem.animate.become(minim_problem.copy().restore().shift(UP)),
+                lag_ratio=0.5
+            )
+        )
         imply.next_to(minim_problem, DOWN, buff=0.2)
         necessary_condition.next_to(imply, DOWN, buff=0.2)
         self.play(FadeIn(necessary_condition, imply))
 
-        # SLIDE 27:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # IMPLICATION: FORMULA FOR 'm', 'q'
         self.next_slide(
             notes=
-            ''' by the following expressions. [CLICK] 
+            '''by the following expressions. [CLICK]
             '''
         )
         mq_eqs = LinearRegressionEquations()
@@ -671,13 +693,13 @@ class W2Theory_slides(Slide):
         mq_eqs.next_to(imply2, DOWN, buff=0.2)
         self.play(FadeIn(mq_eqs, imply2))
 
-        # SLIDE 28:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # FINAL FORMULAS GO TO CENTER
         self.next_slide(
             notes=
-            '''We need a computer code to perform these operations automatically.
-            In the upcoming videos, we will explore how to implement these
-            formulas in Python and MATLAB. [END]
+            '''We need a computer code to perform these operations
+            automatically. In the upcoming videos, we will explore how to
+            implement these formulas in Python and MATLAB. [END]
             '''
         )
         self.play(

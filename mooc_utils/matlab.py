@@ -1,38 +1,26 @@
 __all__ = [
+    "MATLAB_GRAY",
+    "MATLAB_LIGHTGRAY",
+    "MATLAB_FONT_SIZE",
     "MatlabCode",
     "MatlabCodeBlock",
     "MatlabEnv",
     "MatlabOutputText",
-    "MatlabCodeWithLogo"
+    "MatlabCodeWithLogo",
 ]
 
 from manim import *
-from Generic_mooc_utils import *
-from custom_code import CustomCode, CodeWithLogo
-from typing import Any
-
-# import custom lexer and style for Colab-like python code listings
-# Wanted to avoid to install the styles and lexers as plugins, but extremely hacky
-from pygments.styles._mapping import STYLES
-from pygments.lexers._mapping import LEXERS
-
-# STYLES['ColabStyle'] = ('ColabStyle', 'colab', ())
-# _STYLE_NAME_TO_MODULE_MAP['colab'] = 'ColabStyle'
-# pygments.styles.STYLES['colab'] = ColabStyle  # Optional for some versions
-LEXERS['CustomMatlabLexer'] = (
-    'CustomMatlabLexer', # name of the module
-    'Custom-matlab', # Name of the lexer
-    ('custommatlab',), # aliases
-    ('*.m',), # extensions
-    () # mime types
-    )
+from .Generic_mooc_utils import FRAME_WIDTH, FRAME_HEIGHT, CODE_FONT, Cursor
+from .custom_code import CustomCode, CodeWithLogo
+from typing import Any, List
 
 _MATLAB_LOGO = r'Assets\matlab_logo.png'
-COLAB_FONT_SIZE = 12
 MATLAB_FONT_SIZE = 12
 MATLAB_PLOT_WIDTH = 5
+MATLAB_GRAY = "#f0f0f0"    # Color of plot windows
+MATLAB_LIGHTGRAY = "#f7f7f7"
 _MATLAB_CELL_TO_CELL_BUFF = 0.25
-MATLAB_GRAY = "#f0f0f0"
+_MATLAB_CELLS_Z_INDEX = -3
 
 class MatlabCode(CustomCode):
     # override default options
@@ -64,11 +52,20 @@ class MatlabCode(CustomCode):
             paragraph_config=paragraph_config
         )
 
-    def IntoMatlab(self, matlab_env: 'MatlabEnv', **kwargs):
-        target = MatlabCodeBlock(self.code_string)
-        # target.add_background_window(background_config={'stroke_width':0, 'buff':0})
-        matlab_env.add_cell(target)
-        cells_to_fade = matlab_env.cells[:-1]
+    def IntoMatlab(
+            self,
+            matlab_env: 'MatlabEnv',
+            target_cell: int = None,
+            **kwargs
+        ):
+        if target_cell is None:
+            target = MatlabCodeBlock(self.code_string)
+            matlab_env.add_cell(target)
+            cells_to_fade = matlab_env.cells[:-1]
+        else:
+            target = matlab_env.cells[target_cell]
+            # cells_to_fade = colab_env.cells[:target_cell] + colab_env.cells[target_cell+1:]
+            cells_to_fade = matlab_env.cells[target_cell+1:]
         if self.window is not None:
             fake_dot = Dot(fill_opacity=0)
             return AnimationGroup(
@@ -106,7 +103,7 @@ class MatlabCodeBlock(MatlabCode):
 
 class MatlabEnv(Mobject):
     def _pixel2p(px, py):
-        '''Converts pixel coordinates (1080 x 1440) into manim units.'''
+        '''Converts pixel coordinates (1400 x 1050) into manim units.'''
         return [
              (px/1400 - 0.5)*FRAME_WIDTH,
             -(py/1050 - 0.5)*FRAME_HEIGHT,
@@ -115,44 +112,61 @@ class MatlabEnv(Mobject):
     
     TOP_LEFT_CORNER_ = _pixel2p(155, 241)
     TOP_LEFT_CORNER_UNSAVED_ = _pixel2p(128, 218)
-    OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 783)
+    # OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 783)
+    OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 833)
+
     NEW_SCRIPT_ = _pixel2p(25, 107)
     SAVE_ = _pixel2p(123, 71)
     SAVE_PROMPT_BUTTON_ = _pixel2p(874, 888)
     RUN_BUTTON_ = _pixel2p(1070, 67)
+    BROWSE_FOLDER_ = _pixel2p(107, 170)
+    OK_PROMPT_ = _pixel2p(874, 848)
+    SIDEMENU_ = _pixel2p(23, 227)
 
     def __init__(self, background=None):
         super().__init__()
         
-        self.env_image = ImageMobject(background).scale_to_fit_width(FRAME_WIDTH).center().set_z_index(-2)
+        self.env_image = ImageMobject(background).scale_to_fit_width(FRAME_WIDTH).center().set_z_index(-4)
         self.add(self.env_image)
-        self.cells = []
+        self.cells : List[MatlabCodeBlock]= []
         self.output : MatlabOutput  | None = None
-        self.cursor : Cursor = Cursor().set_z_index(-1.5)
+        self.cursor : Cursor = Cursor().set_z_index(-2).move_to([-20,-20, 0])
+        self.add(self.cursor)
 
 
     def set_image(self, image_path: str):
-        self.env_image.become(ImageMobject(image_path).scale_to_fit_width(FRAME_WIDTH)).center().set_z_index(-2)
+        self.env_image.become(ImageMobject(image_path).scale_to_fit_width(FRAME_WIDTH)).center().set_z_index(-4)
 
     def add_cell(self, cell: MatlabCodeBlock):
         if len(self.cells) == 0:
             cell.move_to(self.TOP_LEFT_CORNER_, aligned_edge=UL)
         else:
             cell.next_to(self.cells[-1], DOWN, buff=_MATLAB_CELL_TO_CELL_BUFF).align_to(self.cells[-1], LEFT)
-        cell.set_z_index(-1.5)
+        cell.set_z_index(_MATLAB_CELLS_Z_INDEX)
         self.cells.append(cell)
         self.add(cell)
 
-    def remove_cell(self):
+    def remove_cell(self, scene: Scene):
         if len(self.cells) > 0:
-            self.remove(self.cells.pop())  
+            removed_cell = self.cells.pop()
+            self.remove(removed_cell)  
+            scene.remove(removed_cell) 
     
-    def clear(self):
-        while len(self.cells) > 0:
-            self.remove_cell()
+    def remove_output(self, scene: Scene):
         if self.output is not None:
             self.remove(self.output)
+            scene.remove(self.output)
             self.output = None
+    
+    def remove_cursor(self):
+        self.cursor.move_to((-20,-20,0))
+    
+    def clear(self, scene: Scene):
+        while len(self.cells) > 0:
+            self.remove_cell(scene)
+        self.remove_output(scene)
+        self.remove_cursor()
+        scene.remove(self.cursor)
 
     def OutofMatlab(self, cell: MatlabCodeBlock, fullscreen=True, **kwargs):
         target = MatlabCode(cell.code_string)
@@ -164,31 +178,31 @@ class MatlabEnv(Mobject):
                     fill_opacity=1,
                     height=FRAME_HEIGHT,
                     width=FRAME_WIDTH))
+        cells_to_fade = self.cells[:-1]
         return AnimationGroup(
             Transform(cell, target),
-            FadeOut(self.env_image)
+            FadeOut(self.env_image, *cells_to_fade, self.cursor),
     )
 
     def add_output(
         self,
         output_text: str | Mobject = None,
-        output_image: str | Mobject = None
+        output_image: str | Mobject = None,
+        scene = None,
+        **kwargs
     ):
         # clear previous output
         if self.output is not None:
-            self.remove(self.output)
-        self.output = MatlabOutput(output_text, output_image).set_z_index(-1.5)
+            self.remove_output(scene)
+        self.output = MatlabOutput(output_text, output_image, **kwargs).set_z_index(_MATLAB_CELLS_Z_INDEX)
         self.add(self.output)
         
     def Run(self):
-        self.cursor.move_to(self.RUN_BUTTON_)
-        self.add(self.cursor)
+        self.cursor.move_to(ORIGIN)
         if self.output is not None:
-        # add again the output so it is above everything else
-            # self.remove(self.output)
-            # self.add(self.output)
             return Succession(
                 GrowFromCenter(self.cursor),
+                ApplyMethod(self.cursor.move_to, self.RUN_BUTTON_),
                 self.cursor.Click(),
                 FadeIn(self.output, run_time=0),
                 Wait(0.1)
@@ -196,23 +210,24 @@ class MatlabEnv(Mobject):
         else:
             return Succession(GrowFromCenter(self.cursor), self.cursor.Click())
 
-    def focus_output(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2, **kwargs):
+    def focus_output(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2, alignment=None, **kwargs):
         if self.output is None:
             raise ValueError("Matlab environment has no output")
         self.output.set_z_index(0)  # any negative z_index will not work
-        return self.output.animate(**kwargs).focus(scale, buff)
+        return self.output.animate(**kwargs).focus(scale=scale, buff=buff, alignment=alignment)
 
 
 class MatlabOutputText(Paragraph):
     def __init__(self, text, **kwargs):
-        super().__init__(text, font_size=COLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
+        super().__init__(text, font_size=MATLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
                         line_spacing=0.5, **kwargs)
         
 class MatlabOutput(Mobject):
     def __init__(
         self,
         output_text: str | Mobject = None,
-        output_image: str | Mobject = None
+        output_image: str | Mobject = None,
+        image_width: float = MATLAB_PLOT_WIDTH
     ):
         super().__init__()
         # add output text
@@ -236,19 +251,22 @@ class MatlabOutput(Mobject):
                 self.image = ImageMobject(output_image)
             else:
                 self.image = output_image
-            self.image.scale_to_fit_width(MATLAB_PLOT_WIDTH).center()
-            self.plot_window = SurroundingRectangle(self.image, color="#f0f0f0", 
+            self.image.scale_to_fit_width(image_width).center()
+            self.plot_window = SurroundingRectangle(self.image, color=MATLAB_GRAY, 
                                                     buff=0.1, corner_radius=0.1,
                                                     fill_opacity=1,
                                                     stroke_width=0.5, stroke_color=BLACK)
             self.add(self.plot_window, self.image)
 
-    def focus(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2):
+    def focus(self, scale=0.75, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2, alignment=None):
         """To be used with animate syntax"""
-        self.text.scale_to_fit_width(FRAME_WIDTH*scale)
-        if self.image is not None:
-            Group(self.image, self.plot_window).next_to(self.text, DOWN, buff=buff)
+        if self.text is not None:
+            self.text.scale_to_fit_width(FRAME_WIDTH*scale)
+            if self.image is not None:
+                Group(self.image, self.plot_window).next_to(self.text, DOWN, buff=buff)
         self.center()
+        if alignment is not None:
+            self.to_edge(alignment)
         if self.outputWindow is not None:
             self.outputWindow.become(
                     Rectangle(
@@ -256,7 +274,7 @@ class MatlabOutput(Mobject):
                     height=FRAME_HEIGHT,
                     width=FRAME_WIDTH,
                     fill_opacity=1)
-                )
+                ).center()
 
 class MatlabCodeWithLogo(CodeWithLogo):
     def __init__(
@@ -264,6 +282,7 @@ class MatlabCodeWithLogo(CodeWithLogo):
         code,
         logo_pos=UP,
         logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER,
+        logo_shift_buff=0.5,
         **kwargs
     ):
         super().__init__(
@@ -271,4 +290,5 @@ class MatlabCodeWithLogo(CodeWithLogo):
             logo_mobj=ImageMobject(_MATLAB_LOGO).scale(0.5),
             logo_pos=logo_pos,
             logo_buff=logo_buff,
+            logo_shift_buff=logo_shift_buff
         )

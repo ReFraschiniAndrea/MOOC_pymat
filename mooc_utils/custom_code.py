@@ -10,6 +10,7 @@ __all__ = [
 
 from pathlib import Path
 from typing import Any, Literal
+from textwrap import dedent
 
 from bs4 import BeautifulSoup, Tag
 from pygments import highlight
@@ -17,6 +18,7 @@ from pygments.formatters.html import HtmlFormatter
 from pygments.lexers import get_lexer_by_name, guess_lexer, guess_lexer_for_filename
 
 from manim.constants import *
+from manim.mobject.geometry.arc import Dot
 from manim.mobject.geometry.polygram import Rectangle
 from manim.mobject.geometry.shape_matchers import SurroundingRectangle
 from manim.mobject.text.text_mobject import Paragraph
@@ -51,6 +53,11 @@ class CustomCode(VMobject):
         "disable_ligatures": True,
     }
 
+    @staticmethod
+    def _remove_invisible_chars(paragraph_line: VGroup):
+        mobject_without_dots = VGroup(k for k in paragraph_line if k.__class__ != Dot)
+        return mobject_without_dots
+    
     def __init__(
         self,
         code_file: StrPath | None = None,
@@ -76,6 +83,7 @@ class CustomCode(VMobject):
             raise ValueError("Either a code file or a code string must be specified.")
 
         code_string = code_string.expandtabs(tabsize=tab_width)
+        code_string = dedent(code_string).strip("\n")
         self.code_string = code_string
 
         # Create Paragraph object corresponding to the code
@@ -137,16 +145,23 @@ class CustomCode(VMobject):
         for line, color_range in zip(self.code, color_ranges):
             for start, end, color in color_range:
                 line[start:end].set_color(color)
-
+        # remove invisible chars (tabs)
+        for i in range(len(self.code.chars)):
+            self.code.chars[i] = self._remove_invisible_chars(self.code.chars[i])
         self.add(self.code)
         self.window = None
 
 
     def __getitem__(self, value):
-        return self.code.__getitem__(value)
-
+        return self.code.chars.__getitem__(value)
+    
+    def __len__(self):
+        return len(self.code.chars)
+    
 
     def add_background_window(self, rectangle: Rectangle = None, background_config=None):
+        if self.window is not None:
+            self.remove(self.window) # remove window if it already has one
         if rectangle is not None:
             self.window = rectangle
         else:
@@ -168,8 +183,8 @@ class CustomCode(VMobject):
             lines = range(len(self.code))
         anims = []
         for i in lines:
-            if self.code[i].family_members_with_points():  # Not an empty line
-                anims.append(AddTextLetterByLetter(self.code[i], rate_func=linear, time_per_char=0.01))
+            if self.code.chars[i].family_members_with_points():  # Not an empty line
+                anims.append(AddTextLetterByLetter(self.code.chars[i], rate_func=linear, time_per_char=0.01))
         return AnimationGroup(*anims, lag_ratio=lag_ratio)
 
 class CodeWithLogo(Mobject):
@@ -178,7 +193,8 @@ class CodeWithLogo(Mobject):
         code_mobj: CustomCode,
         logo_mobj: ImageMobject,
         logo_pos=UP,
-        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER
+        logo_buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER,
+        logo_shift_buff = _LOGO_SHIFT_BUFF
     ):
         super().__init__()
         self.codeMobject = code_mobj
@@ -186,8 +202,8 @@ class CodeWithLogo(Mobject):
             self.codeMobject.add_background_window()
         self.logo = logo_mobj.next_to(self.codeMobject, logo_pos, buff=logo_buff)
         if (logo_pos == UP).all():
-            self.logo.align_to(self.codeMobject.window, LEFT).shift(RIGHT*_LOGO_SHIFT_BUFF)
+            self.logo.align_to(self.codeMobject.window, LEFT).shift(RIGHT*logo_shift_buff)
         elif (logo_pos == LEFT).all():
-             self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*_LOGO_SHIFT_BUFF)
+             self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*logo_shift_buff)
         self.add(self.codeMobject)
         self.add(self.logo)

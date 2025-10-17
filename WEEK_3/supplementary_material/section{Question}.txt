@@ -1,63 +1,124 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\geometry{a4paper, margin=1in}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue},
+  stringstyle=\color{green},
+  commentstyle=\color{gray},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  captionpos=b
+}
+
+\newcommand{\as}[1]{{\color{magenta}{#1}}} %colors
+\newcommand{\py}[1]{\texttt{\lstinline!#1!}}
+
+\title{Additional material Week 3}
+\author{anna.scotti }
+\date{May 2025}
+
+\begin{document}
+
+\maketitle
+
 \section{Question}
 \subsection{Statement}
 \begin{enumerate}
-\item Try to run the gradient descent algorithm for our robot arm example with target points and same initial condition.
-Consider the values $(x_p, y_p)=(0.75, -1), (1, 1), (2, 2.5)$ for the target point; for the other parameters, use $\alpha=0.1, tol=1e-6, N_{iter}=1000$
-\item Collect the values of the distances of the robot tip to the target and plot them as a function of iteration.
+\item[] Try to run the Gradient Descent algorithm for our robot arm example with different target points and same initial condition.
+Consider the values $(x_p, y_p)=(0.75, -1), (1, 1), (2, 2.5)$ for the target point; for the other parameters, use $\alpha=0.1,\ tol=10^{-4},\ N_{iter}=100$, and initial conditions $(\theta_1^0, \theta_2^0)=(2.5, 2.7)$.
+\item[] Collect the values of the objective function $J$ at each iteration of the Gradient Descent algorithm and plot them.
 \end{enumerate}
-Pay attention in particular to what happens in the case $(x_p, y_p)=(...)$, which is not reachable by the robot, since its distance from the robot base is greater than the sum of the lengths of its arms.
+Pay attention in particular to what happens in the case $(x_p, y_p)=(2, 2.5)$, which is not reachable by the robot, since its distance from the robot base is greater than the sum of the lengths of its arms.
 
 
 \subsection{Theory}
-Gradient Descent is an iterative algorithm used to solve (approximatively) a minimization problem:
+Gradient Descent is an iterative algorithm used to solve (approximately) a minimization problem:
 \begin{equation}
-	\min_{\mathbf{x} \in \mathbb{R}} J(\mathbf{x})
+	\min_{\mathbf{x} \in \mathbb{R}^n} J(\mathbf{x})
 \end{equation}
-This is done by taking an initial guess $\bbmath{x}_0 \in \mathbb{R}^n$ and updating it by moving in the direction opposite to the gradient:
+This is done by taking an initial guess $\mathbf{x}_0 \in \mathbb{R}^n$ and updating it by moving in the direction opposite to the gradient of $J$:
 \begin{equation}
 	\mathbf{x}_{n+1} = \mathbf{x}_n - \alpha \nabla J(\mathbf{x}_n)
 \end{equation}
-The main idea is that the gradient of a function corresponds to the direction of its greatest increse, so moving in the opposite direction means decreasing the objective function.
+The main idea behind the algorithm is that the gradient of a function corresponds to the direction of its greatest increase, so moving in the opposite direction means decreasing the objective function. The magnitude of the update depends on the parameter $\alpha$, which is called \emph{learning rate} or \emph{step size}.
 
-In our robot arm example, the objective function $J$ is the squared distance between the robot tip and the target point $(x_p, y_p)$, so we can compute the distance simply by taking its square root.
+In our robot arm example, the objective function $J$ is the squared distance between the robot tip $(x, y)$ and the target point $(x_p, y_p)$:
 \begin{equation}
-	d_p(\theta_1, \theta_2) = \sqrt{J(\theta_1, \theta_2)}
+	J(\theta_1, \theta_2) =d_p^2(\theta_1, \theta_2) = (x(\theta_1, \theta_2)-x_p)^2 + (y(\theta_1, \theta_2)-y_p)^2
 \end{equation}
 
 
 \subsection{Python solution}
-The code for gradient descent algorithm is the same as the one seen in the lecture, we just have to modify it slighlty to store the distances. 
+The code for the algorithm is the same as the one seen in the lecture, we just have to modify it slightly to store values of $J$. 
 
-However, since the algorithm can take a different number of iterations to converge depending on the parameters, we do not know a priori how many distance values we will get. This means that we cannot allocate a list "statically" with … like we did before: we have to instead grow the list dynamically while the algorithm progresses. 
-To to this, we can use the \py{append} method, which takes in input an object and inserts it at the end of the list, increasing its length by one.
+However, since Gradient Descent can take a different number of iterations to converge depending on the parameters that we use, we do not know a priori how many values we will get. This means that we cannot allocate a list "statically" with \py{dp = N*[0]} like we did before: we have to instead grow the list dynamically while the algorithm progresses. 
+To do this, we can use the \py{append} method, which takes as input an object and inserts it at the end of the list, increasing its length by one.
 
-a=[2,3] 	# List has two elements
-a.append(4) 	# Now the list has 3 elements: [2, 3, 4]
+\begin{lstlisting}[language=Python]
+    a = [2,3]       # List has two elements
+    a.append(4)     # Now the list has 3 elements: [2, 3, 4]
+\end{lstlisting}
 
-At the start of the algorithm we initialize an empty list \py{dp=[]}. Then, at each iteration of the while loop, we append the new distance value: \py{dp.append(sqrt(Jval))}.
-We can then plot them with matplotlib.
-The full code is reported in Listing \ref{}.
+At the start of the algorithm we initialize an empty list with \py{values=[]}. Then, at each iteration of the while loop, we append the new value: \py{values.append(Jval)}.
+
+To better visualize the sequence, instead of \py{plt.plot} we will use \py{plt.semilogy}, which plots the data using a logarithmic y axis; this is useful because the values of $J$ will span across multiple orders of magnitude.
+Since we want to plot the values against the number of iterations, we can pass \py{values} as the only argument to \py{plt.semilogy}; in that case the corresponding x value of a given entry of a vector will just be its index in the vector, which is exactly what we need.
+Listing \ref{q1pycode} shows the final Python code for the solution.
+\lstinputlisting[language=Python, caption={Python code solution for the Question}, label=q1pycode]{Code/W3Q1_convergence_plot.py}
 
 
 \subsection{Matlab solution}
-The code for gradient descent algorithm is the same as the one seen in the lecture, we just have to modify it slighlty to store the distances. 
+The code for the algorithm is the same as the one seen in the lecture, we just have to modify it slightly to store the distances. 
 
-Since the number of iterations needed by the algorithm to converge is not known a priori, we cannot use \py{np.zeros(N)} like before to store the distance values; instead we need to grow a vector dynamically while the algorithm progresses.
-Matlab allows us to do this by simply accessing the corresponding index of the vector.
-That is, if the vector is shorter than the index that we access, the corresponding element will be created in that moment (and any other intermediate values will be filled with zeros).
+Since the number of iterations needed by Gradient Descent to converge is not known a priori, we cannot use \py{np.zeros(N)} like before to store the distance values; instead we need to grow a vector dynamically while the algorithm progresses.
+Matlab allows us to do this by simply accessing the corresponding index of the vector and assigning a value to it: if the vector is shorter than the index that we access, the corresponding element will be created in that moment (and any other intermediate values will be filled with zeros), like in this example:
 
-a = [2, 3]  	% Vector has 2 elements
-a[5] = 4 	% Now it has 5 elements: a = [2, 3, 0, 0, 4]
+\begin{lstlisting}[language=Matlab]
+    a = [2, 3];      % Vector has 2 elements
+    a(5) = 4;        % Now it has 5 elements: a = [2, 3, 0, 0, 4]
+\end{lstlisting}
 
-At the start of the algorithm we initialize an empty list \py{dp=[]}. Then, at each iteration of the while loop, we simply add the new distance value with \dp[i]=sqrt(Jval)}.
-We can then plot them with matplotlib.
-The full code is reported in Listing \ref{}.
+So, at the start of the algorithm we initialize an empty vector with \py{values=[];} and then add to it the computed distances with \py{values(i)=Jval;} at each while loop iteration.
+
+Another way of appending elements that is more explicit in its syntax is \emph{concatenation}:
+\begin{lstlisting}[language=Matlab]
+    a = [2, 3];      % Vector has 2 elements
+    a = [a, 4];      % a is concatenated with 4, so a = [2, 3, 4]
+\end{lstlisting}
+
+To better visualize the sequence, instead of \py{plot} we will use \py{semilogy}, which plots the data using a logarithmic y axis; this is useful because the values of $J$ will span across multiple orders of magnitude.
+Since we want to plot the values against the number of iterations, we can pass \py{values} as the only argument to \py{semilogy}; in that case the x value corresponding to a given entry of the vector will just be the its index in the vector, which is exactly what we need.
+Listing \ref{q1matcode} shows the final Matlab code for the solution.
+\lstinputlisting[language=Matlab, caption={Matlab code solution for the  Question}, label=q1matcode]{Code/W3Q1_convergence_plot.m}
 
 
 \subsection{Comments}
-We can see that, starting from an initial positive value, the target distance initially decreases quite fast, while at the end it plateaus, until the algorithm stops because we have reached the required tolerance.
-Indeed, at each iteration we take a step that is proportial to the gradient, so the steepest the gradient the lager the step and thus the decrease. Near the minimum of the objectuve function J, the function is much "flatter" i.e. the gradient magnitude is low, and so the convergence is slow.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{Plots/W3Q1_convergence_plot_pyplot.png}
+\caption{\label{fig:convergence_profiles} Squared distance of the robot arm tip to the target as a function of Gradient Descent iteration, shown with logarithmic y axis.}
+\end{figure}
+We can see that initially the objective function decreases quite fast, with a decrease of the order of $10^0$ per iteration, while later this rate slows down to around $10^{-4}$ per iteration, until the algorithm stops because we have reached the required tolerance: $J < tol = 10^{-4}$.
 
-Something different happens in the last case. As higlighted, the sum of the length of the robot arms is $L_1 + L_2 = 1 + 1.5 = 2.5$, while the distance of the target from the base is $\sqrt{2^2+2.5^2}=3.2015$, so the point is not reacheable. The Gradient Descent algorithm however does not really care about this: the distance between the robot tip and the target is minmized, which means that thethe robot stretches out to it without actually reaching. Since this minimum distance is much greater than the tolerance that we fixed, the stop criterion will never be satisfied and the algorithms runs for the maximum number of iterations $\N_{iter}$.
+Indeed, at each iteration we take a step that is proportional to the gradient of $J$, so the steepest the gradient, the larger the step and thus the decrease. Near the minimum of the objective function $J$, the function is much "flatter", i.e. the gradient magnitude is low, and so the convergence is slower.
 
+Something different happens in the last case $(x_p,y_p)=(2, 2.5)$. As highlighted, the sum of the length of the robot arms is $L_1 + L_2 = 1 + 1.5 = 2.5$, while the distance of the target from the base is $\sqrt{2^2+2.5^2}=3.2015$, so the point is not reachable. However, the Gradient Descent algorithm  does not really care about this: the distance between the robot tip and the target is minimized, which means that the robot stretches out in its direction without actually ever reaching it. Since this minimum distance is much greater than the tolerance that we fixed, the stop criterion will never be satisfied and the algorithms runs for the maximum number of iterations $N_{iter}=100$.
 
+\end{document}

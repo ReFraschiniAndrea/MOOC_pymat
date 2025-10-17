@@ -2,10 +2,11 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT, CODE_FONT, HighlightRectangle, CustomDecimalNumber
-from matlab_utils import MatlabCodeWithLogo
-from colab_utils import ColabCodeWithLogo, ColabCode
+from mooc_utils import *
+from mooc_utils.colab import ColabCodeWithLogo, ColabCode
+from mooc_utils.matlab import MatlabCodeWithLogo
+
+
 from W3Anim import double_arm_kinematics, NewDB, RobotGradientDescent
 
 config.update(RELEASE_CONFIG)

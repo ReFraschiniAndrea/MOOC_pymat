@@ -3,14 +3,13 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from mooc_utils import *
-from mooc_utils.colab import *
+from mooc_utils.matlab import *
 from W2Anim import *
-import matplotlib.pyplot as plt
 
 config.update(RELEASE_CONFIG)
-config.max_files_cached = 200  # this presentation is particularly long
+config.max_files_cached = 200  # these presentation is particularly long
 
-class W2Python_slides(MOOCSlide):
+class W2Matlab_slides(MOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
         # AXIS WITH DATA POINTS APPEAR
@@ -18,8 +17,7 @@ class W2Python_slides(MOOCSlide):
         # FORMULAS FOR m, q  APPEAR
         self.next_slide(
             notes=
-            '''Let's explore how linear regression can be implemented in Python.
-            Our ultimate goal is to answer key questions, such as: To what
+            '''Our ultimate goal is to answer to the question:  To what
             extent do variables like temperature and humidity affect the risk of
             wildfires? [CLICK]
             '''
@@ -58,11 +56,11 @@ class W2Python_slides(MOOCSlide):
         initial_graph = VGroup(ax, ax_labels, dataset_points, reg_line, rise_over_run, slope_label,intercept_dot, intercept_label, LR_equations).scale(0.75).shift(DOWN*0.35)
         surrounding_rect = SurroundingRectangle(initial_graph, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,
                                               stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
-        cl_env = ColabEnv(r'Assets\W2\colabSLR.png')
+        mat_env = MatlabEnv(r'Assets\W2\matlab_empty.png')
 
         self.play(
             Succession(
-                FadeIn(cl_env),
+                FadeIn(mat_env),
                 Wait(0.5),
                 FadeIn(surrounding_rect),
                 FadeIn(ax, ax_labels, dataset_points),
@@ -73,327 +71,284 @@ class W2Python_slides(MOOCSlide):
         )
 
         # SLIDE 02:  ===========================================================
-        # COLAB NOTEBOOK FADES IN
-        # HAND CURSOR GROWS FROM CENTER AND MOVES TO FOLDER ICON
+        # MATLAB ENVIRONMENT FADES IN
+        # HAND CURSOR GROWS FROM CENTER AND MOVES TO BROWSE FOLDER ICON
         self.next_slide(
             notes=
-            '''Let's open the notebook. First, we need to load the data. By
-            clicking on the folder icon on the left, [CLICK]
+            '''Let's open Matlab. First, we need to load the data: to ensure
+            that MATLAB can access the file, click on the "Browse folder button"
+            [CLICK]...
             '''
         )
         hand_cursor = Cursor()
         self.play(
             Succession(
                 FadeOut(initial_graph, surrounding_rect),
-                Wait(0.5),
+                Wait(0.2),
+                FadeIn(mat_env),
+                Wait(1),
                 GrowFromCenter(hand_cursor)
             )
         )
 
         # SLIDE 03:  ===========================================================
-        # HAND CURSOR MOVES TO FOLDER ICON
-        # FOLDER ICON IS CLICKED AND SIDE MENU APPEARS
+        # HAND CURSOR MOVES TO BROWSE FOLDER ICON
+        # BROWSE FOLDER ICON IS CLICKED AND PROMPT WINDOW APPEARS
         self.next_slide(
             notes=
-            '''a side bar appears showing the list of available files. Let us
-            click on the upload button, [CLICK]
+            '''and select the folder containing the
+            "Algerian_forest_dataset.csv" file. [CLICK]
             '''
         )
-        self.play(Succession(hand_cursor.animate.move_to(cl_env.MENU_), hand_cursor.Click()))
-        cl_env.set_image(r'Assets\W2\colabSLR_sidemenu.png')
-
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.BROWSE_FOLDER_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_browse_folder.png')
+        
         # SLIDE 04:  ===========================================================
-        # HAND CURSOR MOVES TO UPLOAD BUTTON
-        # UPLOAD BUTTON IS CLICKED, UOLUADED FILE APPEARS
+        # OK BUTTON CLICKED, RETURN TO EMPTY ENVIRONMENT
         self.next_slide(
             notes=
-            '''and select from your local file system the file
-            Algerian_forest_dataset.csv. [CLICK] This dataset includes detailed
-            features related to a set of forest fires recorded in Algeria.
+            '''Then, check that the file appears in the [CLICK] "Current Folder"
+            panel.
+            '''
+        )
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.OK_PROMPT_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_empty.png')
+
+        # SLIDE 05:  ===========================================================
+        # MOVE AND CLICK TO SIDEMENU TO SHOW CURRENT FILES
+        self.next_slide(
+            notes=
+            '''This confirms that MATLAB can locate the file before we proceed
+            with reading it. [CLICK]
+            '''
+        )
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SIDEMENU_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_sidemenu_algerian.png')
+
+        # SLIDE 06:  ===========================================================
+        # CREATE NEW SCRPT AND SAVE IT
+        self.next_slide(
+            notes=
+            '''Let us create a new script, named "week2.m". [CLICK]
+            '''
+        )
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.NEW_SCRIPT_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_untitled.png')
+        self.wait(0.2)
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_save_week2.png'),
+        self.wait(0.2)
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_PROMPT_BUTTON_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_week2.png'),
+
+        # SLIDE 07:  ===========================================================
+        # READTABLE LINES WRITTEN
+        self.next_slide(
+            notes=
+            '''Then, with the function "readtable" we can read CSV files, Comma-
+            Separated Values files. Make sure the file name matches exactly!
             [CLICK]
             '''
         )
-        self.play(Succession(hand_cursor.animate.move_to(cl_env.UPLOAD_), hand_cursor.Click()))
-        cl_env.set_image(r'Assets\W2\colabSLR_uploaded.png'),
+        empty_cell = MatlabCodeBlock(code='')
+        mat_env.add_cell(empty_cell)
 
-        # SLIDE 05:  ===========================================================
-        # NEW CODE CELL IS CREATED AND ZOOMED IN
-        self.next_slide(
-            notes=
-            '''next, we start coding. The first step is to import the modules we
-            are going to use in the project. [CLICK]
-            '''
-        )
-        empty_cell = ColabCodeBlock(code='')
-        self.play(Succession(hand_cursor.animate.move_to(cl_env.PLUS_CODE_), hand_cursor.Click()))
-        cl_env.set_image(r'Assets\W2\colabSLR.png')
-        cl_env.add_cell(empty_cell)
-        self.wait(0.8)
-        self.play(cl_env.OutofColab(empty_cell), FadeOut(hand_cursor))
-
-        # SLIDE 06:  ===========================================================
-        # IMPORT NUMPY LINE IS WRITTEN
-        self.next_slide(
-            notes=
-            '''We need the module "numpy", imported with the name "np", for
-            vector oparations, [CLICK]
-            '''
-        )
-        import_code = ColabCode(
+        import_code = MatlabCode(
             r'''
-            import numpy as np
-            import pandas as pd
-            import matplotlib.pyplot as plt
-
-            # Load the dataset
-            my_dataset = pd.read_csv('Algerian_forest_dataset.csv')
+            % Load the dataset
+            my_dataset = readtable('Algerian_forest_dataset.csv');
             '''
         ).center()
-        self.play(import_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 07:  ===========================================================
-        # IMPORT PANDAS LINE IS WRITTEN
-        self.next_slide(
-            notes=
-            '''Next, we use module "pandas", imported as "pd", to work with
-            datasets, [CLICK]
-            '''
+        self.play(
+            mat_env.OutofMatlab(empty_cell),
+            FadeOut(hand_cursor)
         )
-        self.play(import_code.TypeLetterbyLetter(lines=[1]))
+        self.wait(0.2),
+        self.play(import_code.TypeLetterbyLetter())
 
         # SLIDE 08:  ===========================================================
-        # IMPORT MATPLOTLIB LINE IS WRITTEN
-        self.next_slide(
-            notes=
-            '''Finally, we will use "matplotlib" to visualize the data. [CLICK]
-            '''
-        )
-        self.play(import_code.TypeLetterbyLetter(lines=[2]))
-
-        # SLIDE 09:  ===========================================================
-        # READ_CSV LINES WRITTEN
-        self.next_slide(
-            notes=
-            '''To load the dataset, we can use the function "read_csv", which
-            reads CSV files: Comma Separated Values files. Make sure the file
-            name matches exactly! [CLICK]
-            '''
-        )
-        self.play(
-            Succession(
-                import_code.TypeLetterbyLetter(lines=[4]),
-                Wait(0.5),
-                import_code.TypeLetterbyLetter(lines=[5]),
-            )
-        )
-
-        # SLIDE 10:  ===========================================================
-        # DATAFRAME VARIABLE IS HIGHLIGHTED
+        # MY_DATASET VARIABLE IS HIGHLIGHTED
         self.next_slide(
             notes=
             '''The output of the function is stored in a variable named
-            my_dataset, [CLICK] ...
+            my_dataset, which is an object of type "table". In MATLAB, a "table"
+            is a data type for storing tabular data, where columns represent
+            variables and rows correspond to observations. It allows easy
+            indexing, filtering, and manipulation using column names, making
+            data analysis more efficient. [CLICK]
             '''
         )
-        my_dataset_highlight = HighlightRectangle(import_code[5][:10])
+        my_dataset_highlight = HighlightRectangle(import_code[1][:10])
         self.play(Create(my_dataset_highlight))
 
-        # SLIDE 11:  ===========================================================
-        # INTO COLAB, CODE IS RUN
+        # SLIDE 09:  ===========================================================
+        # INTO MATLAB, THEN OUT OF MATLAB AGAIN
         self.next_slide(
             notes=
-            '''...which is an instance of the class DataFrame from pandas.
-            [CLICK]
+            '''Let's explore our dataset to get familiar with this type of data
+            structure and to see the data firsthand, which is always a good
+            practice! [CLICK]
             '''
         )
-        DSS = DynamicSplitScreen(COLAB_LIGHTGRAY, WHITE, buff=0.5)
-        self.add(DSS); self.remove(cl_env.cells[0].colabCode.window)
-        cl_env.clear(self)
-        import_code.add_background_window(DSS.mainRect.suspend_updating())
+        mat_env.clear(self)
+        DSS = DynamicSplitScreen(WHITE, MATLAB_LIGHTGRAY, buff=0.5)
+        self.add(DSS)
+        import_code.add_background_window(DSS.mainRect.suspend_updating().set_color(WHITE))  # this set color prevents something bad, why?
         
         self.play(FadeOut(my_dataset_highlight))
-        self.play(import_code.IntoColab(cl_env))
-        self.play(cl_env.Run(cell=0))
-
-        # SLIDE 12:  ===========================================================
-        # CLASS SCHEME APPEARS
-        self.next_slide(
-            notes=
-            '''A class is more than just a data type: [CLICK] ...
-            '''
-        )
-        class_title = Text("Class", font=CODE_FONT, color = COLAB_TEAL, weight=BOLD).scale(1.3)
-        cs = VGroup(
-            Dot(color=COLAB_BROWN), 
-            Text("Attributes", font=CODE_FONT, color = COLAB_BROWN, weight=BOLD),
-            Arrow(ORIGIN,RIGHT*1.5, color=BLACK),
-            Text("Characteristics", font=CODE_FONT, color = BLACK),
-            Dot(color=COLAB_BLUE), 
-            Text("Methods", font=CODE_FONT, color = COLAB_BLUE, weight=BOLD),
-            Arrow(ORIGIN,RIGHT*1.5, color=BLACK),
-            Text('"Actions"', font=CODE_FONT, color = BLACK),
-        )
-        cs.arrange_in_grid(2, 4, buff = 0.5, cell_alignment=LEFT)
-
-        class_title.next_to(cs,UP, buff = 0.7)
-        
-        css = VGroup(class_title, cs).scale(0.8).move_to( (cl_env.cells[0].get_bottom() + DOWN * FRAME_HEIGHT/2)/2)
-        surrounding_css = SurroundingRectangle(VGroup(cs, class_title), fill_color=COLAB_LIGHTGRAY, fill_opacity=1, stroke_width=0.5,
-                                              stroke_color=BLACK, corner_radius=0.2, buff=0.5)
-        
-        self.play(
-            Succession(
-                FadeIn(surrounding_css),
-                FadeIn(class_title)
-            )
-        )
-
-        # SLIDE 13:  ===========================================================
-        # CLASS SCHEME APPEARS
-        self.next_slide(
-            notes=
-            '''...it defines the attributes, the characteristics that an object
-            can have, [CLICK] ...
-            '''
-        )
-        self.play(FadeIn(cs[:4]))
-
-        # SLIDE 14:  ===========================================================
-        # CLASS SCHEME APPEARS
-        self.next_slide(
-            notes=
-            '''...but also the methods, the "actions" that we can perform on the
-            and with the object. [CLICK]
-            '''
-        )
-        self.play(FadeIn(cs[4:]))
-
-        # SLIDE 15:  ===========================================================
-        # INTO COLAB, CELL IS RUN
-        # NEW CELL APPEARS, OUT OF COLAB AGAIN
-        self.next_slide(
-            notes=
-            '''Let's explore our dataset using both attributes and methods.
-            [CLICK]
-            '''
-        )
-        hand_cursor = cl_env.cursor
-        self.play(
-            Succession(
-                FadeOut(surrounding_css, css),
-                ApplyMethod(hand_cursor.move_to, cl_env.PLUS_CODE_),
-                hand_cursor.Click()
-            )
-        )
-        new_empty_cell=ColabCodeBlock(code='')
-        cl_env.add_cell(new_empty_cell)
-        self.add(cl_env)  # to update
+        self.play(import_code.IntoMatlab(mat_env))
         self.wait(0.5)
-        self.play(cl_env.OutofColab(new_empty_cell))
-        self.remove(hand_cursor)
 
-        # SLIDE 16:  ===========================================================
+        new_empty_cell=MatlabCodeBlock(code='')
+        new_empty_cell.window.stretch_to_fit_height(0.25).stretch_to_fit_width(mat_env.cells[0].width)
+        
+        mat_env.add_cell(new_empty_cell)
+        self.play(mat_env.OutofMatlab(new_empty_cell))
+
+        # SLIDE 10:  ===========================================================
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
             '''First of all, we find the number of rows and columns. We use the
-            attribute of the dataset called [CLICK] ...
+            function [CLICK] ...
             '''
         )
-        dataset_size_code = ColabCode(
+        dataset_size_code = MatlabCode(
             r'''
-            # Dataset dimensions
-            print(my_dataset.shape)
+            % Dataset dimensions
+            disp('Shape of the dataset:');
+            disp(size(my_dataset));
             '''
         ).center()
         self.play(dataset_size_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 17:  ===========================================================
-        # PRINT SHAPE LINE IS WRITTEN
+        # SLIDE 11:  ===========================================================
+        # DISPLAY SIZE LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''..."shape" to find the number of rows and columns. [CLICK]
+            '''..."size" to find the number of rows and columns. [CLICK]
             '''
         )
-        self.play(dataset_size_code.TypeLetterbyLetter(lines=[1]))
+        self.play(dataset_size_code.TypeLetterbyLetter(lines=[1, 2]))
 
-        # SLIDE 18:  ===========================================================
-        # INTO COLAB, CELL IS RUN, OUTPUT APPEARS
+        # SLIDE 12:  ===========================================================
+        # INTO MATLAB, CODE IS RUN, OUTPUT APPEARS
         self.next_slide(
             notes=
             '''In this case we have 59 rows and 4 columns. [CLICK]
             '''
         )
-        dataset_size_code.add_background_window(new_empty_cell.colabCode.window)
-        cl_env.clear(self)
-        self.play(dataset_size_code.IntoColab(cl_env))
-        cl_env.cells[0].add_output('(59,  4)')
-        self.play(cl_env.Run())
+        DSS.reset()
+        dataset_size_code.add_background_window(DSS.mainRect.suspend_updating())
+        mat_env.remove_cell(self)  # remove the empty cell we created, but leave the import one
+        self.play(dataset_size_code.IntoMatlab(mat_env))
+        mat_env.add_output('Shape of the dataset:\n59\t4')
+        self.play(mat_env.Run())
 
-        # SLIDE 19:  ===========================================================
-        # RETURN TO OUT OF COLAB
-        # HEAD CODE IS WRITTEN
+        # SLIDE 13:  ===========================================================
+        # RETURN TO OUT OF MATLAB
+        # HEAD TABLE CODE IS WRITTEN
         self.next_slide(
             notes=
-            '''Next, we use the method head. The line dataset.head(5) displays
-            [CLICK]
+            '''Next, we display the first five rows of the dataset With the
+            command my_dataset(1:5, :) we are using MATLAB indexing to extract a
+            subset of the table: [CLICK]
             '''
         )
-        DSS.reset()
-        dataset_head_code = ColabCode(
+        dataset_head_code = MatlabCode(
             r'''
-            # Showing the data
-            print("First 5 rows of the dataset:")
-            dataset.head(5)
+            % Showing the data
+            disp('First 5 rows of the dataset:');
+            disp(my_dataset(1:5, :));
             '''
         ).center()
 
+        DSS.reset()
         self.play(FadeIn(DSS.mainRect))
         self.play(dataset_head_code.TypeLetterbyLetter(lag_ratio=0))
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 14:  ===========================================================
+        # HIGHLIGHT 1:5
+        self.next_slide(
+            notes=
+            '''1:5 selects the first five rows of the dataset. [CLICK]
+            '''
+        )
+        dataset_head_code_highlights = [
+            HighlightRectangle(dataset_head_code[2][16:19]),
+            HighlightRectangle(dataset_head_code[2][17]),
+            HighlightRectangle(dataset_head_code[2][20]),
+        ]
+
+        self.play(Create(dataset_head_code_highlights[0]))
+
+        # SLIDE 15:  ===========================================================
+        # HIGHLIGHT FIRST COLON
+        self.next_slide(
+            notes=
+            '''The colon ":" in 1:5 represents a range from row 1 to row 5
+            [CLICK]
+            '''
+        )
+        self.play(ReplacementTransform(dataset_head_code_highlights[0], dataset_head_code_highlights[1]))
+
+        # SLIDE 16:  ===========================================================
+        # HIGHLIGHT SECOND COLON
+        self.next_slide(
+            notes=
+            '''":" in the column position means "all columns", so we keep all
+            the variables in the table. [CLICK]
+            '''
+        )
+        self.play(ReplacementTransform(dataset_head_code_highlights[1], dataset_head_code_highlights[2]))
+
+        # SLIDE 17:  ===========================================================
         # DISPLAY HEAD TABLE AFTER RUNNNING CODE
         self.next_slide(
             notes=
-            '''...the first 5 rows of the dataset. [CLICK]
+            '''This syntax allows us to display only a portion of the dataset...
+            [CLICK]
             '''
         )
         dataset_head_code.add_background_window(DSS.mainRect.suspend_updating())
-        head_text = ColabBlockOutputText('First 5 rows of the dataset:')
+        head_text = MatlabOutputText('First 5 rows of the dataset:')
         # creating the table
         dataset = np.genfromtxt(r'WEEK_2\supplementary_material\ALgerian_forest_dataset.csv', delimiter=',')
-        row_labels = [Text(str(i), color=BLACK, font=CODE_FONT, weight=ULTRAHEAVY) for i in range(5)]
+        row_labels = [Text(str(i), color=BLACK, font=CODE_FONT, weight=ULTRAHEAVY) for i in range(1, 6)]
         col_labels = [Text(label,  color=BLACK, font=CODE_FONT, weight=ULTRAHEAVY) for label in ['Temperature', 'RH', 'BUI', 'FWI']]
         head_table = Table(dataset[1:6], row_labels=row_labels, col_labels=col_labels,
                           add_background_rectangles_to_entries=False,
                           element_to_mobject=CustomDecimalNumber,
                           element_to_mobject_config={'font':CODE_FONT,'color': BLACK, 'mob_class': Text, 'num_decimal_places':1},
                           line_config={'stroke_width':0},
-                          arrange_in_grid_config={'cell_alignment': ORIGIN})
+                          arrange_in_grid_config={'cell_alignment': ORIGIN},
+                          v_buff = 0.6)
         for i in range(6):
             for j in range(5):
-                color = WHITE if i % 2 ==0 else COLAB_LIGHTGRAY
-                head_table.add_highlighted_cell((i+1,j+1),color=color)
+                head_table.add_highlighted_cell((i+1,j+1),color=WHITE)
                 # color in table constructor does not work 
                 head_table.get_entries((i+1, j+1)).set_color(BLACK)  
-        head_table.scale(0.25).next_to(head_text, DOWN).align_to(head_text, LEFT)
+        head_table.scale(0.25).next_to(head_text, DOWN, buff= 0.05).align_to(head_text, LEFT)
 
-        self.play(dataset_head_code.IntoColab(cl_env))
-        cl_env.cells[1].add_output(VGroup(head_text, head_table))
-        self.play(cl_env.Run(1, new_cursor=False))
+        mat_env.remove_output(self)
+        mat_env.remove_cursor()
+        self.play(FadeOut(dataset_head_code_highlights[2]))
+        self.play(dataset_head_code.IntoMatlab(mat_env))
+        mat_env.add_output(VGroup(head_text, head_table), scene=self)
+        self.play(mat_env.Run())
 
-        # SLIDE 21:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # FOCUS ON THE TABLE
         self.next_slide(
             notes=
-            '''In the table, each row represents a different fire event, while
-            each column corresponds to a specific variable associated with that
-            event: [CLICK]
+            '''where each row represents a different fire event, and each column
+            corresponds to a specific variable:
             '''
         )
-        self.play(cl_env.focus_output(cell=1 ,scale=0.5, alignment=LEFT))
+        self.play(mat_env.focus_output(scale=0.5, alignment=LEFT))
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # HIGHLIGHT TEMPERATURE COLUMN
         self.next_slide(
             notes=
@@ -413,7 +368,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[0], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 20:  ===========================================================
         # HIGHLIGHT RELATIVE HUMIDITY COLUMN
         self.next_slide(
             notes=
@@ -426,7 +381,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[1], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 21:  ===========================================================
         # HIGHLIGHT BUILD-UP INDEX COLUMN
         self.next_slide(
             notes=
@@ -440,7 +395,7 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[2], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # HIGHLIGHT FIRE WEATHER INDEX COLUMN
         self.next_slide(
             notes=
@@ -454,13 +409,13 @@ class W2Python_slides(MOOCSlide):
             AddTextLetterByLetter(full_labels[3], rate_func=linear, time_per_char=0.01)
         )
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # BRACES UNDER COLUMNS APPEAR WITH x_i, y_i labels
         self.next_slide(
             notes=
             '''In our context, temperature, relative humidity, and Build-up
             index can (separately) play the role of variable X, while the fire
-            weather index plays the role of variable Y. [CLICK]
+            weather index plays the role of variable Y.
             '''
         )
         moving_brace = Brace(column_highlights[0], DOWN, color=BLACK)
@@ -484,45 +439,71 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 27:  ===========================================================
-        # NEW EMPTY EMPTY SCREEN FADES IN
-        # # LINEAR REGRESSION WRITTEN
+        # SLIDE 24:  ===========================================================
+        # CREATE NEW SCRIPT AND SAVE IT
+        # OUT OF MATLAB
         self.next_slide(
             notes=
-            '''Now we are ready to implement linear regression. [CLICK]
+            '''Now we are ready to implement linear regression. We will create a
+            new file named "my_linear_regression.m" and that will contain the
+            function definition. [CLICK]
             '''
         )
-        linear_regression_code = ColabCode(
-            r'''
-            # Linear regression
-            def linear_regression(x, y):
-                sum_x = np.sum(x)
-                sum_y = np.sum(y)
-                sum_xy = np.sum(x * y)
-                sum_x2 = np.sum(x ** 2)
+        hand_cursor = Cursor()
+        mat_env.remove_cursor()
+        self.play(FadeOut(mat_env.output, *full_labels, *colored_dots, *column_highlights, x_brace, y_brace))
+        self.play(
+            Succession(
+                GrowFromCenter(hand_cursor),
+                ApplyMethod(hand_cursor.move_to, mat_env.NEW_SCRIPT_),
+                hand_cursor.Click()
+            )
+        )
+        self.add(mat_env)
+        mat_env.clear(self)
+        mat_env.set_image(r'Assets\W2\matlab_untitled2.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_save_mylinearregression.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_PROMPT_BUTTON_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W2\matlab_mylinearregression.png')
 
-                n = len(x)
-                numerator = n*sum_xy - sum_x*sum_y
-                denominator = n*sum_x2 - sum_x**2
-                m = numerator / denominator
-                q = (sum_y - m*sum_x)/n
-                
-                return m, q
+        empty_cell = MatlabCodeBlock('')
+        mat_env.add_cell(empty_cell)
+        self.play(mat_env.OutofMatlab(empty_cell), FadeOut(hand_cursor))
+
+        # SLIDE 25:  ===========================================================
+        # % LINEAR REGRESSION WRITTEN
+        self.next_slide(
+            notes=
+            '''
+            '''
+        )
+        linear_regression_code = MatlabCode(
+            r'''
+            % Linear regression
+            function [m, q] = my_linear_regression(x, y)
+                sum_x = sum(x);
+                sum_y = sum(y);
+                sum_xy = sum(x.*y);
+                sum_x2 = sum(x.^2);
+
+                n = length(x);
+                numerator = n*sum_xy - sum_x*sum_y;
+                denominator = n*sum_x2 - sum_x^2;
+                m = numerator / denominator;
+                q = (sum_y - m*sum_x)/n;
+            end
             '''
         ).center()
         DSS.reset()
-        DSS.mainRect.set_z_index(1)
-        self.play(FadeIn(DSS))
-        cl_env.clear(self)
-        self.remove(cl_env, *full_labels, *colored_dots, *column_highlights, x_brace, y_brace)
-        DSS.mainRect.set_z_index(-1)
+        self.add(DSS); self.remove(empty_cell.window)
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 28:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # SCHEMATIC DRAWING OF THE FUNCTION IS BROUGHT IN
         self.next_slide(
             notes=
-            '''We are going to write a function that [CLICK] takes as inputs the
+            '''We are going to write a function that takes as inputs the
             datapoints, organized in two lists. [CLICK]
             '''
         )
@@ -531,9 +512,8 @@ class W2Python_slides(MOOCSlide):
         DSS.add_main_obj(linear_regression_code[0], follow_obj=linear_regression_code[1:])
 
         self.play(DSS.bringIn())
-        self.play(linear_regression_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 29:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # X INPUT WITH ITS ARRAY APPEARS
         self.next_slide(
             notes=
@@ -548,7 +528,7 @@ class W2Python_slides(MOOCSlide):
         
         self.play(FadeIn(x_vector, fscheme.InputArrows[0], fscheme.InputLabels[0]))
 
-        # SLIDE 30:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # Y INPUT WITH ITS ARRAY APPEARS
         self.next_slide(
             notes=
@@ -558,16 +538,12 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(FadeIn(y_vector, fscheme.InputArrows[1], fscheme.InputLabels[1]))
         
-        # SLIDE 31:  ===========================================================
-        # OUTPUTS M,Q APPEAR
-        # RETURN LINE IS WRITTEN
+        # SLIDE 29:  ===========================================================
+        # OUTPUTS M, Q APPEAR
         self.next_slide(
             notes=
             '''The function will return the coefficients of the regression
-            lines, namely m and q. This is the structure of the Python function
-            that we will write. The function will have two inputs (x and y) and
-            two outputs (m and q). What we need to do now is to fill in the
-            dots. [CLICK]
+            lines, namely m and q. [CLICK]
             '''
         )
         fscheme.add_outputs("m", "q", relative_offset=0.3)
@@ -576,23 +552,33 @@ class W2Python_slides(MOOCSlide):
         q_label = MathTex(r"\hat{q}", color=BLACK).next_to(fscheme.OutputLabels[1], RIGHT, buff=1).scale(1.2)
         q_label.shift((fscheme.OutputLabels[1].get_y()-q_label[0][1].get_y())*UP).match_x(m_label)
 
-        short_linear_regression_code = ColabCode(
-            r'''
-            ...
-            return m, q
+        self.play(FadeIn(fscheme.OutputArrows, fscheme.OutputLabels, m_label, q_label))
+
+        # SLIDE 30:  ===========================================================
+        # SHORT FUNCTION DEFINITION IS WRITTEN
+        self.next_slide(
+            notes=
+            '''This is the structure of the Matlab function that we will write.
+            The function will have two inputs (x and y) and two outputs (m and
+            q). What we need to do now is to fill in the dots. [CLICK]
             '''
-        ).align_to(linear_regression_code[2:4], DL)
+        )
+        short_linear_regression_code = MatlabCode(
+            r'''
+            function [m, q] = my_linear_regression(x, y)
+                ...
+            end
+            '''
+        ).align_to(linear_regression_code[1], UL)
 
         self.play(
             Succession(
-                FadeIn(fscheme.OutputArrows, fscheme.OutputLabels, m_label, q_label),
-                Wait(0.5),
-                short_linear_regression_code.TypeLetterbyLetter()
+                linear_regression_code.TypeLetterbyLetter(lines=[1]),
+                short_linear_regression_code.TypeLetterbyLetter(lines=[1,2])
             )
         )
 
-        self.play
-        # SLIDE 32:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # LINEAR REGRESSION FORMULAS APPEAR
         self.next_slide(
             notes=
@@ -613,7 +599,7 @@ class W2Python_slides(MOOCSlide):
         self.play(DSS.bringIn())
         DSS.add_main_obj(linear_regression_code[:2], linear_regression_code[2:])
 
-        # SLIDE 33:  ===========================================================
+        # SLIDE 32:  ===========================================================
         # ALL SUMS ARE HIGHLIGHTED
         self.next_slide(
             notes=
@@ -637,11 +623,11 @@ class W2Python_slides(MOOCSlide):
         
         self.play(FadeIn(sums_highlights))
 
-        # SLIDE 34:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # THE NON RPEATED SUM TERMS ARE EXTRACTED FROM THE EQUATIONS
         self.next_slide(
             notes=
-            '''We are going to write now a python code that computes these four
+            '''We are going to write now a Matlab code that computes these four
             terms. [CLICK]
             '''
         )
@@ -649,21 +635,21 @@ class W2Python_slides(MOOCSlide):
         sum_terms = LR_equations.get_sums_without_repetition().arrange(RIGHT, buff=1).scale(1.2).move_to(DSS.secondaryRect)
         self.play(LR_equations.ExtractSumTerms(target=sum_terms))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # SAMPLE SUM FOR LOOP CODE IS WRITTEN
         self.next_slide(
             notes=
             '''These sums can be computed by writing suitable "for" loops.
             However, we will compute them in a more concise and readable way by
-            leveraging the np.sum function from the NumPy library (imported as
-            np). [CLICK]
+            leveraging the "sum". [CLICK]
             '''
         )
-        for_sum_code = ColabCode(
+        for_sum_code = MatlabCode(
             r'''
-            sum_x = 0
-            for i in range(len(x)):
-                sum_x = sum_x + x[i]
+            sum_x = 0;
+            for i = 1:length(x)
+                sum_x = sum_x + x(i);
+            end
             '''
         ).align_to(linear_regression_code[2], UL)
 
@@ -674,13 +660,13 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 36:  ===========================================================
-        # SAMPLE SUM FOR LOOP CODE TRANSFORMS INTO NP.SUM(X)
+        # SLIDE 35:  ===========================================================
+        # SAMPLE SUM FOR LOOP CODE TRANSFORMS INTO SUM(X)
         self.next_slide(
             notes=
             '''This function allows us to compute directly the sum of all
-            elements in an array. For example, np.sum(x) calculates the sum of
-            all the x-coordinates. [CLICK]
+            elements in an array. For example, sum(x) calculates the sum of all
+            the x-coordinates. [CLICK]
             '''
         )
         code_sum_highlights = [
@@ -696,11 +682,11 @@ class W2Python_slides(MOOCSlide):
             Create(code_sum_highlights[1]),
         )
 
-        # SLIDE 37:  ===========================================================
-        # NP.SUM(Y) LINE WRITTEN
+        # SLIDE 36:  ===========================================================
+        # SUM(Y) LINE WRITTEN
         self.next_slide(
             notes=
-            '''Similarly, np.sum(y) calculates the sum of all the yi. [CLICK]
+            '''Similarly, sum(y) calculates the sum of all the yi. [CLICK]
             '''
         )
         self.play(linear_regression_code.TypeLetterbyLetter(lines=[3]))
@@ -709,13 +695,13 @@ class W2Python_slides(MOOCSlide):
             Create(code_sum_highlights[3]),
         )
 
-        # SLIDE 38:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # EMPTY RECTANGLE BROUGHT IN ON TOP
         # VECTORIZED OPERATIONS TITLE WRITTEN
         self.next_slide(
             notes=
             '''To compute the last two terms, we need to introduce a powerful
-            concept in Python: vectorized operations. [CLICK]
+            concept in Matlab: vectorized operations. [CLICK]
             '''
         )
         DSS.add_side_obj(sum_terms)
@@ -727,8 +713,8 @@ class W2Python_slides(MOOCSlide):
         x_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]' for i in [0,1,2,'n']]).scale(0.6)
         y_vector =  VectorArray(arrangement='vertical', include_dots=True, array=[f'y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
         xy_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]*y[{i}]' for i in [0,1,2,'n']]).scale(0.6)
-        x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]**2' for i in [0,1,2,'n']]).scale(0.6)
-        vector_labels = [Text(s, color=BLACK, font=CODE_FONT) for s in ['x', 'y', 'x*y', 'x**2']]
+        x2_vector = VectorArray(arrangement='vertical', include_dots=True, array=[f'x[{i}]^2' for i in [0,1,2,'n']]).scale(0.6)
+        vector_labels = [Text(s, color=BLACK, font=CODE_FONT) for s in ['x', 'y', 'x.*y', 'x.^2']]
 
         y_vector.next_to(x_vector, RIGHT)
         xy_vector.next_to(y_vector, RIGHT, buff=1)
@@ -739,8 +725,9 @@ class W2Python_slides(MOOCSlide):
         title.next_to(first_group, UP, buff=0.5)
         first_group.add(title)
         first_group.center()
+        
 
-        DSS2 = DynamicSplitScreen(WHITE, COLAB_LIGHTGRAY, direction=DOWN, buff = 0.5)
+        DSS2 = DynamicSplitScreen(MATLAB_LIGHTGRAY, WHITE, direction=DOWN, buff = 0.5)
         DSS2.add_empty_side_obj(FRAME_HEIGHT)
         DSS2.hard_bring_in()
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:])
@@ -749,7 +736,7 @@ class W2Python_slides(MOOCSlide):
         self.play(DSS2.bringOut())
         self.play(Write(title))
 
-        # SLIDE 39:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # X, Y COLUMN VECTORS APPEAR
         self.next_slide(
             notes=
@@ -763,21 +750,20 @@ class W2Python_slides(MOOCSlide):
             FadeIn(*vector_labels[:2])
         )
         
-        # SLIDE 40:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # EMPTY X*Y VECTOR APPEARS
         self.next_slide(
             notes=
-            '''The operation x * y creates a new array, [CLICK]...
+            '''The operation x .* y creates a new array, [CLICK]...
             '''
         )
         mixed_sum_terms = sum_terms[2:].scale(0.8)
         mixed_sum_terms[0].next_to(x_vector, LEFT, buff = 0.8)
         mixed_sum_terms[1].align_to(mixed_sum_terms[0], DL)
         self.add(mixed_sum_terms); self.remove(mixed_sum_terms)
-
         xy_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[2][1]), # * in x*y
-            HighlightRectangle(mixed_sum_terms[0][5:]),    # x_i y_i
+            HighlightRectangle(vector_labels[2][1:3]),      # .* in x.*y
+            HighlightRectangle(mixed_sum_terms[0][5:]),     # x_i y_i
         )
 
         self.play(
@@ -787,7 +773,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(Create(xy_term_highlights[0]), Create(xy_term_highlights[1]))
 
-        # SLIDE 41:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # X, Y TERMS ANIMATED INTO X*Y TERMS
         self.next_slide(
             notes=
@@ -809,12 +795,23 @@ class W2Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 42:  ===========================================================
-        # NP.SUM(X * Y) LINE WRITTEN
+        # SLIDE 41:  ===========================================================
+        # '.*' HIGHLIGHTED
         self.next_slide(
             notes=
-            '''As a consequence, with np.sum(x * y) we compute the sum of all
-            the products xi times yi, that is the term called sum_xy. [CLICK]
+            '''Please notice the "." Before the "*", which indicates that the
+            operation must act element by element. [CLICK]
+            '''
+        )
+        dot_star_highlight = HighlightRectangle(vector_labels[2][1])
+        self.play(Transform(xy_term_highlights[0], dot_star_highlight))
+
+        # SLIDE 42:  ===========================================================
+        # SUM(X .* Y) LINE WRITTEN
+        self.next_slide(
+            notes=
+            '''As a consequence, with sum(x .* y) we compute the sum of all the
+            products xi times yi, that is the term called sum_xy. [CLICK]
             '''
         )
         DSS2.add_side_obj(linear_regression_code[:4], linear_regression_code[4:], consider_follow=linear_regression_code[4:6], center_horizontally=False)
@@ -832,11 +829,11 @@ class W2Python_slides(MOOCSlide):
         self.play(Create(second_xy_term_highlights[0]), Create(second_xy_term_highlights[1]))
 
         # SLIDE 43:  ===========================================================
-        # EMPTY X**2 APPEARS
-        # ANIMATE X TERMS INTO X**2 TERMS
+        # EMPTY X^2 APPEARS
+        # ANIMATE X TERMS INTO X^2 TERMS
         self.next_slide(
             notes=
-            '''Similarly, the element-wise power operation x ** 2 is also
+            '''Similarly, the element-wise power operation x .^ 2 is also
             vectorized, meaning it applies the power operation to each element
             of the array individually. [CLICK]
             '''
@@ -848,13 +845,13 @@ class W2Python_slides(MOOCSlide):
         x2_vector.move_to(xy_vector)
         vector_labels[-1].next_to(x2_vector, UP).align_to(vector_labels[0], DOWN)
         x2_term_highlights = VGroup(
-            HighlightRectangle(vector_labels[3][1:], ORANGE), # **2
+            HighlightRectangle(vector_labels[3][1:], ORANGE), # .^2
             HighlightRectangle(mixed_sum_terms[1][6], ORANGE),    # ^2 in the sum
         )
 
         self.play(
             Succession(
-                FadeOut(y_vector, xy_vector, *vector_labels[1:3], mixed_sum_terms[0]),
+                FadeOut(y_vector, xy_vector, *vector_labels[1:3], mixed_sum_terms[0]) ,
                 AnimationGroup(
                     Create(x2_vector.get_lines()),
                     FadeIn(vector_labels[-1]),
@@ -879,11 +876,11 @@ class W2Python_slides(MOOCSlide):
         )
 
         # SLIDE 44:  ===========================================================
-        # NP.SUM(X**2) LINE WRITTEN
+        # SUM(X^2) LINE WRITTEN
         self.next_slide(
             notes=
-            '''...so that combining this operation with np.sum gives the last
-            term. [CLICK]
+            '''...so that combining this operation with sum gives the last term.
+            [CLICK]
             '''
         )
         self.play(FadeOut(x2_term_highlights))
@@ -962,7 +959,7 @@ class W2Python_slides(MOOCSlide):
 
         # SLIDE 50:  ===========================================================
         # Q LINE WRITTEN
-        # RETURN M, Q LINE WRITTEN
+        # END LINE WRITTEN
         self.next_slide(
             notes=
             '''Finally, we calculate q, making use of the m value we just
@@ -974,7 +971,7 @@ class W2Python_slides(MOOCSlide):
             Succession(
                 linear_regression_code.TypeLetterbyLetter(lines=[11]),
                 Wait(1),
-                linear_regression_code.TypeLetterbyLetter(lines=[13])
+                linear_regression_code.TypeLetterbyLetter(lines=[12])
             )
         )
 
@@ -986,58 +983,72 @@ class W2Python_slides(MOOCSlide):
             implementation of our function. [CLICK]
             '''
         )
-        DSS.add_main_obj(linear_regression_code[:])
+        DSS.add_main_obj(linear_regression_code[:])  # NOTE: need [:] because the bounding box got messed up
         self.play(DSS.bringOut())
         
         # SLIDE 52:  ===========================================================
-        # INTO COLAB, FUNCTION DEFINITION CELL IS RUN
+        # SWITCH BACK TO WEEK2 SCRIPT
         self.next_slide(
             notes=
-            '''Now that the function has been written we can run the block and
-            it is ready to be used. [CLICK]
+            '''Now we are ready to use this function with the Algerian forest
+            dataset. Let us go back to the "week2.m" script, and make sure that
+            the file "my_linear_regression.m" is available in the current
+            directory. [CLICK]
             '''
         )
         linear_regression_code.add_background_window(DSS.mainRect.suspend_updating())
-        cl_env.clear(self)
-        self.play(linear_regression_code.IntoColab(cl_env))
-        self.play(cl_env.Run())
-        cl_env.cursor.save_state()
-        self.play(ShrinkToCenter(cl_env.cursor))
+        mat_env.clear(self)
+        self.play(linear_regression_code.IntoMatlab(mat_env))
+        hand_cursor.move_to(mat_env.SAVE_)
+        self.play(
+            Succession(
+                GrowFromCenter(hand_cursor),
+                hand_cursor.Click(),
+                Wait(1),
+                ApplyMethod(hand_cursor.move_to, MatlabEnv._pixel2p(94, 200)),  # switch to first script
+                hand_cursor.Click(),
+            )
+        )
+        # switch to week2 script and outofmatlab
+        mat_env.set_image(r"Assets\W2\matlab_back2week2.png")
+        self.add(mat_env); mat_env.clear(self)
+        self.wait(0.5)
 
         # SLIDE 53:  ===========================================================
-        # NEW EMPTY SCREEN FADES IN
+        # OUT OF MATLAB
         # FIRST COMMENT LINE IS WRITTEN
         self.next_slide(
             notes=
-            '''In this way, we are ready to apply it to the Algerian forest
-            dataset. We wonder how the temperature influences the Fire Weather
-            Index, [CLICK] ...
+            '''We wonder how the temperature influences the Fire Weather Index,
+            [CLICK] ...
             '''
         )
-        LR_example_code = ColabCode(
+        LR_example_code = MatlabCode(
             r'''
-            # Perform simple linear regression
-            x = my_dataset['Temperature'].values
-            y = my_dataset['FWI'].values
+            % Perform simple linear regression
+            x = my_dataset.Temperature;
+            y = my_dataset.FWI;
 
-            m, q = linear_regression(x, y)
+            [m, q] = my_linear_regression(x, y);
 
-            # Print results
-            print('Linear model results:')
-            print(f'Slope (m): {m}')
-            print(f'Y-intercept (q): {q}')
+            % Print results
+            disp('Linear model results:');
+            fprintf('Slope (m): %f\n', m);
+            fprintf('Y-intercept (q): %f\n', q);
             '''
         ).center()
-        DSS.reset()
-        self.play(FadeIn(DSS))
 
+        empty_cell = MatlabCodeBlock('')
+        mat_env.add_cell(empty_cell)
+        self.play(mat_env.OutofMatlab(empty_cell), FadeOut(hand_cursor))
+        DSS.reset(); self.add(DSS); mat_env.clear(self)
         self.play(LR_example_code.TypeLetterbyLetter(lines=[0]))
 
         # SLIDE 54:  ===========================================================
         # X = TEMPERATURE CODE LINE APPEARS
         self.next_slide(
             notes=
-            '''To this goal, we chose the temperature as the x, using this code:
+            '''To this goal, we chose the temperature as the x, using this code.
             [CLICK]
             '''
         )
@@ -1047,35 +1058,26 @@ class W2Python_slides(MOOCSlide):
         # HIGHLIGHT 'TEMPERATURE'
         self.next_slide(
             notes=
-            '''The label "Temperature" extracts the corresponding column from
-            the dataset, [CLICK] ...
+            '''"my_dataset.Temperature" extracts the corresponding column from
+            the dataset, which is stored in the variable "x", [CLICK]...
             '''
         )
-        temperature_highlight = HighlightRectangle(LR_example_code[1][13:26])
-        values_highlight = HighlightRectangle(LR_example_code[1][28:])
+        temperature_highlight = HighlightRectangle(LR_example_code[1][13:25])
 
         self.play(Create(temperature_highlight))
         
         # SLIDE 56:  ===========================================================
-        # HIGHLIGHT VALUES
-        self.next_slide(
-            notes=
-            '''and the attribute "values" returns the array. [CLICK]
-            '''
-        )
-        self.play(ReplacementTransform(temperature_highlight, values_highlight))
-        
-        # SLIDE 57:  ===========================================================
         # Y = FWI CODE LINE APPEARS
         self.next_slide(
             notes=
-            '''And similarly, for the Fire Weather Index which becomes y. [CLICK]
+            '''...and similarly the content of the column FWI is stored in the
+            variable "y". [CLICK]
             '''
         )
-        self.play(FadeOut(values_highlight))
+        self.play(FadeOut(temperature_highlight))
         self.play(LR_example_code.TypeLetterbyLetter(lines=[2]))
 
-        # SLIDE 58:  ===========================================================
+        # SLIDE 57:  ===========================================================
         # LINEAR REGRESSION FUNCTION CALL LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -1088,7 +1090,7 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=[4]))
 
-        # SLIDE 59:  ===========================================================
+        # SLIDE 58:  ===========================================================
         # PRINT LINES ARE WRITTEN
         self.next_slide(
             notes=
@@ -1098,126 +1100,99 @@ class W2Python_slides(MOOCSlide):
         )
         self.play(LR_example_code.TypeLetterbyLetter(lines=range(6, 10), lag_ratio=0))
 
-        # SLIDE 60:  ===========================================================
-        # 'f' F-STRINGS HIGHLIGHTED
+        # SLIDE 59:  ===========================================================
+        # '%f' F-STRINGS HIGHLIGHTED
         self.next_slide(
             notes=
-            '''By putting the letter f in front of a string, [CLICK] ...
+            '''In MATLAB, the "fprintf" function is used to format and display
+            output. The "%f" specifies that the variable should be displayed as
+            a floating-point number. In this case, `m` and `q` are the variables
+            being printed. [CLICK]
             '''
         )
-        f_string_highlights = VGroup(
-            HighlightRectangle(LR_example_code[8][6]),
-            HighlightRectangle(LR_example_code[9][6])
+        perc4f_highlights = VGroup(
+            HighlightRectangle(LR_example_code[8][18:20]),
+            HighlightRectangle(LR_example_code[9][24:26])
         )
 
-        self.play(Create(h) for h in f_string_highlights)
+        self.play(Create(h) for h in perc4f_highlights)
+
+        # SLIDE 60:  ===========================================================
+        # INTO MATLAB, CODE IS RUN, RESULT OUTPUT APPEARS
+        self.next_slide(
+            notes=
+            '''Running this code, we see the results printed on the screen.
+            [CLICK]
+            '''
+        )
+        LR_example_code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(FadeOut(perc4f_highlights))
+        self.play(LR_example_code.IntoMatlab(mat_env))
+        mat_env.add_output(
+            'Linear model results:\n'
+            'Slope (m): 1.421975\n'
+            'Y-intercept (q): -36.219189'
+        )
+        self.play(mat_env.Run())
 
         # SLIDE 61:  ===========================================================
-        # 'm', 'q' IN F-STRINGS HIGHLIGHTED
-        self.next_slide(
-            notes=
-            '''...you allow Python to interpret variables inside curly braces
-            directly within the string. [CLICK]
-            '''
-        )
-        mq_f_string_highlights = VGroup(
-            HighlightRectangle(LR_example_code[8][18]),
-            HighlightRectangle(LR_example_code[9][24])
-        )
-
-        self.play(ReplacementTransform(fh, dot_h) for fh, dot_h in zip(f_string_highlights, mq_f_string_highlights))
-
-        # SLIDE 62:  ===========================================================
-        # INTO COLAB
-        # CELL IS RUN, RESULT OUTPUT APPEARS
-        self.next_slide(
-            notes=
-            '''Running this cell in the notebook, we see the results printed on
-            the screen. [CLICK]
-            '''
-        )
-        self.play(FadeOut(mq_f_string_highlights))
-
-        LR_example_code.add_background_window(DSS.mainRect.suspend_updating())
-        self.play(LR_example_code.IntoColab(cl_env))
-        cl_env.cells[1].add_output(
-            'Linear model results:\n'
-            'Slope (m): 1.421975321551814\n'
-            'Y-intercept (q): -36.219188539161344'
-        )
-        cl_env.cursor.restore()
-        self.play(cl_env.Run(1, new_cursor=True))
-
-        # SLIDE 63:  ===========================================================
         # RETURN TO EMPTY SCREEN
-        # WRITE # PLOTTING
+        # WRITE % PLOTTING
         self.next_slide(
             notes=
             '''Let's now visualize the datapoints together with the regression
-            line. By using the module matplotlib imported as plt, [CLICK]
+            line. [CLICK]
             '''
         )
-        plotting_code = ColabCode(
+        plotting_code = MatlabCode(
             r'''
-            # Plotting
-            plt.figure(figsize=(16, 10))
-            plt.scatter(x, y, color='blue', alpha=0.5, label='Data points')
-            plt.plot(x, m*x+q, color='red', label='Regression line')
+            % Plotting
+            figure;
+            scatter(x, y, 'blue', 'filled', 'MarkerFaceAlpha', 0.5);
+            hold on;
+            plot(x, m*x+q, 'red', 'LineWidth', 2);
 
-            plt.xlabel('Temperature')
-            plt.ylabel('FWI')
-            plt.title('Linear Regression: FWI vs Temperature')
-            plt.grid(True)
-            plt.legend()
+            xlabel('Temperature');
+            ylabel('FWI');
+            title('Linear Regression: FWI vs Temperature');
+            grid on;
+            legend('Data points', 'Regression line');
             '''
         ).center()
-        # plotting_code.code.save_state()
+
         DSS.reset()
         self.play(FadeIn(DSS))
-        self.add(cl_env); self.remove(cl_env)
-        cl_env.clear(self)
+        self.add(mat_env); self.remove(mat_env)
+        mat_env.clear(self)
         self.play(plotting_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 64:  ===========================================================
-        # PLT.FIGURE LINE WRITTEN
+        # SLIDE 62:  ===========================================================
+        # FIGURE LINE WRITTEN
         self.next_slide(
             notes=
-            '''...we create a new figure, and we use the function [CLICK] ...
+            '''We create a new figure, and we use the function [CLICK] ...
             '''
         )
-        def draw_plot(fig) -> ImageMobject:
-            fig.canvas.draw()
-            buf1 = np.array(fig.canvas.buffer_rgba())
-            return ImageMobject(buf1)
-        
-        PLOT_WIDTH=7
-        
-        # create the plot with matplotlib
-        temp, RH, FWI = dataset[1:, 0], dataset[1:, 1], dataset[1:, -1]
-        q, m = np.polynomial.polynomial.Polynomial.fit(temp, FWI, 1).convert().coef
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-        DSS.add_side_obj(draw_plot(fig).scale_to_fit_width(PLOT_WIDTH))
-        
         self.play(plotting_code.TypeLetterbyLetter(lines=[1]))
-        DSS.add_main_obj(plotting_code[:2], follow_obj=plotting_code[2:])
-        self.play(DSS.bringIn(consider_follow = plotting_code[2:4]))
 
-        # SLIDE 65:  ===========================================================
-        # PLT.SCATTER LINE WRITTEN
+        # SLIDE 63:  ===========================================================
+        # SCATTER LINE WRITTEN, RESULT SHOWN
         self.next_slide(
             notes=
-            '''...scatter to plot the datapoints as small blue circles in the
-            x-y plane. [CLICK]
+            '''..."scatter" to display the datapoints as small blue circles in
+            the x-y plane. [CLICK]
             '''
         )
-        ax.scatter(temp, FWI, color='blue', alpha=0.5, label='Data points')
-        new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
+        PLOT_WIDTH = 6
+        DSS.buff_= 0.5
+        DSS.add_side_obj(ImageMobject(r'Assets\W2\matlab_fwi_temp_plot_1.png').scale_to_fit_width(PLOT_WIDTH))
+        DSS.add_main_obj(plotting_code[:3], follow_obj=plotting_code[3:])
 
         self.play(plotting_code.TypeLetterbyLetter(lines=[2]))
-        self.play(DSS.secondaryObj.animate.become(new_plot))
+        self.play(DSS.bringIn(consider_follow = plotting_code[3:5]))
 
-        # SLIDE 66:  ===========================================================
-        # PLOT LINE APPEARS
+        # SLIDE 64:  ===========================================================
+        # HOLD ON AND PLOT LINES APPEAR, RESULT SHOWN
         self.next_slide(
             notes=
             '''Then, we use the function "plot" to display the regression line
@@ -1225,151 +1200,107 @@ class W2Python_slides(MOOCSlide):
             [CLICK]
             '''
         )
-        ax.plot(temp, m*temp+q, color='red', label='Regression line')
-        new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
+        new_plot = ImageMobject(r'Assets\W2\matlab_fwi_temp_plot_2.png').scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
 
-        self.play(plotting_code.TypeLetterbyLetter(lines=[3]))
+        self.play(plotting_code.TypeLetterbyLetter(lines=[3, 4]))
         self.play(DSS.secondaryObj.animate.become(new_plot))
 
-        # SLIDE 67:  ===========================================================
+        # SLIDE 65:  ===========================================================
         # X, Y LABEL LINES AND RESULT SHOWN
         self.next_slide(
             notes=
             '''...axis labels, [CLICK]
             '''
         )
-        ax.set_xlabel('Temperature')
-        ax.set_ylabel('FWI')
-        new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
-        DSS.add_main_obj(plotting_code[:4], plotting_code[4:])
+        new_plot_2 = ImageMobject(r'Assets\W2\matlab_fwi_temp_plot_3.png').scale_to_fit_width(new_plot.width*1328/1275).align_to(DSS.secondaryObj, UR)
+        DSS.add_main_obj(plotting_code[:5], plotting_code[5:])
 
         self.play(DSS._MainObjIntoPosition()) # recenter considering the entire code
-        self.play(plotting_code.TypeLetterbyLetter(lines=[5, 6], lag_ratio=0))
-        self.play(DSS.secondaryObj.animate.become(new_plot))
+        self.play(plotting_code.TypeLetterbyLetter(lines=[6, 7], lag_ratio=0))
+        self.play(FadeIn(new_plot_2), FadeOut(DSS.secondaryObj))
 
-        # SLIDE 68:  ===========================================================
+        # SLIDE 66:  ===========================================================
         # GRID, TITLE LEGEND LINES AND RESULT SHOWN
         self.next_slide(
             notes=
-            '''...a title, a grid and a legend. Please notice that the "legend"
-            function leverages the [CLICK] ...
+            '''...a title, a grid and a legend. Please notice that the labels
+            passed to the function "legend" must match the order in which the
+            different plots were created.
             '''
         )
-        ax.set_title('Linear Regression: FWI vs Temperature')
-        ax.grid(True)
-        ax.legend()
-        new_plot = draw_plot(fig).scale_to_fit_width(PLOT_WIDTH).move_to(DSS.secondaryObj)
+        new_plot_3 = ImageMobject(r'Assets\W2\matlab_fwi_temp_plot_4.png').scale_to_fit_width(new_plot_2.width).align_to(new_plot_2, DL)
 
-        self.play(plotting_code.TypeLetterbyLetter(lines=[7, 8, 9]))
-        self.play(DSS.secondaryObj.animate.become(new_plot))
+        self.play(plotting_code.TypeLetterbyLetter(lines=[8, 9, 10]))
+        self.play(FadeIn(new_plot_3), FadeOut(new_plot_2))
 
-        # SLIDE 69:  ===========================================================
-        # LABEL KEYWORDS HIGHLIGHTED
+        # SLIDE 67:  ===========================================================
+        # INTO MATLAB, CODE IS RUN, FINAL PLOT APPEARS
         self.next_slide(
             notes=
-            '''...argument "label" which we previously specified when plotting
-            the data points and the regression line, to identify them in the
-            plot. [CLICK]
-            '''
-        )
-        plot_label_highlights = [
-            HighlightRectangle(plotting_code[2][39:44]),
-            HighlightRectangle(plotting_code[3][29:34])
-        ]
-        self.play(*[Create(highlight) for highlight in plot_label_highlights])
-
-        # SLIDE 70:  ===========================================================
-        # INTO COLAB
-        # CELL IS RUN, FINAL PLOT APPEARS
-        self.next_slide(
-            notes=
-            '''Running this cell, the plot is shown in the notebook. [CLICK]
-            '''
-        )
-        cl_env.clear(self)
-        plotting_code.add_background_window(DSS.mainRect.suspend_updating())
-        DSS.remove_main_obj()
-        self.play(FadeOut(*plot_label_highlights))
-        self.play(
-            plotting_code.IntoColab(cl_env),
-            DSS.bringOut()
-        )
-
-        # save figure as array
-        temp_fwi_plot = draw_plot(fig).scale_to_fit_width(6)
-        
-        cl_env.cells[0].add_output(temp_fwi_plot)
-        self.play(cl_env.Run())
-        
-        # SLIDE 71:  ===========================================================
-        # FOCUS ON PLOT
-        self.next_slide(
-            notes=
-            '''The slope is positive, indicating that an increase in the
+            '''Running this cell, a new figure showing the plot is displayed.
+            The slope is positive, indicating that an increase in the
             temperature corresponds to a higher overall risk of forest fires.
             [CLICK]
             '''
         )
-        self.play(cl_env.focus_output(0, scale=0.7))
+        self.add(mat_env); self.remove(mat_env)
+        mat_env.clear(self)
+        plotting_code.add_background_window(DSS.mainRect.suspend_updating())
+        DSS.remove_main_obj()
+        DSS.add_side_obj(new_plot_3)
 
-        # SLIDE 72:  ===========================================================
+        self.play(
+            plotting_code.IntoMatlab(mat_env),
+            DSS.bringOut(),
+        )
+
+        temp_fwi_plot = ImageMobject(r'Assets\W2\matlab_fwi_temp_plot_4.png').scale_to_fit_width(6)
+        mat_env.add_output(output_image=temp_fwi_plot, image_width=7)
+
+        self.play(mat_env.Run())
+
+        # SLIDE 68:  ===========================================================
         # PLOT CODE COMES BACK IN
         # 'TEMPERATURE' IS REPLACED WITH 'RH' IN THE CODE
+        # RETURN TO MATLAB ENV
         self.next_slide(
             notes=
             '''Now, let's repeat the above procedure using the relative humidity
-            instead of the temperature. To do that, just replace the string
-            'Temperature' with 'RH' in the previous lines of code. [CLICK]
+            instead of the temperature. To do that, just replace 'Temperature'
+            with 'RH' in the previous lines of code. [CLICK]
             '''
         )
-        # NOTE: the trailing space is added to the line x = my_dataset.., otherwise the font size changes??? I'm so done.
-        LR_example_code_2 = ColabCode(LR_example_code.code_string).center()
-        replacement_code = ColabCode(LR_example_code.code_string.replace(r"""'Temperature'].values""", r"""'RH'].values """))
+        LR_example_code_2 = MatlabCode(LR_example_code.code_string).center()
+        replacement_code = MatlabCode(LR_example_code.code_string.replace("Temperature", "RH"))
         replacement_code.move_to(LR_example_code_2).align_to(LR_example_code_2, UL)
+        rh_fwi_plot =  ImageMobject(r'Assets\W2\matlab_fwi_rh_plot.png').scale_to_fit_width(6)
 
         DSS.reset()
+        self.play(FadeIn(DSS.mainRect.set_z_index(0)))
+        self.clear()
+        mat_env.clear(self)
         self.play(
             Succession(
-                FadeIn(DSS.mainRect.set_z_index(0)),
                 FadeIn(LR_example_code_2),
                 Wait(1)
             )
         )
-        cl_env.clear(self)
         DSS.mainRect.set_z_index(-1)
         self.play(
-            Transform(LR_example_code_2[1][14:25], replacement_code[1][14:16]),
-            Transform(LR_example_code_2[1][25:], replacement_code[1][16:]),
+            Transform(LR_example_code_2[1][13:24], replacement_code[1][13:15]),
+            Transform(LR_example_code_2[1][24:], replacement_code[1][15:]),
         )
         self.add(replacement_code); self.add(LR_example_code_2); self.remove(LR_example_code_2) # need to readd otherwise remove does not work...
 
         # create other plot
-        q, m = np.polynomial.polynomial.Polynomial.fit(RH, FWI, 1).convert().coef
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-        ax.scatter(RH, FWI, color='blue', alpha=0.5, label='Data points')
-        ax.plot(RH, m*RH+q, color='red', label='Regression line')
-        ax.set_xlabel('RH')
-        ax.set_ylabel('FWI')
-        ax.set_title('Linear Regression: FWI vs RH')
-        ax.grid(True)
-        ax.legend()
-        # save figure as array
-        fig.canvas.draw()
-        buf1 = np.array(fig.canvas.buffer_rgba())
-        rh_fwi_plot = ImageMobject(buf1).scale_to_fit_width(6)
-
-        cl_env.add_cell(ColabCodeBlock(replacement_code.code_string))
-        cl_env.add_cell(ColabCodeBlock(plotting_code.code_string.replace('Temperature','RH')))
+        mat_env.add_cell(MatlabCodeBlock(replacement_code.code_string))
+        mat_env.add_cell(MatlabCodeBlock(plotting_code.code_string.replace('Temperature','RH')))
         replacement_code.add_background_window(DSS.mainRect.suspend_updating())
         
-        self.play(replacement_code.IntoColab(cl_env, target_cell=0))
-        self.play(cl_env.Run(0))
-        cl_env.cells[1].add_output(rh_fwi_plot)
-        self.remove(cl_env.cells[1].output) # it gets shown too early
-        self.play(cl_env.Run(1, new_cursor=False))
+        self.play(replacement_code.IntoMatlab(mat_env, target_cell=0))
 
-        # SLIDE 73:  ===========================================================
-        # FOCUS ON THE SECOND PLOT
+        # SLIDE 69:  ===========================================================
+        # CODE IS RUN, SECOND PLOT APPEARS
         self.next_slide(
             notes=
             '''From the plot it can be seen an opposite trend with respect to
@@ -1377,9 +1308,11 @@ class W2Python_slides(MOOCSlide):
             decreases the overall risk of forest fire. [CLICK]
             '''
         )
-        self.play(cl_env.focus_output(cell=1, scale=0.7))
+        mat_env.add_output(output_image=rh_fwi_plot, image_width=7)
 
-        # SLIDE 74:  ===========================================================
+        self.play(mat_env.Run())
+
+        # SLIDE 70:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
@@ -1389,11 +1322,17 @@ class W2Python_slides(MOOCSlide):
             crucial for effective fire risk management. [CLICK]
             '''
         )
-        self.play(rh_fwi_plot.animate.scale(0.65).move_to(HALF_SCREEN_RIGHT))
-        temp_fwi_plot.scale_to_fit_width(rh_fwi_plot.width).move_to(HALF_SCREEN_LEFT)
-        self.play(FadeIn(temp_fwi_plot))
+        self.play(mat_env.output.animate.scale(0.8).move_to(HALF_SCREEN_RIGHT))
+        temp_fwi_plot.scale_to_fit_height(rh_fwi_plot.height).move_to(HALF_SCREEN_LEFT).set_z_index(0)
+        second_window = SurroundingRectangle(
+            temp_fwi_plot, color=MATLAB_GRAY, 
+            buff=0.1, corner_radius=0.1,
+            fill_opacity=1,
+            stroke_width=0.5, stroke_color=BLACK).set_z_index(-1)
         
-        # SLIDE 75:  ===========================================================
+        self.play(FadeIn(Group(temp_fwi_plot, second_window)))
+
+        # SLIDE 71:  ===========================================================
         # THE TWO PLOTS APPEAR SIDE BY SIDE
         self.next_slide(
             notes=
@@ -1402,13 +1341,15 @@ class W2Python_slides(MOOCSlide):
             between variables. [END]
             '''
         )
+        mat_env.remove(mat_env.output)  # so that it is not faded out later
         wf_fact = WildfireFactorsScheme(icons_height=0.6).scale(0.9)
 
         self.play(
             AnimationGroup(
                 AnimationGroup(
-                    temp_fwi_plot.animate.scale(0.8).next_to(wf_fact.circles[0], LEFT, buff=0.5).shift(UP*0.5),
-                    rh_fwi_plot.animate.scale(0.8).next_to(wf_fact.circles[0], RIGHT, buff=0.5).shift(UP*0.5),
+                    Group(temp_fwi_plot, second_window).animate.scale(0.8).next_to(wf_fact.circles[0], LEFT, buff=0.5).shift(DOWN*0),
+                    mat_env.output.animate.scale(0.8).next_to(wf_fact.circles[0], RIGHT, buff=0.5).shift(DOWN*0),
+                    FadeOut(mat_env)
                 ),
                 FadeIn(wf_fact),
                 lag_ratio=0.5

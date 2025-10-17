@@ -68,6 +68,13 @@ def E(m, q, data_points):
     E = np.sum(np.square((m*x +q) - y))
     return E
 
+def R2(m, q, data_points):
+    SSres = E(m, q, data_points)
+    y = data_points[:, 1]
+    SStot = np.sum(np.square(y - np.mean(y)))
+    r2 = 1 - SSres/SStot
+    return max(0, min(1, r2))
+
 
 class ECounter(Variable):
     def __init__(self, regression_line: RegressionLine, data: np.ndarray, num_decimal_places = 2, **kwargs):
@@ -82,6 +89,25 @@ class ECounter(Variable):
                 E(regression_line.slope.get_value(), regression_line.intercept.get_value(), data)
             )
         )
+
+class R2Counter(Variable):
+    def __init__(self, regression_line: RegressionLine, data: VGroup, num_decimal_places = 2, **kwargs):
+        self.data = data
+        self.regLine = regression_line
+        super().__init__(
+            R2(regression_line.slope.get_value(), regression_line.intercept.get_value(), self._data_coords()),
+            'R^2',
+            num_decimal_places=num_decimal_places,
+            color=BLACK,
+            **kwargs)
+        self.value.add_updater(
+            lambda v: v.set_value(
+                R2(regression_line.slope.get_value(), regression_line.intercept.get_value(), self._data_coords())
+            )
+        )
+    
+    def _data_coords(self):
+        return np.stack([self.regLine.ax.p2c(p.get_center()) for p in self.data], axis=0)[:,:2]
 
 def generate_regression_dataset(
     func: callable,
@@ -101,7 +127,7 @@ def points_from_data(data: np.ndarray, ax: Axes, **kwargs):
     return VGroup(Dot(ax.c2p(data[i, 0], data[i, 1]), **kwargs) for i in range(len(data)))
 
 class LinearRegressionEquations(VMobject):
-    def __init__(self, x_i_color = BLUE, y_i_color=ORANGE):
+    def __init__(self, x_i_color = BLUE, y_i_color=ORANGE, central_buff=1):
         super().__init__()
         self.m_eq = MathTex(
             r'\hat{m} = '
@@ -121,7 +147,7 @@ class LinearRegressionEquations(VMobject):
         )
         self.q_eq[0][8:10].set_color(y_i_color)
         self.q_eq[0][18:20].set_color(x_i_color)
-        self.q_eq.next_to(self.m_eq, RIGHT, buff=0.5).align_to(self.m_eq, UP)
+        self.q_eq.next_to(self.m_eq, RIGHT, buff=central_buff).align_to(self.m_eq, UP)
         self.add(self.m_eq, self.q_eq)
         self.center()
  
@@ -151,17 +177,13 @@ class LinearRegressionEquations(VMobject):
 
     def ExtractSumTerms(self, target: VGroup) -> Succession:
         sums = self._get_sums()
+        sums2target_map = {0:0, 1:0, 2:0, 3:1, 4:1, 5:2, 6:3}
         return Succession(
             sums.animate(run_time=0).set_opacity(0),
             AnimationGroup(
                 FadeOut(self),
-                ReplacementTransform(sums[0].copy(), target[0]),
-                ReplacementTransform(sums[1].copy(), target[0]),
-                ReplacementTransform(sums[2].copy(), target[0]),
-                ReplacementTransform(sums[3].copy(), target[1]),
-                ReplacementTransform(sums[4].copy(), target[1]),
-                ReplacementTransform(sums[5].copy(), target[2]),
-                ReplacementTransform(sums[6].copy(), target[3]),
+                *[ReplacementTransform(sums[s].copy(), target[t])
+                for s, t in sums2target_map.items()]
             )
         )
 
@@ -170,46 +192,37 @@ def mq_throgh_points(p1, p2):
     q = p1[1] -m*p1[0]
     return m, q
 
+def linear_reg_coeffs(dataset: np.ndarray):
+    coeffs = np.polynomial.polynomial.Polynomial.fit(dataset[:, 0], dataset[:, 1], 1).convert().coef
+    return coeffs[1], coeffs[0]
 
-if __name__ == '__main__':
-    pass
-    #dataset = generate_regression_dataset(func= lambda x: 0.5*(0.4*x-0.75)**3 + 0.25, x_range=(0.1, 1.5), n=20, sigma=0.10, seed=0)
-    # dataset = generate_regression_dataset(func= lambda x: 0.5*x+0.2, x_range=(0.1, 1.5), n=20, sigma=0.05)
-    # x, y = dataset[:, 0], dataset[:, 1]
-    # linear_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 1).convert().coef
-    # quadratic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 2).convert().coef
-    # cubic_fit = np.polynomial.polynomial.Polynomial.fit(x, y, 3).convert().coef
-    # exp_fit = np.polynomial.polynomial.Polynomial.fit(np.log(x), y, 1).convert().coef
+class WildFireIcon(VGroup):
+    def __init__(self):
+        self.forest_icon = SVGMobject(r'Assets\W2\pine_trees_icon.svg')
+        u = self.forest_icon.height
+        self.fire_icon = SVGMobject(r"Assets\W2\flame_icon.svg").scale_to_fit_height(u*0.6).shift(UP*u*0.3 + LEFT*u*0.2)
+        self.fire_icon_2= SVGMobject(r"Assets\W2\flame_icon.svg").flip().scale_to_fit_height(u*0.45).shift(DOWN*u*0 + RIGHT*u*0.4)
+        super().__init__(self.forest_icon, self.fire_icon, self.fire_icon_2)
 
-
-config.background_color = WHITE
-from Generic_mooc_utils import HighlightRectangle
-class Test(ThreeDScene):
-    def construct(self):
-        # linear_relation = MathTex(r'y = f(x) = {{mx+q}}',
-        #                           color = BLACK, tex_to_color_map={'y': ORANGE, 'x':BLUE})
-        # ind = index_labels(linear_relation)
-        multiple_linear_relation = MathTex(
-            r'y= f(x_1, x_2, \dots, \x_p) = {{m_1 x_1 + m_2 x_2 + \dots + m_p x_p + q}}',
-            color = BLACK, tex_to_color_map={'y': ORANGE, 'x_1':BLUE, 'x_2': BLUE, 'x_p':BLUE})
-        ind2 = index_labels(multiple_linear_relation)
-        self.add(multiple_linear_relation, ind2)
-
-        m_i_highlights = VGroup(
-            HighlightRectangle(multiple_linear_relation[8]),
-            HighlightRectangle(multiple_linear_relation[10]),
-            HighlightRectangle(multiple_linear_relation[12][-2:]),
+class WildfireFactorsScheme(VGroup):
+    def __init__(self, icons_height, **kwargs):
+        self.tri = Triangle().scale(3).flip(axis=RIGHT).center()
+        self.circles = VGroup(Circle(stroke_color=BLACK, fill_color=WHITE, radius= icons_height*2 + 0.5, stroke_width=6, fill_opacity=0).move_to(self.tri.get_vertices()[i]) for i in range(3))
+        
+        # self.wildfire_icon = SVGMobject(r'Assets\W2\forest_fire_icon.svg').scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0])
+        self.wildfire_icon = WildFireIcon().scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[0] + UP*0.1)
+        self.high_temp_icon = SVGMobject(r'Assets\W2\high_temperature_icon.svg').set_color(RED).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[1])
+        self.humidty_icon = SVGMobject(r'Assets\W2\humidity_icon.svg').set_color(BLUE).scale_to_fit_height(icons_height*4).move_to(self.tri.get_vertices()[2])
+        
+        self.causal_arrows = VGroup(
+            Line(self.tri.get_vertices()[0], self.tri.get_vertices()[1], color=BLACK, stroke_width=6, buff=icons_height*2 + 0.5),
+            Line(self.tri.get_vertices()[0], self.tri.get_vertices()[2], color=BLACK, stroke_width=6, buff=icons_height*2 + 0.5),
         )
-        self.add(m_i_highlights)
 
-        # self.play(
-        #     ReplacementTransform(linear_relation[:2], multiple_linear_relation[:2]), # y=f(
-        #     ReplacementTransform(linear_relation[2], multiple_linear_relation[2:7]), # f argument
-        #     ReplacementTransform(linear_relation[3], multiple_linear_relation[7]), # )=
-        #     ReplacementTransform(linear_relation[4:6], multiple_linear_relation[8:14]), # m*x
-        #     ReplacementTransform(linear_relation[-1], multiple_linear_relation[-1]), # +q
-        # )
+        super().__init__(self.causal_arrows, self.circles, self.wildfire_icon, self.high_temp_icon, self.humidty_icon, **kwargs)
 
-
-
-
+class Test(Scene):
+    def construct(self):
+        w = WildfireFactorsScheme(0.6)
+        self.add(w)
+        

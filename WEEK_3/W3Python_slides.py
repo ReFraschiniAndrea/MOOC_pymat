@@ -2,17 +2,14 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import *
-from colab_utils import *
+from mooc_utils import *
+from mooc_utils.colab import *
 from W3Anim import NewDB
 
 config.update(RELEASE_CONFIG)
 
-class W3Slides_python(MOOCSlide):
+class W3Python_slides(MOOCSlide):
     def construct(self):
-        self.wait_time_between_slides = 0.05
-        self.skip_reversing = True
         # SLIDE 01:  ===========================================================
         # COVER: TRANSLATE PSEUDO CODE INTO PYTHON CODE
         self.next_slide(

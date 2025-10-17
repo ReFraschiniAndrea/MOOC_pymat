@@ -1,6 +1,7 @@
 #  compilated code
 *.pyc
 __pycache__
+.vscode
 # rendered videos and presentations
 *.mp4
 *.pptx
@@ -8,7 +9,13 @@ __pycache__
 presentations
 media
 slides
-Fonts
-w3python_assets
-W3Slides_python_assets
+*_assets
+# Scripts
+renumber_slides.py
+crop_images.py
 Video_player_app.py
+# Latex output
+*.aux
+*.log
+*.dvi
+*.pdf

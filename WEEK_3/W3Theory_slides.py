@@ -2,9 +2,8 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
+from mooc_utils import *
 from W3Anim import *
-from Generic_mooc_utils import *
 import skimage
 
 config.update(RELEASE_CONFIG)
@@ -12,7 +11,7 @@ config.update(RELEASE_CONFIG)
 LABELS_SIZE = 0.75
 LBELS_SIZE_3D = 1.5
 
-class W3Theory_slides(ThreeDMOOCSlide):
+class WEEK3Anim_GradientDescent(ThreeDMOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
         # VIDEO OF THE ROBOTIC ARM IS SHOWN

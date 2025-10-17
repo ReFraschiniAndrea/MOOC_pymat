@@ -2,15 +2,13 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from config import *
-from Generic_mooc_utils import *
-from matlab_utils import *
-from colab_utils import COLAB_LIGHTGRAY
+from mooc_utils import *
+from mooc_utils.matlab import *
 from W3Anim import NewDB
 
 config.update(RELEASE_CONFIG)
 
-class W3Slides_matlab(MOOCSlide):
+class W3Matlab_slides(MOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
         # COVER: MATLAB ENVIRONMENT APPEARS, PSEUDO CODE FADES IN ON TOP
@@ -121,7 +119,7 @@ class W3Slides_matlab(MOOCSlide):
             Niter = 1000;         % max iteration number
             '''
         )
-        DSS = DynamicSplitScreen(main_color=WHITE, side_color=COLAB_LIGHTGRAY)
+        DSS = DynamicSplitScreen(main_color=WHITE, side_color=MATLAB_LIGHTGRAY)
         self.add(DSS)
         self.remove(empty_cell.window)
         RequireLine = pc[1]

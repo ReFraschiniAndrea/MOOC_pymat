@@ -1,6 +1,7 @@
 from typing import Any
 from textwrap import dedent
 from pydantic import model_validator
+import re
 
 from manim import Scene, ThreeDScene
 from manim.utils.color import WHITE
@@ -14,23 +15,23 @@ __all__ = [
 ]
 
 RELEASE_CONFIG = {
-    'renderer': 'cairo',
-    'background_color': WHITE,
-    'pixel_width': 1440,
-    'pixel_height': 1080,
-    'frame_rate': 60
+   'renderer':'cairo',
+   'background_color' : WHITE,
+   'pixel_width': 1440,
+   'pixel_height': 1080,
+   'frame_rate': 60
 }
 
 TEST_CONFIG = {
-    'renderer': 'cairo',
-    'background_color': WHITE,
-    'pixel_width': 960,
-    'pixel_height': 720,
-    'frame_rate': 15
+   'renderer':'cairo',
+   'background_color' : WHITE,
+   'pixel_width': 960,
+   'pixel_height': 720,
+   'frame_rate': 15
 }
 
 class MOOCSlideConfig(BaseSlideConfig):  # type: ignore
-    """Base class for slide config."""
+    """Inherit just to change the dedent."""
     @model_validator(mode="after")
     def apply_dedent_notes(
         self,
@@ -39,10 +40,14 @@ class MOOCSlideConfig(BaseSlideConfig):  # type: ignore
             if not self.notes.startswith("\n"):
                 self.notes = "            " + self.notes
             self.notes = dedent(self.notes).strip("\n")
+            self.notes = re.sub(r'\r?\n',' ', self.notes) # replace newlines with spaces
+            self.notes = re.sub(r'\s{2,}', ' ', self.notes) # remove multiple spaces
+
 
         return self
     
 class MOOCSlide(Slide):
+    "Slide class with already configs baked in"
     def __init__(self):
         super().__init__()
         self.wait_time_between_slides = 0.05
