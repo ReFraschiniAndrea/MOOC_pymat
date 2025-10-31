@@ -3,6 +3,17 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{parskip}
+\usepackage{tikz}
+
+\definecolor{amaranth}{rgb}{0.9, 0.17, 0.31}
+%\figureBoxCustom{bottom-left}{top-right}{label}{border-color}
+\newcommand*\figureBoxCustom[3]{\draw[#3, ultra thick, rounded corners] (#1) rectangle (#2);}
+%\annotatedFigureBoxCustom{bottom-left}{top-right}{label}{label-position}{box-color}{label-color}{border-color}{text-color}
+\newcommand*\annotatedFigureBoxCustom[5]{\draw[#5, ultra thick, rounded corners] (#1) rectangle (#2);\node at (#4) [fill=gray,thick,shape=circle,draw=gray,inner sep=2pt,font={\tiny\bfseries\sffamily},text=white] {\textbf{#3}};}
+
+\newenvironment {annotatedFigure}[1]{\centering\begin{tikzpicture}
+\node[anchor=south west,inner sep=0] (image) at (0,0) { #1};\begin{scope}[x={(image.south east)},y={(image.north west)}]}{\end{scope}\end{tikzpicture}}
+
 \title{Getting Started with the MATLAB Editor}
 \author{}
 \date{}
@@ -13,17 +24,18 @@
 
 \section*{1. What is MATLAB?}
 
-MATLAB is a programming environment widely used for numerical computation, data analysis, and engineering tasks. It has an integrated editor where you can write, run, and save scripts (files containing code).
+MATLAB is a programming environment widely used for numerical computation and data analysis, and engineering tasks. It has an integrated editor where you can write and run scripts.
 
 \section*{2. Exploring the MATLAB Interface}
 
 When you open MATLAB, you’ll see several important windows:
 
-\begin{itemize}
-    \item \textbf{Command Window}: where you can type and immediately execute commands.
-    \item \textbf{Editor}: where you write and save longer programs or scripts.
-    \item \textbf{Current Folder}: shows your working directory (where files are saved).
-\end{itemize}
+\begin{enumerate}
+    \item \textbf{Command Window}: in the center, where you can type and immediately execute commands.
+    \item \textbf{Current Folder}: on the left, shows your working directory.
+    \item \textbf{Workspace}: shows you current variables and their values
+    \item \textbf{Toolbar}: at the top, lets you open, save, run scritps and more. 
+\end{enumerate}
 
 \begin{figure}[h!]
     \centering
@@ -43,7 +55,7 @@ disp('Hello, MATLAB!')
 
 This command displays a message in the Command Window when the script is run.
 
-\begin{figure}[h!]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{screenshots/new_script.png}
     \caption{Writing a simple instruction in the Editor}
@@ -51,41 +63,38 @@ This command displays a message in the Command Window when the script is run.
 
 \section*{4. Running the Script}
 
-Click the \texttt{Run} button (green triangle) in the toolbar.
+Click the \texttt{Run} button (green triangle) in the toolbar. MATLAB will ask you to save the script first if it hasn’t been saved yet (see Section \ref{save}). Once saved, the code is run and the result is shown in the \textbf{Command Window}.
 
-\textbf{What happens next?}
-\begin{itemize}
-    \item MATLAB will ask you to save the script first if it hasn’t been saved.
-    \item Once saved, the code runs and the result is shown in the \textbf{Command Window}.
-\end{itemize}
-
-\begin{figure}[h!]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{screenshots/run_script.png}
     \caption{Running the script — output appears in the Command Window}
 \end{figure}
 
+\label{save}
 \section*{5. Saving the Script}
 
-Click \texttt{File > Save} or the disk icon to save your script.
+To save the current script, you can either:
+\begin{enumerate}
+    \item Click disk icon on the top toolbar.
+    \item Click \texttt{File > Save}.
+    \item Press \texttt{Ctrl > S}.
+\end{enumerate}
+MATLAB scripts are saved with the \texttt{.m} extension.
 
-\begin{itemize}
-    \item Choose a meaningful name, e.g. \texttt{hello.m}
-    \item The \texttt{.m} extension is required for MATLAB scripts
-\end{itemize}
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.85\textwidth]{screenshots/save_script.png}
+\begin{figure}[h]
+    \begin{annotatedFigure}
+        {\includegraphics[width=0.85\textwidth]{screenshots/save_script.png}}
+    \end{annotatedFigure}
     \caption{Saving the script with a \texttt{.m} extension}
 \end{figure}
 
 \section*{6. Reopening a Saved Script}
 
-To open a saved script again:
-
+To open a saved script again, you can either:
 \begin{itemize}
-    \item Find it in the \texttt{Current Folder} window and double-click it, or
-    \item Use \texttt{File > Open} and select the file
+    \item Find it in the \texttt{Current Folder} window and double-click it.
+    \item Use \texttt{File > Open}  from the toolbar and select the file.
+\end{itemize}
 
 \end{document}
