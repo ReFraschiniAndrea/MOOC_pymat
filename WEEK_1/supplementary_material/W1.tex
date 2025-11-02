@@ -1,0 +1,252 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\geometry{a4paper, margin=1in}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue},
+  stringstyle=\color{green},
+  commentstyle=\color{gray},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  captionpos=b
+}
+
+\newcommand{\as}[1]{{\color{magenta}{#1}}} %colors
+\newcommand{\py}[1]{\texttt{\lstinline!#1!}}
+
+\title{Additional material Week 1}
+\date{March 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Question 1: Varying the initial water level}
+\subsection{Statement}
+Study how the water level in the tank behaves for different values of the starting level $h_0$. What do you expect? Consider the values $h_0 = 0, 1, 2, 5, 8$, while keeping the other parameters the same.
+
+\subsection{Mathematical explanation}
+Recall that the equation describing how the water level changes in tank is:
+\begin{equation}
+    \dot V(t)= \frac{d}{dt}(A_t h(t)) = A_t \frac{dh}{dt}=Q_{in}-Q_{out}(h)
+\end{equation}
+
+Where $V(t)$ is the volume of water in the tank at time $t$, $\dot V$ is its time derivative, $A_t$ is the area of the base of the tank, $Q_{in}$ is the volumetric inflow, $Q_{out}(h)$ the volumetric outflow and $h(t)$ is the water level in the tank.
+We can then write $Q_{out}=A_{out}v_{out}$, where  $A_{out}$ is the cross section area of the outlet, $v_{out}$ is the velocity of the water exiting the tank. Using Torricelli's law $v_{out} = \sqrt{2gh}$ (which is derived from the conservation of energy), we obtain:
+\begin{equation}\label{pb}
+    A_t \frac{dh}{dt}=Q_{in}-A_{out}\sqrt{2gh}.
+\end{equation}
+
+This equation is a \emph{differential equation}, because the unknown function $h(t)$ appears through its derivative; the equation only describes how the water level \emph{changes over time}, however. To completely describe the system, we need to additionally specify the initial water level $h(t=0)=h_0$, and depending on its value, the system will evolve in different ways. A differential equation together with some given initial condition forms what is known as a \emph{Cauchy problem}.
+
+In general, this equation cannot be solved exactly, so we want to approximate it numerically, that is by using a computer that can only operate on discrete quantities. Firstly, we divide the time interval $[0, T]$ in which we want to compute the approximation into $N$ equal intervals of width $\Delta t$, and denote the extremes of this intervals with $t_0=0, t_1,t_2,\dots, t_N =T$, so that $t_n = n\Delta t$.
+
+Then, we approximate the time derivative of $h$ at time $\bar t$ with the finite ratio $\frac{h(\bar{t} +\Delta t) -h(\bar{t})}{\Delta t}$:
+
+\begin{equation}
+    A_t\frac{h(\bar{t} +\Delta t) -h(\bar{t})}{\Delta t} \approx Q_{in}-A_{out}\sqrt{2gh(\bar t)}.
+\end{equation}
+Denoting with $h_n$ our numerical approximation of $h(t_n)$ and rearranging, we obtain:
+
+\begin{equation}
+\label{eq:explicit_euler}
+    h_{n+1}=h_n + \frac{\Delta t}{A_t}\left( Q_{in} - A_{out}\sqrt{2gh_n}\right)
+    \text{ , for $n=0,\dots, N-1$}.
+\end{equation}
+Starting from different values of $h_0$, we can then compute $h_1,h_2,\dots, h_N$ by recursively using equation \eqref{eq:explicit_euler}.
+
+
+\subsection{Code solution (Python)}
+To test different values of $h_0$, we can enclose the code that we previously used in a \py{for} loop. Up to now we have used the \py{for} loop syntax in this way:
+\begin{lstlisting}[language=Python]
+for i in range(N):
+    # Instructions...
+\end{lstlisting}
+
+What \py{range(N)} is implicitly doing here is to generate a list containing the elements from 0 to N-1, and then at each \py{for} iteration the next value in the list is assigned to variable \py{i}. However, we can pass our own custom lists too! For example, by doing:
+\begin{lstlisting}[language=Python]
+for h0 in [0, 1, 2, 5, 8]:
+    # Instructions...
+\end{lstlisting}
+
+In this way the variable \py{h0} will automatically assume the values that we want to test for the initial water level. We can then save each result in a separate list and, for the sake of comparison, plot them. To this aim  we use \py{plt.plot} at each iteration, with a final \py{plt.show()}. To distinguish the graphs, we can pass  names to the additional \py{label} argument of \py{plt.plot}, and then create a legend by calling the appropriately named \py{plt.legend()}.
+Listing \ref{q1pycode} shows the final Python code for the solution.
+
+\lstinputlisting[language=Python, caption={Python code solution for Question 1.}, label=q1pycode]{W1Q1_vary_h0.py}
+
+
+\subsection{Code solution (MatLab)}
+We can apply the same strategy in MatLab. We normally write a \py{for} loop this way:
+\begin{lstlisting}[language=Matlab]
+    for i=1:N
+        % Instructions...
+    end
+\end{lstlisting}
+Implicitly, the syntax \py{1:N} generates a vector containing all integer numbers between 1 and N, and at each new iteration the variable \py{i} assumes the next value in it. But we can also use a custom vector like this:
+\begin{lstlisting}[language=Matlab]
+    for h0 = [0, 1, 2, 5, 8]
+        % instructions...
+    end
+\end{lstlisting}
+In this way \py{h0} will automatically assume the values that we want to test for the initial water level. We can then save each result in a vector and plot them.  To this aim, we create an empty plot with \py{figure()}, then we use the \py{hold on} keyword to specify that we want to plot the all the graphs in the same figure. Finally, we can use \py{legend} to specify a different tag for each graph. 
+Listing \ref{q1matcode} shows the final Matlab code for the solution.
+\lstinputlisting[language=Matlab, caption={Matlab code solution for Question 1.}, label=q1matcode]{W1Q1_vary_h0.m}
+
+\subsection{Comments}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{Plots/w1q1_vary_h0_pyplot.png}
+\caption{\label{fig:h0_profiles} Water level in the tank for the considered values of $h_0$.}
+\end{figure}
+What we can observe from the obtained graphs  is that, all other parameters being equal, changing the starting water level modifies the initial behavior, which can be increasing or decreasing. However, if we wait enough time, the level will reach some \emph{equilibrium value} $h_{eq}$, i.e. the water level reaches this value and no longer changes.
+
+We can also notice that $h_{eq}$ is independent of the specific $h_0$ that we chose. Indeed, the equilibrium value that we observe depends directly on the inflow value: at equilibrium, it must be that $\frac{dh}{dt}=0$ (because $h$ is not changing anymore), i.e. $Q_{in}=Q_{out}(h_{eq})=A_{out} \sqrt{2gh_{eq}}$, which yields:
+\begin{equation}\label{eq:heq}
+    h_{eq}=\frac{1}{2g}\left(\frac{Q_{in}}{A_{out}}\right)^2.
+\end{equation}
+You can also try to verify \eqref{eq:heq} using the code by comparing this expression with the final value $h_N$ from the simulation.
+
+%========================================================================
+\section{Question 2: Varying the time step}
+\subsection{Statement}
+Try to run the code with different values of the time step $\Delta t$. How do you expect the approximate solution will change? Try with the values $\Delta t = 0.01, 0.1, 1, 5, 10, 20$ , while keeping the other parameters fixed.
+
+\subsection{Mathematical explanation}
+Recall that we obtained our approximation by substituting the time derivative $\frac{dh}{dt}$ with a finite ratio:
+\begin{equation}
+    \frac{dh}{dt}(\bar{t}) \approx \frac{h(\bar{t} +\Delta t) -h(\bar{t})}{\Delta t}.
+\end{equation}
+This approximation is justified by the definition of derivative:
+\begin{equation}
+    \frac{dh}{dt}(\bar{t}) = \lim_{\Delta t \rightarrow0}\frac{h(\bar{t} +\Delta t) -h(\bar{t})}{\Delta t}.
+\end{equation}
+So, as $\Delta t$ becomes smaller, the ratio becomes a better approximation of the derivative and we expect that our approximation gets closer to the true solution of \eqref{pb} (complemented with a suitable initial condition).
+
+\subsection{Code Solution (Python)}
+To experiment with different values of $\Delta t$, we use a \py{for} loop similar to what we did before. Then, we save the simulated data in a list and plot them to compare the results. The full Python code for the solution is shown in Listing \ref{q2pycode}.
+
+\lstinputlisting[language=Python, caption={Python code solution for Question 2.}, label=q2pycode]{W1Q2_vary_dt.py}
+
+
+\subsection{Code Solution (MatLab)}
+To experiment with different values of $\Delta t$, we use a \py{for} loop similar to what we did before. Then, we can compare the results by reporting the graphs in the same figure (cf. Figure \ref{fig:dt_profiles}). The full Matlab code for the solution is shown in Listing \ref{q2matcode}.
+\lstinputlisting[language=Matlab, caption={Matlab code solution for Question 2.}, label=q2matcode]{W1Q2_vary_dt.m}
+
+\subsection{Comments}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{Plots/w1q2_vary_dt_pyplot.png}
+\caption{\label{fig:dt_profiles} Water level in the tank for the considered values of $\Delta t$.}
+\end{figure}
+
+When $\Delta t$ gets smaller, the graphs approach the true solution of \eqref{pb} (complemented with a suitable initial condition).  
+For a large value of $\Delta t$ our approximation wildly oscillates up and down, showing a completely different behavior from the real solution!
+Choosing $\Delta t$ small enough is thus very important to get reliable and accurate results.
+
+%========================================================================
+\section{Question 3: Non constant water inflow}
+\subsection{Statement}
+Up to now, we considered a constant inflow $Q_{in}=const.$, i.e. the speed at which water enters the tank does not change over time.
+How can you modify the code to account for an inflow that is a function of time ?
+Try to simulate the water level for a sine wave inflow:  $Q_{in}(t)=1+sin(t/4)$,  $Q_{in}(t)=1+sin(t/8)$ and for a piecewise constant one:
+\begin{equation*}
+    Q_{in}(t) = \left\{ 
+    \begin{array}{ll}
+        1.5, & 0\leq t\leq 50 \\
+        0.5, & t>50.
+    \end{array} 
+\right.
+\end{equation*}
+
+\subsection{Mathematical explanation}
+Our approximating equation becomes:
+\begin{equation*}
+    h_{n+1}=h_n + \frac{\Delta t}{A_t}\left( Q_{in}(t_n) - A_{out}\sqrt{2gh_n}\right)
+    \text{ , for $n=0,\dots, N-1$}
+\end{equation*}
+where to account for non constant inflow, in \eqref{eq:explicit_euler} we just  substitute $Q_{in}$ for $Q_{in}(t_n)$, recalling that $t_n = n\Delta t$.
+
+\subsection{Code solution (Python)}
+Since the water inflow is prescribed as a function of time, we can model it in our code with a corresponding function. The syntax for function definition in python goes like this:
+\begin{lstlisting}[language=Python]
+    def Q_in(t):
+        return 1 + sin(t/4)
+\end{lstlisting}
+However, there is an alternative way that uses \emph{lambda functions}. The \py{lambda} keyword (which takes its name from \emph{lambda calculus}) can be used to quickly define a function object:
+\begin{lstlisting}[language=Python]
+    Q_in1 = lambda t : 1 + sin(t/4) 
+\end{lstlisting}
+
+Other than being convenient, employing lambda functions allows us to put them in lists and use our previous trick with \py{for} loops to easily loop over different functions. 
+%This is possible because functions are Python objects, and they can be put in a list like any other one.
+\begin{lstlisting}[language=Python]
+    for Q_in in [Q_in1, Q_in2, Q_in3]:
+        # instructions...
+\end{lstlisting}
+
+Defining a piecewise function is more tricky, but we can do it by employing \emph{boolean expressions}. 
+ We can then define the piecewise function that we need as follows:
+\begin{lstlisting}[language=Python]
+    Q_in3 = lambda t : 1.5*(t<=50) + 0.5*(t>50)
+\end{lstlisting}
+
+The boolean expression ${\tt (t<=50)}$ returns $1$ if $t$ is less or equal than $50$ (in other words when ${\tt t<=50}$ is \emph{true}), otherwise (i.e. when ${\tt t<=50}$ is \emph{false}) it returns $0$.
+
+The full Python code for the solution is shown in Listing \ref{q3pycode}. 
+\lstinputlisting[language=Python, caption={Python code solution for Question 3.}, label=q3pycode]{W1Q3_vary_Qinflow.py}
+
+
+\subsection{Code solution (Matlab)}
+Since the water inflow is prescribed as a function of time, we can model it in our code with a corresponding function. In Matlab, we can use \emph{anonymous functions}, also known as \emph{function handles}, for this purpose. Anonymous functions enable easy definition of mathematical functions using the following syntax:
+\begin{lstlisting}[language=Matlab]
+    Q_in1 = @(t) 1+sin(t/4);
+\end{lstlisting}
+Anonymous functions cannot be inserted into vectors, which are reserved for real or complex numbers. However, Matlab provides a more general data structure that can contain any Matlab object, called \emph{cell arrays}. A cell array is created and accessed using curly braces \py{\{\}}:
+\begin{lstlisting}[language=Matlab]
+    my_cell_array = {Q_in1, Q_in2, Q_in3};
+    Q_in = my_cell_array{1}; % Get the first element of the cell array
+\end{lstlisting}
+Cell arrays are useful, for example, to store vectors of different lengths in a single list. In this case, we can use one to easily loop over the functions we need to test:
+\begin{lstlisting}[language=Matlab]
+    for i=1:3
+        Q_in = my_cell_array{i}
+        % Instructions...
+    end
+\end{lstlisting}
+Defining a piecewise function is more tricky, but we can do it, similarly to what done in Python, by employing \emph{boolean expressions}. 
+ We can then define the piecewise function that we need as follows:
+\begin{lstlisting}[language=Matlab]
+    Q_in3 = @(t) 1.5*(t<=50) + 0.5*(t>50)
+\end{lstlisting}
+
+The full Matlab code for the solution is shown in Listing \ref{q3pycode}. 
+\lstinputlisting[language=Matlab, caption={Matlab code solution for Question 3.}, label=q3matcode]{W1Q3_vary_Qinflow.m}
+
+
+\subsection{Comments}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{plots/w1q3_vary_Qin_pyplot.png}
+\caption{\label{fig:Qin_profiles} Water level in the tank for the different expressions of $Q_{in}$ considered.}
+\end{figure}
+Unsurprisingly, when the inflow oscillates in time like a sine wave, the water level in the tank behaves sinusoidally too. What is more surprising is that even though the two sine waves that we used have the same amplitude and differ only by frequency, the amplitude of the oscillations in water level are very different in the two cases. This phenomenon is known as \emph{resonance}: for particular frequencies of input, the amplitude of the oscillations of the system can become particularly large.
+
+In regard to the piecewise constant inflow case, we can see that the water level evolution changes abruptly at $t=50$: for $t<50$ the level rises until it almost reaches an equilibrium, then for $t>50$ it starts decreasing, asymptotically reaching a new, lower equilibrium value.
+
+\end{document}
