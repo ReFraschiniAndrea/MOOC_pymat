@@ -4,6 +4,7 @@
 \usepackage{caption}
 \usepackage{parskip}
 \usepackage{tikz}
+\usepackage{float}
 
 \definecolor{amaranth}{rgb}{0.9, 0.17, 0.31}
 %\figureBoxCustom{bottom-left}{top-right}{label}{border-color}
@@ -15,8 +16,7 @@
 \node[anchor=south west,inner sep=0] (image) at (0,0) { #1};\begin{scope}[x={(image.south east)},y={(image.north west)}]}{\end{scope}\end{tikzpicture}}
 
 \title{Getting Started with the MATLAB Editor}
-\author{}
-\date{}
+\date{\vspace{-5ex}}
 
 \begin{document}
 
@@ -28,47 +28,78 @@ MATLAB is a programming environment widely used for numerical computation and da
 
 \section*{2. Exploring the MATLAB Interface}
 
-When you open MATLAB, you’ll see several important windows:
+When you open MATLAB, you'll see several important windows:
 
 \begin{enumerate}
     \item \textbf{Command Window}: in the center, where you can type and immediately execute commands.
+    \item \textbf{Toolstrip}: toolbar at the top, lets you open, save, run scritps and more. 
     \item \textbf{Current Folder}: on the left, shows your working directory.
     \item \textbf{Workspace}: shows you current variables and their values
-    \item \textbf{Toolbar}: at the top, lets you open, save, run scritps and more. 
 \end{enumerate}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{screenshots/matlab_windows.png}
-    \caption{MATLAB interface: Command Window, Editor, Current Folder}
+    \begin{annotatedFigure}
+        {\includegraphics[width=0.85\textwidth]{screenshots/01matlab_main.png}}
+        \annotatedFigureBoxCustom{0.004,0.8525}{0.966,0.962}{2}{0.004,0.8525}{amaranth}
+        \annotatedFigureBoxCustom{0.029,0.4413}{0.29,0.796}{3}{0.029,0.4413}{amaranth}
+        \annotatedFigureBoxCustom{0.029,0.0493}{0.29,0.404}{4}{0.029,0.0493}{amaranth}
+        \annotatedFigureBoxCustom{0.302,0.0493}{0.994,0.796}{1}{0.302,0.0493}{amaranth}
+    \end{annotatedFigure}
+    \caption{MATLAB interface: Command Window, Toolstrip, Current Folder and Workspace.}
 \end{figure}
 
 \section*{3. Creating a New Script}
 
-To start writing a program, click \texttt{New Script} in the toolbar. This opens the Editor window.
+To start writing a program, click \texttt{New Script} or \texttt{New > Script} in the toolbar. This opens the Editor window with a new untitled script.
 
+\begin{figure}[H]
+    \centering
+    \begin{annotatedFigure}
+        {\includegraphics[width=\textwidth]{screenshots/02matlab_new_script_prompt.png}}
+        \figureBoxCustom{0.002,0.4886}{0.04,0.8491}{amaranth}
+	    \figureBoxCustom{0.094,0.3248}{0.232,0.5324}{amaranth}
+    \end{annotatedFigure}
+    \caption{Create a new script.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{annotatedFigure}
+        {\includegraphics[width=\textwidth]{screenshots/03matlab_editor.png}}
+        	\figureBoxCustom{0.311,0.244}{0.958,0.8266}{amaranth}
+    \end{annotatedFigure}
+    \caption{Script Editor Window.}
+\end{figure}
 In the editor, type the following instruction:
 
 \begin{verbatim}
-disp('Hello, MATLAB!')
+    disp('Hello, MATLAB!')
 \end{verbatim}
 
 This command displays a message in the Command Window when the script is run.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{screenshots/new_script.png}
-    \caption{Writing a simple instruction in the Editor}
+    \begin{annotatedFigure}
+        {\includegraphics[width=0.85\textwidth]{screenshots/04matlab_simple_instruction.png}}
+        \figureBoxCustom{0.349,0.3064}{0.516,0.4021}{amaranth}
+    \end{annotatedFigure}
+    \caption{Writing a simple instruction in the Editor.}
 \end{figure}
 
 \section*{4. Running the Script}
 
 Click the \texttt{Run} button (green triangle) in the toolbar. MATLAB will ask you to save the script first if it hasn’t been saved yet (see Section \ref{save}). Once saved, the code is run and the result is shown in the \textbf{Command Window}.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{screenshots/run_script.png}
-    \caption{Running the script — output appears in the Command Window}
+    \begin{annotatedFigure}
+        {\includegraphics[width=0.85\textwidth]{screenshots/05matlab_run_script.png}}
+        \figureBoxCustom{0.762,0.9634}{0.811,0.8989}{amaranth}
+        \figureBoxCustom{0.3,0.1621}{0.467,0.220}{amaranth}
+    \end{annotatedFigure}
+    \caption{Running the script — output appears in the Command Window.}
 \end{figure}
 
 \label{save}
@@ -77,16 +108,17 @@ Click the \texttt{Run} button (green triangle) in the toolbar. MATLAB will ask y
 To save the current script, you can either:
 \begin{enumerate}
     \item Click disk icon on the top toolbar.
-    \item Click \texttt{File > Save}.
-    \item Press \texttt{Ctrl > S}.
+    \item Press \texttt{Ctrl + S}.
 \end{enumerate}
 MATLAB scripts are saved with the \texttt{.m} extension.
 
-\begin{figure}[h]
+\begin{figure}[H]
+    \centering
     \begin{annotatedFigure}
-        {\includegraphics[width=0.85\textwidth]{screenshots/save_script.png}}
+        {\includegraphics[width=\textwidth]{screenshots/06matlab_save_button.png}}
+        \figureBoxCustom{0.069,0.6714}{0.107,0.8616}{amaranth}
     \end{annotatedFigure}
-    \caption{Saving the script with a \texttt{.m} extension}
+    \caption{Save button in the toolbar.}
 \end{figure}
 
 \section*{6. Reopening a Saved Script}
@@ -94,7 +126,17 @@ MATLAB scripts are saved with the \texttt{.m} extension.
 To open a saved script again, you can either:
 \begin{itemize}
     \item Find it in the \texttt{Current Folder} window and double-click it.
-    \item Use \texttt{File > Open}  from the toolbar and select the file.
+    \item Use \texttt{Open} from the toolbar or press \texttt{Ctrl + O} and select the file.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{annotatedFigure}
+        {\includegraphics[width=\textwidth]{screenshots/07matlab_reopen_file.png}}
+        \annotatedFigureBoxCustom{0.127,0.7732}{0.171,0.9399}{1}{0.127,0.7732}{amaranth}
+	    \annotatedFigureBoxCustom{0.04,0.5268}{0.248,0.584}{2}{0.04,0.5268}{amaranth}
+    \end{annotatedFigure}
+    \caption{Reopening a file from the toolbar or the Current Folder.}
+\end{figure}
 
 \end{document}
