@@ -1,10 +1,10 @@
-import sys
 import os
+import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from mooc_utils import *
 from mooc_utils.matlab import *
-from W3Anim import NewDB
+from W3Anim import NewDB, GradientDescentPseudoCode
 
 config.update(RELEASE_CONFIG)
 
@@ -19,18 +19,7 @@ class W3Matlab_slides(MOOCSlide):
             '''
         )
         mat_env = MatlabEnv(r'Assets\matlab_noscript.png')
-        pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
-                 r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
-                 r"{{1: $i = 1$ \newline}}"
-                 r"{{2: \textbf{while} $i \leq N_{iter} $ \textbf{do}: \newline}}"
-                 r"{{3: \quad $(\theta_1^i, \theta_2^i) = (\theta_1^{i-1}, \theta_2^{i-1}) - \alpha \nabla J(\theta_1^{i-1}, \theta_2^{i-1})$ \newline}}"
-                 r"{{4: \quad \textbf{if} $ J (\theta_1^i, \theta_2^i) < tol $} \textbf{then} \textbf{stop} \newline}}"
-                 r"{{5: \quad \textbf{end if} \newline}}"
-                 r"{{6: \quad $i = i +1 $ \newline}}"
-                 r"{{7: \textbf{end while}}}",
-                 color=BLACK)
-        for i in range(len(pc)):
-            pc[i].align_on_border(LEFT)
+        pc = GradientDescentPseudoCode()
         pc.scale_to_fit_width(FRAME_WIDTH*0.65).center()
         pc.save_state()
         surrounding_pc = SurroundingRectangle(pc, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,

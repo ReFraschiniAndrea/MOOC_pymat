@@ -74,11 +74,15 @@ class WEEK3Anim_GradientDescent(ThreeDMOOCSlide):
         t1, t2 = -PI/4, -PI*11/12  # target point angles
         target = Star(color=ORANGE, fill_opacity=1).scale(0.1).move_to(robot_arm._hand_coord(t1, t2))
 
-        self.play(Indicate(robot_arm.hand, scale_factor=1.5, run_time=1.5))
-        self.wait(0.3)
-        self.play(GrowFromCenter(target))
-        self.wait(0.2)
-        self.play(robot_arm.MoveToAngles(t1, t2, run_time = 2))
+        self.play(
+            Succession(
+                Indicate(robot_arm.hand, scale_factor=1.5, run_time=1.5),
+                Wait(0.3),
+                GrowFromCenter(target),
+                Wait(0.2),
+                robot_arm.MoveToAngles(t1, t2, run_time = 2)
+            )
+        )
 
         # SLIDE 04:  ===========================================================
         # ARM MOVES BACK AND DISTANCE ARROW APPEARS
@@ -632,18 +636,7 @@ class WEEK3Anim_GradientDescent(ThreeDMOOCSlide):
                           gradient_vector_field, GD_title))
         self.wait(0.5)
 
-        pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
-                 r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
-                 r"{{1: $i = 1$ \newline}}"
-                 r"{{2: \textbf{while} $i \leq N_{iter} $ \textbf{do}: \newline}}"
-                 r"{{3: \quad $(\theta_1^i, \theta_2^i) = (\theta_1^{i-1}, \theta_2^{i-1}) - \alpha \nabla J(\theta_1^{i-1}, \theta_2^{i-1})$ \newline}}"
-                 r"{{4: \quad \textbf{if} $ J (\theta_1^i, \theta_2^i) < tol $} \textbf{then} \textbf{stop} \newline}}"
-                 r"{{5: \quad \textbf{end if} \newline}}"
-                 r"{{6: \quad $i = i +1 $ \newline}}"
-                 r"{{7: \textbf{end while}}}",
-                 color=BLACK)
-        for i in range(len(pc)):
-            pc[i].align_on_border(LEFT)
+        pc = GradientDescentPseudoCode()
         pc.scale(1).center()
 
         self.play(Write(pc[0]))

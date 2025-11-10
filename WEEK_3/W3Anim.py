@@ -75,6 +75,25 @@ class NewDB(VMobject):
         return self.MoveToAngles(t1 + current_t1, t2+current_t2, **kwargs)
 
 
+class GradientDescentPseudoCode(Tex):
+    def __init__(self):
+        super().__init__(
+            r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
+            r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
+            r"{{1: $i = 1$ \newline}}"
+            r"{{2: \textbf{while} $i \leq N_{iter} $ \textbf{do}: \newline}}"
+            r"{{3: \quad $(\theta_1^i, \theta_2^i) = (\theta_1^{i-1}, \theta_2^{i-1}) - \alpha \nabla J(\theta_1^{i-1}, \theta_2^{i-1})$ \newline}}"
+            r"{{4: \quad \textbf{if} $ J (\theta_1^i, \theta_2^i) < tol $} \textbf{then} \textbf{stop} \newline}}"
+            r"{{5: \quad \textbf{end if} \newline}}"
+            r"{{6: \quad $i = i +1 $ \newline}}"
+            r"{{7: \textbf{end while}}}",
+            color=BLACK
+        )
+        for i in range(len(self)):
+            self[i].align_on_border(LEFT)
+        self.center()
+
+
 class RobotGradientDescent():
     def __init__(self, l1, l2, target):
         self.l1 = l1

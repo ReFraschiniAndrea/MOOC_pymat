@@ -1,10 +1,11 @@
-import sys
 import os
+import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from mooc_utils import *
 from mooc_utils.colab import ColabCodeWithLogo, ColabCode
 from mooc_utils.matlab import MatlabCodeWithLogo
+from W3Anim import double_arm_kinematics, NewDB, GradientDescentPseudoCode, RobotGradientDescent
 
 
 from W3Anim import double_arm_kinematics, NewDB, RobotGradientDescent
@@ -178,18 +179,7 @@ class W3WrapUp_GradientDescent(ThreeDMOOCSlide):
             tol=1e-6
         )
 
-        pc = Tex(r"{{\textbf{Algorithm:} Gradient Descent Method \newline}}"
-                 r"{{\textbf{Require:} $ (x_p, y_p), L_1, L_2,(\theta_1^0, \theta_2^0),tol, \alpha, N_{iter} \geq 1$ \newline}}"
-                 r"{{1: $i = 1$ \newline}}"
-                 r"{{2: \textbf{while} $i \leq N_{iter} $ \textbf{do}: \newline}}"
-                 r"{{3: \quad $(\theta_1^i, \theta_2^i) = (\theta_1^{i-1}, \theta_2^{i-1}) - \alpha \nabla J(\theta_1^{i-1}, \theta_2^{i-1})$ \newline}}"
-                 r"{{4: \quad \textbf{if} $ J (\theta_1^i, \theta_2^i) < tol $} \textbf{then} \textbf{stop} \newline}}"
-                 r"{{5: \quad \textbf{end if} \newline}}"
-                 r"{{6: \quad $i = i +1 $ \newline}}"
-                 r"{{7: \textbf{end while}}}",
-                 color=BLACK)
-        for i in range(len(pc)):
-            pc[i].align_on_border(LEFT)
+        pc = GradientDescentPseudoCode()
         self.add_fixed_in_frame_mobjects(pc)
         pc.scale(0.7).to_edge(LEFT)
         
@@ -197,12 +187,16 @@ class W3WrapUp_GradientDescent(ThreeDMOOCSlide):
         curve = VGroup().set_points_as_corners(ax_3d.c2p(GD_trajectory))
         trace = TracedPath(gd_point.get_center, stroke_color=GREEN, stroke_width=3)
         self.add(trace)
-        self.play(FadeIn(pc, obj_surf, ref_sys))  # order is important
-        self.wait(0.5)
-        self.play(FadeIn(gd_point))
-        self.wait(0.8)
-        self.play(MoveAlongPath(gd_point, curve), run_time=5) #, rate_func=linear
-        self.wait(1)
+        self.play(
+            Succession(
+                FadeIn(pc, obj_surf, ref_sys),
+                Wait(0.5),
+                FadeIn(gd_point),
+                Wait(0.8),
+                MoveAlongPath(gd_point, curve, run_time=5),
+                Wait(1)
+            )
+        )
 
         # SLIDE 04:  =========================================================== 
         # PYTHON AND MATLAB SCRIPTS FOR GD APPEAR SIDE BY SIDE

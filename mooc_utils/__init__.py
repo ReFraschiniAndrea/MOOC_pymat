@@ -17,3 +17,4 @@ manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos.ttf")
 
 del os
 del manimpango
+del config
