@@ -5,13 +5,15 @@ __all__ = [
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
     "SANS_SERIF_FONT", "CODE_FONT",
     "HighlightRectangle", "Title", "DynamicSplitScreen",
-    "Cursor", "FunctionAbstraction", "VectorArray",
+    "Cursor", "FunctionAbstraction",
+    "VectorArray", "PixelArray",
     "CustomDecimalNumber",
     "custom_get_axis_labels",
 ]
 
 from manim import *
 from manim.typing import Vector3D
+import itertools as it
 
 FRAME_HEIGHT = 10.66  # In 4:3 frame height is 10.66, not 8!
 ASPECT_RATIO = 4/3
@@ -300,15 +302,20 @@ class Cursor(SVGMobject):
 
 class CustomDecimalNumber(DecimalNumber):
     '''Override of default decimal number to allow for different fonts.'''
+    _FONT_STRING_TO_MOB_MAPS = {}  # class member
     def __init__(
         self,
         number: float = 0,
-        font: str = None,
+        font: str = '',
         **kwargs
     ):
-        self.string_to_mob_map = {}  # presonal dict
         self.font = font
+        if self.font not in self._FONT_STRING_TO_MOB_MAPS.keys():
+            self._FONT_STRING_TO_MOB_MAPS[font] = {}
+        self.string_to_mob_map = self._FONT_STRING_TO_MOB_MAPS[font]
         super().__init__(number, **kwargs)
+        self._set_submobjects_from_number(number) # update with new font
+        self.set_color(self.color)
 
     def _string_to_mob(self, string: str, mob_class: VMobject | None = None, **kwargs):
         if mob_class is None:
@@ -408,3 +415,162 @@ class VectorArray(Table):
 
     def get_lines(self) -> VGroup:
         return VGroup(self.outer_rectangle) + self.get_horizontal_lines() + self.get_vertical_lines()
+
+
+class TabularVGroup(VGroup):
+    def __init__(self, *objects, height, width):
+        super().__init__(objects)
+        self.tab_width : int=int(width)
+        self.tab_height : int=int(height)
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            return self.submobjects[key[0]*self.tab_width+key[1]]
+        return super().__getitem__(key)
+
+    def get_row(self, i: int):
+        if i < 0 or i > self.tab_height:
+            return
+        row = VGroup(self[i,j] for j in range(self.tab_width))
+        return row
+    
+    def get_column(self, j: int):
+        if j < 0 or j > self.tab_width:
+            return
+        column = VGroup(self[i,j] for i in range(self.tab_height))
+        return column
+
+class PixelArray(VGroup):
+    """Image-Table-Matrix hybrid object"""
+    def __init__(
+        self,
+        array : np.ndarray,
+        **kwargs
+    ):
+        super().__init__()
+        self.array : np.ndarray = array  # Grayscale or RGB values
+        self.pixel_array : TabularVGroup = None  # squares for the pixels
+        self.pixel_values : TabularVGroup = None
+        self.brackets : VGroup = None
+
+        self.add_pixel_array(self.array, **kwargs)
+
+    def add_pixel_array(
+        self,
+        array,
+        stroke_width: float = 1,
+        stroke_color = None,
+        height: float = None
+    ):
+        h, w = array.shape[:2]
+        # Create a grid of square pixels
+        pixel_array = TabularVGroup(*[Square() for _ in range(h*w)], width=w, height=h)
+        if array.ndim == 2:
+            for pixel, value in zip(pixel_array, array.flatten()):
+                color = rgb_to_color((value, value, value))
+                pixel.set_fill(color, 1.0)
+                pixel.set_stroke(color=color)
+        else:
+            for pixel, value in zip(pixel_array, it.chain(*array)):
+                color = rgb_to_color(value)
+                pixel.set_fill(color, 1.0)
+                pixel.set_stroke(color=color)
+
+        pixel_array.set_stroke(color=stroke_color, width=stroke_width)
+        pixel_array.arrange_in_grid(h, w, buff=0)
+        if height is not None:
+            pixel_array.set_height(height)
+        
+        self.pixel_array = pixel_array
+        self.add(self.pixel_array)
+
+    def get_pixel_highlight(self, color=YELLOW, stroke_width=2, position = (0,0)) -> Square:
+        """Get square border to highlight a single pixel"""
+        pixel_highlight : Square = self.pixel_array[*position].copy()
+        pixel_highlight.set_fill(BLACK, 0)
+        pixel_highlight.set_stroke(color, stroke_width, opacity=1)
+        return pixel_highlight
+
+    def get_kernel_array(
+        self,
+        kernel: np.ndarray,
+        kernel_color=YELLOW,
+        kernel_stroke_width=2,
+        add_values:bool = True,
+        element_to_mob_class =  DecimalNumber,
+        values_size_fator : float =0.3,
+        kernel_tex = None,
+        **kwargs
+    ) -> TabularVGroup:
+        """Get highlight in the shape of the convolution kernel"""
+        pixel_highlight = self.get_pixel_highlight(kernel_color, kernel_stroke_width)
+        kernel_array = TabularVGroup(height=kernel.shape[0], width=kernel.shape[1])
+        for _ in kernel.flatten():
+            kernel_array.add(pixel_highlight.copy())
+        kernel_array.arrange_in_grid(*kernel.shape, buff=0)
+        kernel_array.move_to(self.pixel_array[0, 0])
+       
+        if not add_values:
+            return kernel_array
+        
+        values = TabularVGroup(height=kernel.shape[0], width=kernel.shape[1])
+        for i, x in enumerate(kernel.flatten()):
+            if kernel_tex:
+                value = MathTex(kernel_tex, color=kernel_color, **kwargs)
+            else:
+                value = element_to_mob_class(x, **kwargs)
+            value.scale_to_fit_height(pixel_highlight.height * values_size_fator)
+            value.move_to(kernel_array[i])
+            values.add(value)
+
+        return kernel_array, values
+ 
+    def add_pixel_values(
+        self,
+        num_decimal_places=0,
+        color=RED
+    ): 
+        values = TabularVGroup(height=self.array.shape[0], width=self.array.shape[1])
+        for pixel, value in zip(self.pixel_array, self.array.flatten()):
+            pixel_value = CustomDecimalNumber(value,font=CODE_FONT, mob_class = Text, num_decimal_places=num_decimal_places, color=color)
+            pixel_value.set_height(pixel.height*0.3)
+            pixel_value.move_to(pixel)
+            values.add(pixel_value)
+
+        self.pixel_values = values
+        self.add(self.pixel_values)
+    
+    def add_brackets(
+        self,
+        left: str = "[",
+        right: str = "]",
+        bracket_h_buff: float = MED_SMALL_BUFF,
+        bracket_v_buff: float = MED_SMALL_BUFF,
+        **kwargs
+    ):
+        # Height per row of LaTeX array with default settings
+        BRACKET_HEIGHT = 0.5977
+        n = int((self.pixel_values.height) / BRACKET_HEIGHT) + 1
+        empty_tex_array = "".join(
+            [ r"\begin{array}{c}", *n * [r"\quad \\"], r"\end{array}", ]
+        )
+        tex_left = "".join(
+            [ r"\left" + left, empty_tex_array, r"\right.", ]
+        )
+        tex_right = "".join(
+            [ r"\left.", empty_tex_array, r"\right" + right, ]
+        )
+        l_bracket = MathTex(tex_left, **kwargs)
+        r_bracket = MathTex(tex_right, **kwargs)
+
+        self.brackets = VGroup(l_bracket, r_bracket)
+        # if self.stretch_brackets:
+        self.brackets.stretch_to_fit_height(self.pixel_values.height + 2 * bracket_v_buff)
+        l_bracket.next_to(self.pixel_values, LEFT, bracket_h_buff)
+        r_bracket.next_to(self.pixel_values, RIGHT,bracket_h_buff)
+
+        self.add(self.brackets)
+
+    def remove_brackets(self):
+        self.remove(self.brackets)
+        self.brackets = None

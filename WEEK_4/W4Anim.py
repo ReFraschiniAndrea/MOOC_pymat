@@ -1,7 +1,51 @@
 from manim import *
 from PIL import Image
 import scipy.signal
-import itertools as it
+from typing import Sequence
+
+
+class DiscreteConvolutionPseudoCode(Tex):
+    def __init__(self):
+        super().__init__(
+            r"{{\textbf{Algorithm:} Local Convolution \newline}}"
+            r"{{\textbf{Require:} $ A, K, (i, j) $ \newline}}"
+            r"{{1: $v \leftarrow 0$ \newline}}"
+            r"{{2: \textbf{for} $m \leftarrow 0 $ to $2$ \textbf{do}: \newline}}"
+            r"{{3: \quad \textbf{for} $n \leftarrow 0$ to $2$ \textbf{do}: \newline}}"
+            r"{{4: \quad \quad $v \leftarrow v + A(i-1 +m, j-1 + n) \times K(m, n)$ \newline}}"
+            r"{{5: \quad \textbf{end for} \newline}}"
+            r"{{6: \textbf{end for}}}",
+            color=BLACK
+        )
+        for i in range(len(self)):
+            self[i].align_on_border(LEFT)
+        self.center()
+
+class ReferenceSystemImageMobject(Group):
+    def __init__(self, image: ImageMobject):
+        self.image = image
+        height, width = self.image.get_pixel_array().shape[:2]
+        self.axes = Axes(
+            [0, width], [0, -height], self.image.width, self.image.height,
+            tips=False, axis_config={'include_ticks':False, 'stroke_width':0},  y_axis_config={"scaling": LinearBase(scale_factor=-1)})
+        self.axes.move_to(self.image, aligned_edge=UL)
+        self.axes.set_opacity(0)
+        super().__init__(self.image, self.axes)
+        
+    def c2p(self,  *coords: float | Sequence[float] | Sequence[Sequence[float]] | np.ndarray):
+        return self.axes.c2p(coords)
+
+def separable_box_blur(
+    input: np.ndarray,
+    kernel_size: int = 3,
+) -> np.ndarray:
+    """2D box blur filter written as two subsequent 1D convolutions."""
+    output = np.empty_like(input)
+    kernel1d = np.ones(kernel_size)/kernel_size
+    scipy.ndimage.correlate1d(input, kernel1d, 0, output, mode='reflect')
+    scipy.ndimage.correlate1d(output, kernel1d, 1, output, mode='reflect')
+    return output
+
 
 def get_norm(vect) -> float:
     return sum((x**2 for x in vect))**0.5
