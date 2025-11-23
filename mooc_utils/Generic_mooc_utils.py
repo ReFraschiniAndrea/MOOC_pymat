@@ -4,7 +4,7 @@ __all__ = [
     "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO",
     "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
     "SANS_SERIF_FONT", "CODE_FONT",
-    "HighlightRectangle", "Title", "DynamicSplitScreen",
+    "HighlightRectangle", "FullScreenBackground","Title", "DynamicSplitScreen",
     "Cursor", "FunctionAbstraction",
     "VectorArray", "PixelArray",
     "CustomDecimalNumber",
@@ -60,6 +60,13 @@ class HighlightRectangle(BackgroundRectangle):
                          buff=buff, corner_radius=corner_radius, **kwargs)
         self.set_z_index(mobject.z_index)
         mobject.set_z_index(mobject.z_index+0.1)
+
+class FullScreenBackground(Rectangle):
+    def __init__(self, color=WHITE, **kwargs):
+        super().__init__(
+            width=FRAME_WIDTH, height=FRAME_HEIGHT,
+            color=color, stroke_width=0, **kwargs)
+        self.set_z_index(-1)
         
 class DynamicSplitScreen(Mobject):
     """Horizontal spliscreen that adapts dynamically to the content.

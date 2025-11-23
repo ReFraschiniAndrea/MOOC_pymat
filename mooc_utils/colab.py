@@ -85,9 +85,21 @@ class ColabCode(CustomCode):
         target_cell: int = None,
         **kwargs
     ):
+        """Animate bringing a piece of code into a colab code cell.
+        
+        Parameters
+        ----------
+        colab_env : ColabEnv
+            The environment object in which the code will appear as a code cell
+        target_cell : int
+            Index of the cell in the colab environment that the code will be placed into.
+            The cell must already be added into the environment (and matching with the input).
+            If not provided, a new matching cell is added to the envoronment
+        
+        """
         if target_cell is None:
             target = ColabCodeBlock(self.code_string)
-            colab_env.add_cell(target)
+            colab_env.add_cell(target, add_to_scene=False)
             cells_to_fade = colab_env.cells[:-1]
         else:
             target = colab_env.cells[target_cell]
@@ -95,26 +107,25 @@ class ColabCode(CustomCode):
             cells_to_fade = colab_env.cells[target_cell+1:]
         if self.window is not None:
             return AnimationGroup(
-                ReplacementTransform(self.window, target.colabCode.window, **kwargs),
-                ReplacementTransform(self.code, target.colabCode.code, **kwargs),
+                ReplacementTransform(self.window, target.window, **kwargs),
+                ReplacementTransform(self.code, target.code, **kwargs),
                 # if we fade in the whole environment, also the new cell will appear before it should
-                FadeIn(colab_env.env_image, *cells_to_fade, colab_env.cursor,
+                FadeIn(colab_env.background, *cells_to_fade, colab_env.cursor,
                        target.gutter, target.playButton, **kwargs)
             )
         else:
             return AnimationGroup(
-                ReplacementTransform(self.code, target.colabCode.code, **kwargs),
-                FadeIn(colab_env.env_image, *cells_to_fade, colab_env.cursor,
-                       target.colabCode.window, target.gutter, target.playButton, **kwargs)
+                ReplacementTransform(self.code, target.code, **kwargs),
+                FadeIn(colab_env.background, *cells_to_fade, colab_env.cursor,
+                       target.window, target.gutter, target.playButton, **kwargs)
             )
 
 
-class ColabCodeBlock(Mobject):
+class ColabCodeBlock(ColabCode):
     def __init__(self, code: str):
-        super().__init__()
-        self.colabCode = ColabCode(code, paragraph_config={'font_size': COLAB_FONT_SIZE})
-        target_height = self.colabCode.code.height + 2*_COLAB_SURROUND_CODE_BUFF if code != '' else 0.4766081925925926
-        self.colabCode.add_background_window(
+        super().__init__(code, paragraph_config={'font_size': COLAB_FONT_SIZE})
+        target_height = self.code.height + 2*_COLAB_SURROUND_CODE_BUFF if code != '' else 0.4766081925925926
+        self.add_background_window(
             Rectangle(
                 width=_COLAB_BLOCK_WIDTH,
                 height= target_height,
@@ -123,15 +134,14 @@ class ColabCodeBlock(Mobject):
                 stroke_width=0
             )
         )
-        self.gutter = self._create_Gutter().next_to(self.colabCode.window, LEFT, buff=0)
+        self.gutter = self._create_Gutter().next_to(self.window, LEFT, buff=0)
         self.playButton = self._create_PlayButton().move_to(self.gutter.get_center()).align_to(self.gutter, UP).shift(DOWN*0.1)
         # be careful if the code is empty
-        if self.colabCode.code.family_members_with_points():
-            self.colabCode.code.align_to(self.colabCode.window, LEFT).shift(RIGHT*_COLAB_GUTTER_TO_TEXT_BUFF)
+        if self.code.family_members_with_points():
+            self.code.align_to(self.window, LEFT).shift(RIGHT*_COLAB_GUTTER_TO_TEXT_BUFF)
         self.output = None
         self.outputWindow = None
 
-        self.add(self.colabCode)
         self.add(self.gutter)
         self.add(self.playButton)
 
@@ -153,7 +163,7 @@ class ColabCodeBlock(Mobject):
         return Rectangle(
             color=COLAB_GRAY, 
             width=_COLAB_GUTTER_WIDTH, 
-            height=self.colabCode.window.height,
+            height=self.window.height,
             fill_opacity=1,
             stroke_width=0)
         
@@ -170,8 +180,8 @@ class ColabCodeBlock(Mobject):
             stroke_width=0,
         )
         self.output.move_to(self.outputWindow)
-        Group(self.outputWindow, self.output).next_to(VGroup(self.colabCode.window, self.gutter), DOWN, buff=0).set_z_index(_COLAB_CELLS_Z_INDEX)
-        self.output.align_to(self.colabCode.code, LEFT)
+        Group(self.outputWindow, self.output).next_to(VGroup(self.window, self.gutter), DOWN, buff=0).set_z_index(_COLAB_CELLS_Z_INDEX)
+        self.output.align_to(self.code, LEFT)
 
         self.add(self.outputWindow)
         self.add(self.output)
@@ -197,7 +207,8 @@ class ColabBlockOutputText(Paragraph):
         super().__init__(text, font_size=COLAB_FONT_SIZE, color=BLACK, font=CODE_FONT,
                         line_spacing=0.5, **kwargs)
 
-class ColabEnv(Mobject):
+class ColabEnv():
+    """Manager of the elements of the Colab UI."""
     def _pixel2p(x, y):
         '''Converts pixel coordinates (1080 x 1440) into manim units.'''
         return [
@@ -211,41 +222,57 @@ class ColabEnv(Mobject):
     UPLOAD_ = _pixel2p(83, 206)
     PLUS_CODE_ = _pixel2p(210, 105)
 
-    def __init__(self, background=None):
-        super().__init__()
-        self.env_image = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-4)
-        self.add(self.env_image)
+    def __init__(self, scene: Scene, background=None):
+        self.scene : Scene = scene
+        self.background : ImageMobject = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-4)
         self.cells : List[ColabCodeBlock] = []
-        self.cursor = Cursor().set_z_index(-2).move_to([-20,-20, 0])
-        self.add(self.cursor)
+        self.cursor : Cursor = Cursor().set_z_index(-2).move_to([-20,-20, 0])
 
     def set_image(self, image_path: str):
-        self.env_image.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-4)
+        self.background.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-4)
 
-    def add_cell(self, cell: ColabCodeBlock):
+    def add_cell(self, cell: ColabCodeBlock = None, add_to_scene: bool = True):
+        if cell is None:
+            cell = ColabCodeBlock(code='')
         if len(self.cells) == 0:
             cell.move_to(self.TOP_LEFT_CORNER_, aligned_edge=UL)
         else:
             cell.next_to(self.cells[-1], DOWN, buff=_COLAB_SURROUND_CODE_BUFF)
         cell.set_z_index(_COLAB_CELLS_Z_INDEX)
         self.cells.append(cell)
-        self.add(cell)
+        if add_to_scene:
+            self.scene.add(cell)
 
-    def remove_cell(self, scene: Scene):
+    def get_cell(self, index: int) -> ColabCodeBlock:
+        if index > len(self.cells):
+            raise IndexError(f'Cell index {index} out of range.')
+        return self.cells[index]
+    
+    def get_cells(self) -> Group:
+        return Group(*self.cells)
+
+    def remove_cell(self):
         if len(self.cells) > 0:
             removed_cell = self.cells.pop()
-            self.remove(removed_cell)  
-            scene.remove(removed_cell)
+            self.scene.remove(removed_cell)
+            self.scene.remove(*removed_cell.submobjects)
+            if removed_cell.output is not None:
+                self.scene.remove(removed_cell.output)
+                self.scene.remove(*removed_cell.output.submobjects)
+                self.scene.remove(removed_cell.outputWindow)
     
-    def clear(self, scene: Scene):
+    def clear(self):
         while len(self.cells) > 0:
-            self.remove_cell(scene)
+            self.remove_cell()
         # cursor is removed from the scene but not from the environment
         self.cursor.move_to([-20,-20, 0])
-        scene.remove(self.cursor)
+        self.scene.remove(self.cursor)
 
-    def OutofColab(self, cell: ColabCodeBlock, fullscreen=True, **kwargs):
-        target = ColabCode(cell.colabCode.code_string)
+    def OutofColab(self, cell: ColabCodeBlock | int, fullscreen=True, **kwargs):
+        if isinstance(cell, int):
+            cell = self.get_cell(cell)
+
+        target = ColabCode(cell.code_string)
         target.add_background_window()
         if fullscreen:
             target.window.become(
@@ -256,8 +283,9 @@ class ColabEnv(Mobject):
                     width=FRAME_WIDTH))
         cells_to_fade = self.cells[:-1]
         return AnimationGroup(
-            Transform(cell.colabCode, target),
-            FadeOut(self.env_image, *cells_to_fade,cell.gutter, cell.playButton, self.cursor)
+            Transform(cell.code, target.code, **kwargs),
+            Transform(cell.window, target.window, **kwargs),
+            FadeOut(self.background, *cells_to_fade, cell.gutter, cell.playButton, self.cursor, **kwargs)
         )
     
     def Run(
@@ -265,9 +293,7 @@ class ColabEnv(Mobject):
         cell: int = 0,
         new_cursor: bool = True
     ):
-        if cell > len(self.cells):
-            raise IndexError('Cell index out of range')
-        cell_to_run = self.cells[cell]
+        cell_to_run = self.get_cell(cell)
 
         result = []
         if new_cursor:
@@ -279,8 +305,8 @@ class ColabEnv(Mobject):
         result.append(self.cursor.Click())
 
         if cell_to_run.output is not None:
-            # add again the output so it is above everything else
-            cell_to_run.add(cell_to_run.outputWindow, cell_to_run.output)
+            # add the output so it appears above everything else
+            # self.scene.add(cell_to_run.outputWindow, cell_to_run.output)
             result.extend([
                 FadeIn(cell_to_run.outputWindow, cell_to_run.output, run_time=0),
                 Wait(0.1)
@@ -288,14 +314,16 @@ class ColabEnv(Mobject):
  
         return Succession(*result)
     
+    def FadeOut(self):
+        return FadeOut(self.background, self.get_cells(), self.cursor)
+    
     def focus_output(self, cell: int, scale=0.75, alignment=None, **kwargs):
-        if cell > len(self.cells):
-            raise IndexError("Cell index out of range.")
-        if self.cells[cell].output is None:
+        cell_to_focus = self.get_cell(cell)
+        if cell_to_focus.output is None:
             raise ValueError("Selected cell has no output")
-        self.cells[cell].outputWindow.set_z_index(0)
-        self.cells[cell].output.set_z_index(0)  # any negative z_index will not work
-        return self.cells[cell].animate(**kwargs).focus(scale, alignment)
+        cell_to_focus.outputWindow.set_z_index(0)
+        cell_to_focus.output.set_z_index(0)  # any negative z_index will not work
+        return cell_to_focus.animate(**kwargs).focus(scale, alignment)
 
 class ColabCodeWithLogo(CodeWithLogo):
     def __init__(
