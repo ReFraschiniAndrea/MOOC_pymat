@@ -10,9 +10,9 @@ from W4Anim import ReferenceSystemImageMobject, DiscreteConvolutionPseudoCode, s
 # Highly suggested to run with --disable_caching
 config.update(RELEASE_CONFIG)
 
-NUMBERS_COLOR = RED
-HIGHLIGHT_COLOR = BLUE
-INDICATE_COLOR = BLUE_B
+NUMBERS_COLOR = ManimColor("#FF1500")
+HIGHLIGHT_COLOR = ManimColor("#00D0FF")
+INDICATE_COLOR = BLUE_C
 
 class W4Theory_slides(MOOCSlide):
     def construct(self):
@@ -69,7 +69,7 @@ class W4Theory_slides(MOOCSlide):
         )
         # Add reference system to the image
         referenced_car_plate = ReferenceSystemImageMobject(car_plate_grayscale)
-        por_xmin, por_ymin, por_L = 248, 108, 336
+        por_xmin, por_ymin, por_L = 248, 108, 336  # L divisible by 12
         portion = cp_gray[por_xmin:por_xmin+por_L, por_ymin:por_ymin+por_L]
         portion_image = ImageMobject(portion).scale_to_fit_height(car_plate_grayscale.height * portion.shape[0]/car_plate_array.shape[0])
         portion_image.move_to(referenced_car_plate.axes.c2p(por_ymin, por_xmin, 0), aligned_edge=UL)
@@ -77,19 +77,16 @@ class W4Theory_slides(MOOCSlide):
         
         self.play(Circumscribe(portion_image, color=HIGHLIGHT_COLOR), runtime=2)
         self.play(FadeOut(car_plate_grayscale), run_time=0.5)
-        self.play(portion_image.animate.scale_to_fit_height(0.75*FRAME_HEIGHT).center(), run_time=0.5)
 
         downscaled_portion = (skimage.transform.resize(portion, (12, 12))) # float64
         downscaled_portion = ((downscaled_portion - downscaled_portion.min())/(downscaled_portion.max()-downscaled_portion.min())*255).astype(np.uint8)
+        upscaled_downscaled_portion = skimage.transform.resize(downscaled_portion, (por_L, por_L), order=0)  # oder=0 -> nearest neighbour interpolation when upscaling
+        upscaled_downscaled_portion_image = ImageMobject(upscaled_downscaled_portion).scale_to_fit_height(0.75*FRAME_HEIGHT)
+        self.play(portion_image.animate.become(upscaled_downscaled_portion_image), run_time=0.5)
+
         sample_12: PixelArray = PixelArray(downscaled_portion, stroke_width=0.75).set_height(portion_image.height)
 
-        self.play(
-            AnimationGroup(
-                *[GrowFromCenter(pixel) for pixel in sample_12.pixel_array],
-                lag_ratio=1,
-                run_time=1
-            )
-        )
+        self.add(sample_12)
         self.remove(portion_image)
 
         # SLIDE 05:  ===========================================================
@@ -101,12 +98,7 @@ class W4Theory_slides(MOOCSlide):
             '''
         )
         sample_12.add_pixel_values(color=NUMBERS_COLOR)
-        self.play(
-            AnimationGroup(
-                Create(sample_12.pixel_values),
-                lag_ratio=0.1
-            )
-        )
+        self.play(Create(sample_12.pixel_values, lag_ratio=0.1))
 
         # SLIDE 06:  ===========================================================
         # GRAYSCALE VALUES ARE MOVED TO THE SIDE AND ENCLOSED BY SQUARE BRACKETS
@@ -142,13 +134,13 @@ class W4Theory_slides(MOOCSlide):
             '''For instance, this pixel is row x and column y.
             '''
         )
-        qi, qj = 6, 6  # pixel used for example
-        pixel_highlight = sample_12.get_pixel_highlight(position=(qi, qj), color=HIGHLIGHT_COLOR)
+        pi, pj = 5, 8  # pixel used for examples
+        pixel_highlight = sample_12.get_pixel_highlight(position=(pi, pj), color=HIGHLIGHT_COLOR)
         
-        row_highlight = HighlightRectangle(sample_12.pixel_values.get_row(qi), color=BLUE)
-        column_highlight = HighlightRectangle(sample_12.pixel_values.get_column(qj), color=ORANGE)
-        x_label = MathTex('x', color=BLACK).next_to(row_highlight, LEFT, buff=0.75)
-        y_label = MathTex('y', color=BLACK).next_to(column_highlight, UP)
+        row_highlight = HighlightRectangle(sample_12.pixel_values.get_row(pi), color=BLUE)
+        column_highlight = HighlightRectangle(sample_12.pixel_values.get_column(pj), color=ORANGE)
+        x_label = MathTex(str(pi+1), color=BLACK).next_to(row_highlight, LEFT, buff=0.75)
+        y_label = MathTex(str(pj+1), color=BLACK).next_to(column_highlight, UP)
 
         self.play(Create(pixel_highlight))
         self.play(
@@ -170,7 +162,6 @@ class W4Theory_slides(MOOCSlide):
             that changing the values of the matrix affects the image.
             '''
         )
-        pi, pj = 5, 8  # pixel used for further examples
         self.play(FadeOut(pixel_highlight, sample_12.brackets, column_highlight, row_highlight, x_label, y_label))
         self.play(sample_12.pixel_array.animate.restore(), sample_12.pixel_values.animate.restore())
         sample_12.remove_brackets()
@@ -237,26 +228,23 @@ class W4Theory_slides(MOOCSlide):
                     rate_func=linear,
                     run_time= 20 * dt_per_char
                 ),
-                Succession(
+                AnimationGroup(
                     *[Indicate(sample_12.pixel_array[pi-1 + i, pj-1+j], scale_factor=1, color=INDICATE_COLOR) for i in range(3) for j in range(3)],
                     lag_ratio=0.5,
-                    run_time = 16 *dt_per_char,
+                    run_time = 17 * dt_per_char,
                 ),
-                lag_ratio=0.2,
+                lag_ratio=0.17,
             )
         )
 
         # SLIDE 11:  ===========================================================
         # VALUES IN THE FORMULA ARE REPLACED WITH THE CORRESPONDING PIXELS
-        # RESULT APPEARS AND IS PUT IN THE FIANL IMAGE
         self.next_slide(
             notes=
             '''For the given pixel (X,Y) we replace its value with the average
-            of these 9 values. This operation has to be repeated for each pixel!
-            How can we automate it?
+            of these 9 values.
             '''
         )
-        # Replace v_i with squares form the image
         v_terms = VGroup(*expr_initial[2:19:2])
         phony_length = 0.6
         pixels_to_sum = VGroup()
@@ -276,29 +264,44 @@ class W4Theory_slides(MOOCSlide):
                     lag_ratio=0.5
                 ) for i in range(9)],
                 lag_ratio = 0.2,
-                runt_time=2
+                run_time=2
             )
         )
 
-        # Create the blur result (show initially empty)
-        blur_array = separable_box_blur(downscaled_portion, 3).astype(np.uint8)
-        blur_result : PixelArray = PixelArray(blur_array[1:-1, 1:-1], stroke_color=WHITE, stroke_width=1).set_height(10/12*sample_12.height)
-        blur_result.set_fill(opacity=0)
-        blur_result.move_to(HALF_SCREEN_RIGHT).shift(DOWN)
-        back = Square(blur_result.height, stroke_width=0).set_fill(color=LIGHTER_GRAY, opacity=1).move_to(blur_result).set_z_index(-1)
-        blur_result.add(back)
+        # SLIDE 12:  ===========================================================
+        # RESULT PIXEL APPEARS TO THE RIGHT OF THE FORMULA
+        self.next_slide(
+            notes=
+            '''[...]
+            '''
+        )
+        blur_array = np.round(separable_box_blur(downscaled_portion, 3), decimals=0).astype(np.uint8)
         
         # Formula shifts slightly right, then resulting pixel appears
         self.play(VGroup(expr_initial, pixels_to_sum).animate.shift(LEFT*0.5))
 
         equal = MathTex("=", color=BLACK).next_to(expr_initial[-1], RIGHT)
         result_pixel = pixels_to_sum[0].copy().next_to(equal, RIGHT)
-        cl = blur_array[pi-1, pj-1]
+        cl = blur_array[pi, pj]
         result_pixel.set_fill(color=rgb_to_color((cl, cl, cl)), family=False)  # exlude the number
-        result_pixel[1].set_value(cl).move_to(result_pixel).set_z_index(5)  # the order gets inverrted for some reason, bring back to front
+        result_pixel[1].set_value(cl).move_to(result_pixel).set_z_index(5)  # the order gets inverted for some reason, bring back to front
         self.play(FadeIn(equal, result_pixel))
 
-        # Put the pixel in the resulting image
+        # SLIDE 13:  ===========================================================
+        # RESULT PIXELS IS PUT IN THE RESULTING IMAGE
+        self.next_slide(
+            notes=
+            '''This operation has to be repeated for each pixel! How can we
+            automate it?
+            '''
+        )
+        # Create the blur result (show initially empty)
+        blur_result : PixelArray = PixelArray(blur_array[1:-1, 1:-1], stroke_color=WHITE, stroke_width=1).set_height(10/12*sample_12.height)
+        blur_result.set_fill(opacity=0)
+        blur_result.move_to(HALF_SCREEN_RIGHT).shift(DOWN)
+        back = Square(blur_result.height, stroke_width=0).set_fill(color=LIGHTER_GRAY, opacity=1).move_to(blur_result).set_z_index(-1)
+        blur_result.add(back)
+
         self.play(
             AnimationGroup(
                 VGroup(sample_12, kernel_highlight).animate.move_to(HALF_SCREEN_LEFT).shift(DOWN),
@@ -310,7 +313,7 @@ class W4Theory_slides(MOOCSlide):
             result_pixel.animate.move_to(blur_result.pixel_array[4, 7]).set_stroke(width=1, opacity=0, family=False).match_height(blur_result.pixel_array[pi-1, pj-1])
         )
 
-        # SLIDE 12:  ===========================================================
+        # SLIDE 14:  ===========================================================
         # THE 1/9 COEFFICIENTS IS DISTRIBUTED TO ALL TERMS IN THE AVERAGE FORMULAS
         # THE 1/9 ARE ORGANIZED INTO A 3 X 3 KERNEL
         self.next_slide(
@@ -362,7 +365,7 @@ class W4Theory_slides(MOOCSlide):
         self.play(AnimationGroup(TransformMatchingShapes(one_over_nines[i], kernel_values[i]) for i in range(9)))
         self.play(FadeIn(kernel_array))
 
-        # SLIDE 13:  ===========================================================
+        # SLIDE 15:  ===========================================================
         # KERNEL IS POSITIONED ON TOP OF PREVIOUSLY HIGHLIGHTED AREA,
         # SO THAT VALUE*WEIGHT IS ON TOP OF EACH PIXEL
         self.next_slide(
@@ -432,7 +435,7 @@ class W4Theory_slides(MOOCSlide):
         result_pixel.match_height(local_result_array.pixel_array[0, 0]).next_to(local_result_array, DOWN)
         self.play(FadeIn(result_pixel, shift=DOWN))
 
-        # SLIDE 14:  ===========================================================
+        # SLIDE 16:  ===========================================================
         # SLIDING KERNEL WHILE BLURRED IMAGE FILLS IN (3b1b ANIMATION)
         self.next_slide(
             notes=
@@ -461,15 +464,15 @@ class W4Theory_slides(MOOCSlide):
         pixel_highlight.add_updater(lambda m: m.move_to(blur_result.pixel_array[int(index_tracker.get_value())]))
         blur_result.pixel_array.add_updater(lambda m: m[int(index_tracker.get_value())].set_fill(opacity=1))
 
-        self.play(index_tracker.animate.set_value(99), run_time=5, rate_func=linear)
+        self.play(index_tracker.animate.set_value((pi-1)*10 + (pj-1)), run_time=2.5, rate_func=linear)
 
         # At the end the effect disappears, so we need to reapply it
-        blur_result.pixel_array.set_fill(opacity=1)
+        # blur_result.pixel_array.set_fill(opacity=1)
         kernel_array.clear_updaters()
         blur_result.pixel_array.clear_updaters()
         pixel_highlight.clear_updaters()
 
-        # SLIDE 15:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # DISCRETE CONVOLUTION TITLE APPEARS
         # MOVE TERMS S.T. ORIGINAL IMAGE * CONVOLUTION KERNEL = BLURRED IMAGE
         self.next_slide(
@@ -502,7 +505,7 @@ class W4Theory_slides(MOOCSlide):
         self.play(FadeIn(star, equal))
         self.play(Write(A_label), Write(K_label))
 
-        # SLIDE 16:  ===========================================================
+        # SLIDE 18:  ===========================================================
         # IMAGES DISAPPEAR, START WRITING ALGORITHM
         self.next_slide(
             notes=
@@ -513,7 +516,7 @@ class W4Theory_slides(MOOCSlide):
         pc = DiscreteConvolutionPseudoCode()
         self.play(Write(pc[0]))
 
-        # SLIDE 17:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # REQUIRE LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -523,17 +526,25 @@ class W4Theory_slides(MOOCSlide):
         )
         self.play(Write(pc[1]))
 
-        # SLIDE 18:  ===========================================================
+        # SLIDE 20:  ===========================================================
+        #  V = 0 LINE WRITTEN
+        self.next_slide(
+            notes=
+            '''We store the sum in variable v, ...
+            '''
+        )
+        self.play(Write(pc[2]))
+
+        # SLIDE 21:  ===========================================================
         # DOUBLE FOR LOOP IS WRITTEN
         self.next_slide(
             notes=
             '''We loop over the rows and the columns of the kernel, ...
             '''
         )
-        self.play(Write(pc[2]))
         self.play(Write(pc[3]), Write(pc[4]))
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # CONVOLUTION LINE IS WRITTEN
         self.next_slide(
             notes=
@@ -544,27 +555,28 @@ class W4Theory_slides(MOOCSlide):
         self.play(Write(pc[5]))
         self.play(Write(pc[6]), Write(pc[7]))
 
-        # SLIDE 20:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # HIGHLIGHT THE ACCUMULATES SUM
         self.next_slide(
             notes=
             '''As we go, we sum these products up in the variable v.
             '''
         )
-        partial_sum_highlight = HighlightRectangle(pc[2][2:])
+        partial_sum_highlight = HighlightRectangle(pc[5][2:])
         self.play(Create(partial_sum_highlight))
 
-        # SLIDE 21:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # HIGHLIGHT THE INDEXED MATRICES
         self.next_slide(
             notes=
             '''It is worth focusing on the indices here.
             '''
         )
-        indices_highlight = HighlightRectangle(pc[5][6:])
-        self.play(ReplacementTransform(partial_sum_highlight, indices_highlight))
+        indices_highlight = HighlightRectangle(pc[5][6:], color=ORANGE)
+        self.play(FadeOut(partial_sum_highlight))
+        self.play(FadeIn(indices_highlight))
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # 3 X 3 IMAGE AND KERNEL APPEAR
         # CENTER PIXEL IS HIGHLIGHTED, WITH (i, j) LABELS
         self.next_slide(
@@ -579,17 +591,19 @@ class W4Theory_slides(MOOCSlide):
 
 
         three_by_three: PixelArray = PixelArray(sample_12.array[:3,:3], stroke_width=2, stroke_color=WHITE).set_height(0.45*FRAME_HEIGHT)
-        # kernel_array = three_by_three.get_kernel_array(kernel, add_values=True, kernel_tex = " 1 / 9", values_size_fator=0.5, kernel_color=BLACK)
+        i_labels = VGroup(MathTex(lab, color=BLACK) for lab in ['i-1', 'i', 'i+1']).arrange(DOWN).next_to(three_by_three, LEFT)
+        j_labels = VGroup(MathTex(lab, color=BLACK) for lab in ['j-1', 'j', 'j+1']).arrange(RIGHT).next_to(three_by_three, UP)
+        for k in range(3):
+            i_labels[k].match_y(three_by_three.pixel_array[k,0])
+            j_labels[k].match_x(three_by_three.pixel_array[0,k])
+
         kernel_array.set_color(BLACK).match_height(three_by_three)
-        VGroup(three_by_three, kernel_array).arrange(buff=1).shift(DOWN*0.5)
+        m_counter = Variable(var=0, label='m', var_type=Integer).set_color(BLACK).next_to(kernel_array[0][0,0], LEFT)
+        n_counter = Variable(var=0, label='n', var_type=Integer).set_color(BLACK).next_to(kernel_array[0][0,0], UP).match_y(j_labels)
+
+        VGroup(VGroup(three_by_three, i_labels, j_labels), VGroup(kernel_array, m_counter, n_counter)).arrange(buff=0.5).shift(DOWN*0.75)
         A_label.next_to(three_by_three, DOWN)
         K_label.next_to(kernel_array, DOWN)
-
-        ij_labels = VGroup(MathTex(lab, color=BLACK) for lab in ['i-1', 'j-1', 'i', 'j'])
-        ij_labels[0].next_to(three_by_three.pixel_array[0,0], LEFT)
-        ij_labels[1].next_to(three_by_three.pixel_array[0,0], UP)
-        ij_labels[2].next_to(three_by_three.pixel_array[1,0], LEFT).match_x(ij_labels[0])
-        ij_labels[3].next_to(three_by_three.pixel_array[0,1], UP).match_y(ij_labels[1])
 
         self.play(
             AnimationGroup(
@@ -601,10 +615,10 @@ class W4Theory_slides(MOOCSlide):
         )
         self.play(
             Indicate(three_by_three.pixel_array[1,1], color=INDICATE_COLOR, scale_factor=1, run_time=2),
-            Write(ij_labels[2]), Write(ij_labels[3])
+            Write(i_labels[1]), Write(j_labels[1])
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # I, J, M, N COUNTERS APPEAR AND FIRST PIXEL IS HIGHLIGHTED
         self.next_slide(
             notes=
@@ -614,23 +628,20 @@ class W4Theory_slides(MOOCSlide):
         )
         pixel_highlight = three_by_three.get_pixel_highlight(color=HIGHLIGHT_COLOR, stroke_width=6)
 
-        self.play(Create(pixel_highlight), Write(ij_labels[0]), Write(ij_labels[1]))
+        self.play(Create(pixel_highlight), Write(i_labels[0]), Write(j_labels[0]))
 
-        # SLIDE 24:  ===========================================================
-        # M, N COUNTERS APPEAR NAD FIRST KERNEL ELEMENT HIGHLIGHTED
+        # SLIDE 27:  ===========================================================
+        # M, N COUNTERS APPEAR AND FIRST KERNEL ELEMENT HIGHLIGHTED
         self.next_slide(
             notes=
             '''...corresponding to m=0, n=0 in the kernel.
             '''
         )
-        m_counter = Variable(var=0, label='m', var_type=Integer).set_color(BLACK)
-        n_counter = Variable(var=0, label='n', var_type=Integer).set_color(BLACK)
-        VGroup(m_counter, n_counter).arrange(buff=1).next_to(kernel_array, UP).match_y(ij_labels[1])
         kernel_highlight = pixel_highlight.copy().move_to(kernel_array[0][0,0])
 
         self.play(Create(kernel_highlight), Write(m_counter), Write(n_counter))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # PIXEL SLIDES IN BOTH IMAGE AND KERNEL WHILE UPDATING INDICES
         # FIRST DOWN, THEN RIGHT
         self.next_slide(
@@ -646,20 +657,32 @@ class W4Theory_slides(MOOCSlide):
         kernel_highlight.add_updater(
             lambda m: m.move_to(kernel_array[0][0,0].get_center() + side_length*(DOWN*m_counter.tracker.get_value() + RIGHT*n_counter.tracker.get_value()))
         )
+        m_counter.add_updater(
+            lambda m: m.set_y(kernel_array[0][0,0].get_y() - side_length*m_counter.tracker.get_value())
+        )
+        n_counter.add_updater(
+            lambda m: m.set_x(kernel_array[0][0,0].get_x() + side_length*n_counter.tracker.get_value())
+        )
 
         self.play(
             Succession(
                 ApplyMethod(m_counter.tracker.set_value, 1, run_time=0.5),
                 Wait(0.5),
-                ApplyMethod(m_counter.tracker.set_value, 2, run_time=0.5),
+                AnimationGroup(
+                    ApplyMethod(m_counter.tracker.set_value, 2, run_time=0.5),
+                    Write(i_labels[2]),
+                ),
                 Wait(0.5),
                 ApplyMethod(n_counter.tracker.set_value, 1, run_time=0.5),
                 Wait(0.5),
-                ApplyMethod(n_counter.tracker.set_value, 2, run_time=0.5),
+                AnimationGroup(
+                    ApplyMethod(n_counter.tracker.set_value, 2, run_time=0.5),
+                    Write(j_labels[2])
+                )
             )
         )
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # PSEUDO-CODE REAPPEARS
         self.next_slide(
             notes=
@@ -668,7 +691,7 @@ class W4Theory_slides(MOOCSlide):
             automatically, and in the next videos we will learn how to write it.
             '''
         )
-        self.play(FadeOut(three_by_three, kernel_array, pixel_highlight, kernel_highlight, m_counter, n_counter, ij_labels, A_label, K_label))
+        self.play(FadeOut(three_by_three, kernel_array, pixel_highlight, kernel_highlight, m_counter, n_counter, i_labels, j_labels, A_label, K_label))
         self.play(
             AnimationGroup(
                 indices_line.animate.restore(),

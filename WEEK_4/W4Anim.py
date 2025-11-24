@@ -40,7 +40,7 @@ def separable_box_blur(
     kernel_size: int = 3,
 ) -> np.ndarray:
     """2D box blur filter written as two subsequent 1D convolutions."""
-    output = np.empty_like(input)
+    output = np.empty(input.shape)
     kernel1d = np.ones(kernel_size)/kernel_size
     scipy.ndimage.correlate1d(input, kernel1d, 0, output, mode='reflect')
     scipy.ndimage.correlate1d(output, kernel1d, 1, output, mode='reflect')
