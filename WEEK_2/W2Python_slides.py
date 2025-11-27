@@ -1184,12 +1184,7 @@ class W2Python_slides(MOOCSlide):
             notes=
             '''...we create a new figure, and we use the function [CLICK] ...
             '''
-        )
-        def draw_plot(fig) -> ImageMobject:
-            fig.canvas.draw()
-            buf1 = np.array(fig.canvas.buffer_rgba())
-            return ImageMobject(buf1)
-        
+        )        
         PLOT_WIDTH=7
         
         # create the plot with matplotlib

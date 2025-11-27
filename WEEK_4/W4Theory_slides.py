@@ -291,8 +291,9 @@ class W4Theory_slides(MOOCSlide):
         # RESULT PIXELS IS PUT IN THE RESULTING IMAGE
         self.next_slide(
             notes=
-            '''This operation has to be repeated for each pixel! How can we
-            automate it?
+            '''This operation has to be repeated for each internal pixel, this
+            explains why the matrix on the right is smaller! How can we automate
+            it?
             '''
         )
         # Create the blur result (show initially empty)
@@ -464,7 +465,7 @@ class W4Theory_slides(MOOCSlide):
         pixel_highlight.add_updater(lambda m: m.move_to(blur_result.pixel_array[int(index_tracker.get_value())]))
         blur_result.pixel_array.add_updater(lambda m: m[int(index_tracker.get_value())].set_fill(opacity=1))
 
-        self.play(index_tracker.animate.set_value((pi-1)*10 + (pj-1)), run_time=2.5, rate_func=linear)
+        self.play(index_tracker.animate.set_value(99), run_time=4, rate_func=linear)
 
         # At the end the effect disappears, so we need to reapply it
         # blur_result.pixel_array.set_fill(opacity=1)

@@ -1,8 +1,12 @@
 from manim import *
 from PIL import Image
-import scipy.signal
+import scipy.ndimage
+import skimage.transform
 from typing import Sequence
+from mooc_utils import PixelArray, HALF_SCREEN_LEFT, HALF_SCREEN_RIGHT
 
+SATURATED_RED = ManimColor("#FF1500")
+SATURATED_BLUE = ManimColor("#00D0FF")
 
 class DiscreteConvolutionPseudoCode(Tex):
     def __init__(self):
@@ -38,272 +42,138 @@ class ReferenceSystemImageMobject(Group):
 def separable_box_blur(
     input: np.ndarray,
     kernel_size: int = 3,
+    **kwargs
 ) -> np.ndarray:
     """2D box blur filter written as two subsequent 1D convolutions."""
     output = np.empty(input.shape)
     kernel1d = np.ones(kernel_size)/kernel_size
-    scipy.ndimage.correlate1d(input, kernel1d, 0, output, mode='reflect')
-    scipy.ndimage.correlate1d(output, kernel1d, 1, output, mode='reflect')
+    scipy.ndimage.correlate1d(input, kernel1d, 0, output, **kwargs)
+    scipy.ndimage.correlate1d(output, kernel1d, 1, output, **kwargs)
     return output
 
+class LiveConvolution():
+    """Class for managing live convolution animation.
+    Index is referred to the resulting image
+    """
+    def __init__(
+        self,
+        source_image: PixelArray,
+        result_image: PixelArray,
+        sliding_kernel: VMobject,
+        pixel_highlight : VMobject,
+        kernel_size: int = 3,
+        move_images=True,
+        background_color=None
+    ):
+        self.source_image = source_image
+        self.result_image = result_image
+        self.sliding_kernel = sliding_kernel
+        self.pixel_highlight = pixel_highlight
 
-def get_norm(vect) -> float:
-    return sum((x**2 for x in vect))**0.5
+        self.n_ = kernel_size
+        self.index_tracker = ValueTracker(0)
 
-class ImageConvolution(Scene):
-    image_name = "MarioSmall"
-    image_height = 6.0
-    kernel_tex = None
-    scalar_conv = False
-    pixel_stroke_width = 1.0
-    pixel_stroke_opacity = 1.0
-    kernel_decimal_places = 2
-    kernel_color = BLUE
-    grayscale = False
+        # Set its pixels to transparent
+        self.result_image.pixel_array.set_fill(opacity=0)
+
+        if background_color is not None:
+            back = Square(self.result_image.height, stroke_width=0).set_fill(color=background_color, opacity=1).move_to(self.result_image).set_z_index(-1)
+            self.result_image.add(back)
+        
+        if move_images:
+            self.source_image.move_to(HALF_SCREEN_LEFT)
+            self.result_image.move_to(HALF_SCREEN_RIGHT)
+            kernel_radius = (self.n_ - 1)//2
+            self.sliding_kernel.move_to(self.source_image.pixel_array[kernel_radius, kernel_radius])
+            self.pixel_highlight.move_to(self.result_image.pixel_array[0,0])
+
+    def setup(self, full_result=False):
+        # setup updaters
+        def get_result_index(): return int(self.index_tracker.get_value())
+        if full_result:  # source and result have same size:
+            get_source_index = get_result_index
+        else:
+            self.index_tracker.set_value(0)
+            row_source = self.source_image.array.shape[1]
+            row_result = self.result_image.array.shape[1]
+            kernel_radius = (self.n_ - 1)//2
+            def get_source_index(): t =int(self.index_tracker.get_value()); return kernel_radius*(row_source+1) + t + 2*kernel_radius*(t//row_result)
+        
+        self.sliding_kernel.add_updater(lambda m: m.move_to(self.source_image.pixel_array[get_source_index()]))
+        self.pixel_highlight.add_updater(lambda m: m.move_to(self.result_image.pixel_array[get_result_index()]))
+        self.result_image.pixel_array.add_updater(lambda m: m[get_result_index()].set_fill(opacity=1))
+
+        self.sliding_kernel.update()
+        self.pixel_highlight.update()
+
+    def SlideKernel(self, end, run_time=1) -> Animation:
+        return self.index_tracker.animate(run_time=run_time, rate_func=linear).set_value(end)
+
+    def clear_updaters(self):
+        self.sliding_kernel.clear_updaters()
+        self.result_image.pixel_array.clear_updaters()
+        self.pixel_highlight.clear_updaters()
+
+    
+class Kernel3X3IndexAnimation(VMobject):
+    def __init__(
+        self,
+        input_portion,
+        kernel,
+        highlight_color = SATURATED_BLUE,
+        highlight_stroke_width = 6
+    ):
+        self.three_by_three = input_portion
+        self.kernel = kernel.next_to(self.three_by_three, RIGHT)
+        self.kernel[1].set_z_index(1)
+        self.i_labels = VGroup(MathTex(lab, color=BLACK) for lab in ['i-1', 'i', 'i+1']).arrange(DOWN ).next_to(self.three_by_three, LEFT)
+        self.j_labels = VGroup(MathTex(lab, color=BLACK) for lab in ['j-1', 'j', 'j+1']).arrange(RIGHT).next_to(self.three_by_three, UP)
+        for k in range(3):
+            self.i_labels[k].match_y(self.three_by_three.pixel_array[k,0])
+            self.j_labels[k].match_x(self.three_by_three.pixel_array[0,k])
+        self.m_counter = Variable(var=0, label='m', var_type=Integer).set_color(BLACK).next_to(self.kernel[0][0,0], LEFT)
+        self.n_counter = Variable(var=0, label='n', var_type=Integer).set_color(BLACK).next_to(self.kernel[0][0,0], UP).match_y(self.j_labels)
+        
+        VGroup(VGroup(self.three_by_three, self.i_labels, self.j_labels), VGroup(self.kernel, self.m_counter, self.n_counter)).arrange(buff=0.5)
+
+        self.pixel_highlight = self.three_by_three.get_pixel_highlight(color=highlight_color, stroke_width=highlight_stroke_width)
+        self.kernel_highlight = self.pixel_highlight.copy().move_to(self.kernel[0][0,0])
+        super().__init__()
+        self.add(self.three_by_three, self.kernel, self.i_labels, self.j_labels, self.m_counter, self.n_counter, self.pixel_highlight, self.kernel_highlight)
 
     def setup(self):
-        super().setup()
-        # Set up the pixel grids
-        pixels = self.get_pixel_value_array() / 255.0
-        kernel = self.get_kernel()
-        if self.scalar_conv:
-            conv = scipy.signal.convolve(pixels.mean(2), kernel, mode='same')
-        else:
-            conv = scipy.signal.convolve(pixels, np.expand_dims(kernel, 2), mode='same')
-
-        conv = np.clip(conv, -1, 1)
-
-        pixel_array = self.get_pixel_array(pixels)
-        kernel_array = self.get_kernel_array(kernel, pixel_array, tex=self.kernel_tex)
-        conv_array = self.get_pixel_array(conv)
-        conv_array.set_fill(opacity=0)
-
-        VGroup(pixel_array, conv_array).arrange(RIGHT, buff=2.0)
-        kernel_array.move_to(pixel_array[0])
-
-        self.add(pixel_array)
-        self.add(conv_array)
-        self.add(kernel_array)
-
-        # Set up index tracker
-        index_tracker = ValueTracker(0)
-
-        def get_index():
-            return int(clip(index_tracker.get_value(), 0, len(pixel_array) - 1))
-
-        kernel_array.add_updater(lambda m: m.move_to(pixel_array[get_index()]))
-        conv_array.add_updater(lambda m: m.set_fill(opacity=0))
-        conv_array.add_updater(lambda m: m[:get_index() + 1].set_fill(opacity=1))
-
-        right_rect = conv_array[0].copy()
-        right_rect.set_fill(opacity=0)
-        right_rect.set_stroke(self.kernel_color, 4, opacity=1)
-        right_rect.add_updater(lambda m: m.move_to(conv_array[get_index()]))
-        self.add(right_rect)
-
-        self.index_tracker = index_tracker
-        self.pixel_array = pixel_array
-        self.kernel_array = kernel_array
-        self.conv_array = conv_array
-        self.right_rect = right_rect
-
-    def get_pixel_value_array(self):
-        im_path = get_full_raster_image_path(self.image_name)
-        image = Image.open(im_path)
-        return np.array(image)[:, :, :3]
-
-    def get_pixel_array(self, array: np.ndarray):
-        height, width = array.shape[:2]
-
-        pixel_array = Square().get_grid(height, width, buff=0)
-        for pixel, value in zip(pixel_array, it.chain(*array)):
-            if value.size == 3:
-                # Value is rgb valued
-                rgb = np.abs(value).clip(0, 1)
-                if self.grayscale:
-                    rgb[:] = rgb.mean()
-            else:
-                # Treat as scalar, color red for negative green for positive
-                rgb = [max(-value, 0), max(value, 0), max(value, 0)]
-            pixel.set_fill(rgb_to_color(rgb), 1.0)
-        pixel_array.set_height(self.image_height)
-        pixel_array.set_max_width(5.75)
-        pixel_array.set_stroke(WHITE, self.pixel_stroke_width, self.pixel_stroke_opacity)
-
-        return pixel_array
-
-    def get_kernel_array(self, kernel: np.ndarray, pixel_array: VGroup, tex=None):
-        kernel_array = VGroup()
-        values = VGroup()
-        for row in kernel:
-            for x in row:
-                square = pixel_array[0].copy()
-                square.set_fill(BLACK, 0)
-                square.set_stroke(self.kernel_color, 2, opacity=1)
-                if tex:
-                    value = OldTex(tex)
-                else:
-                    value = DecimalNumber(x, num_decimal_places=self.kernel_decimal_places)
-                value.set_width(square.get_width() * 0.7)
-                value.set_backstroke(BLACK, 3)
-                value.move_to(square)
-                values.add(value)
-                square.add(value)
-                kernel_array.add(square)
-        for value in values:
-            value.set_height(values[0].get_height())
-        kernel_array.reverse_submobjects()
-        kernel_array.arrange_in_grid(*kernel.shape, buff=0)
-        kernel_array.move_to(pixel_array[0])
-        return kernel_array
-
-    def get_kernel(self):
-        return np.ones((3, 3)) / 9
-
-    # Setup combing and zooming
-    def set_index(self, value, run_time=8, rate_func=linear):
-        self.play(
-            self.index_tracker.animate.set_value(value),
-            run_time=run_time,
-            rate_func=rate_func
+        side_length = self.three_by_three.pixel_array[0,0].height
+        self.pixel_highlight.add_updater(
+            lambda m: m.move_to(self.three_by_three.pixel_array[0,0].get_center() + side_length*(DOWN*self.m_counter.tracker.get_value() + RIGHT*self.n_counter.tracker.get_value()))
+        )
+        self.kernel_highlight.add_updater(
+            lambda m: m.move_to(self.kernel[0][0,0].get_center() + side_length*(DOWN*self.m_counter.tracker.get_value() + RIGHT*self.n_counter.tracker.get_value()))
+        )
+        self.m_counter.add_updater(
+            lambda m: m.set_y(self.kernel[0][0,0].get_y() - side_length*self.m_counter.tracker.get_value())
+        )
+        self.n_counter.add_updater(
+            lambda m: m.set_x(self.kernel[0][0,0].get_x() + side_length*self.n_counter.tracker.get_value())
         )
 
-    def zoom_to_kernel(self, run_time=2):
-        ka = self.kernel_array
-        self.play(
-            self.camera.frame.animate.set_height(1.5 * ka.get_height()).move_to(ka),
-            run_time=run_time
+    def IndexAnimation(self, slide_dt=0.5, wait_dt=0.5):
+        return Succession(
+            ApplyMethod(self.m_counter.tracker.set_value, 1, run_time=slide_dt),
+            Wait(wait_dt),
+            AnimationGroup(
+                ApplyMethod(self.m_counter.tracker.set_value, 2, run_time=slide_dt),
+                # Write(i_labels[2]),
+            ),
+            Wait(wait_dt),
+            ApplyMethod(self.n_counter.tracker.set_value, 1, run_time=slide_dt),
+            Wait(wait_dt),
+            AnimationGroup(
+                ApplyMethod(self.n_counter.tracker.set_value, 2, run_time=slide_dt),
+                # Write(j_labels[2])
+            )
         )
-
-    def zoom_to_new_pixel(self, run_time=4):
-        ka = self.kernel_array
-        ca = self.conv_array
-        frame = self.camera.frame
-        curr_center = frame.get_center().copy()
-        index = int(self.index_tracker.get_value())
-        new_center = ca[index].get_center()
-        center_func = bezier([curr_center, curr_center, new_center, new_center])
-
-        target_height = 1.5 * ka.get_height()
-        height_func = bezier([
-            frame.get_height(), frame.get_height(), FRAME_HEIGHT,
-            target_height, target_height,
-        ])
-        self.play(
-            UpdateFromAlphaFunc(frame, lambda m, a: m.set_height(height_func(a)).move_to(center_func(a))),
-            run_time=run_time,
-            rate_func=linear,
-        )
-
-    def reset_frame(self, run_time=2):
-        self.play(
-            self.camera.frame.animate.to_default_state(),
-            run_time=run_time
-        )
-
-    def show_pixel_sum(self, tex=None, convert_to_vect=True, row_len=9):
-        # Setup sum
-        ka = self.kernel_array
-        pa = self.pixel_array
-        frame = self.camera.frame
-
-        rgb_vects = VGroup()
-        lil_pixels = VGroup()
-        expr = VGroup()
-
-        ka_copy = VGroup()
-        stroke_width = 2 * FRAME_HEIGHT / frame.get_height()
-
-        lil_height = 1.0
-        for square in ka:
-            ka_copy.add(square.copy().set_stroke(TEAL, stroke_width))
-            sc = square.get_center()
-            pixel = pa[np.argmin([get_norm(p.get_center() - sc) for p in pa])]
-            color = pixel.get_fill_color()
-            rgb = color_to_rgb(color)
-            rgb_vect = DecimalMatrix(rgb.reshape((3, 1)), num_decimal_places=2)
-            rgb_vect.set_height(lil_height)
-            rgb_vect.set_color(color)
-            if get_norm(rgb) < 0.1:
-                rgb_vect.set_color(WHITE)
-            rgb_vects.add(rgb_vect)
-
-            lil_pixel = pixel.copy()
-            lil_pixel.match_width(rgb_vect)
-            lil_pixel.set_stroke(WHITE, stroke_width)
-            lil_pixels.add(lil_pixel)
-
-            if tex:
-                lil_coef = OldTex(tex, font_size=36)
-            else:
-                lil_coef = square[0].copy()
-                lil_coef.set_height(lil_height * 0.5)
-            expr.add(lil_coef, lil_pixel, OldTex("+", font_size=48))
-
-        expr[-1].scale(0, about_edge=LEFT)  # Stray plus
-        rows = VGroup(*(
-            expr[n:n + 3 * row_len]
-            for n in range(0, len(expr), 3 * row_len)
-        ))
-        for row in rows:
-            row.arrange(RIGHT, buff=0.2)
-        rows.arrange(DOWN, buff=0.4, aligned_edge=LEFT)
-
-        expr.set_max_width(FRAME_WIDTH - 1)
-        expr.to_edge(UP)
-        expr.fix_in_frame()
-
-        for vect, pixel in zip(rgb_vects, lil_pixels):
-            vect.move_to(pixel)
-            vect.set_max_width(pixel.get_width())
-        rgb_vects.fix_in_frame()
-
-        # Reveal top
-        top_bar = FullScreenRectangle().set_fill(BLACK, 1)
-        top_bar.set_height(rgb_vects.get_height() + 0.5, stretch=True, about_edge=UP)
-        top_bar.fix_in_frame()
-
-        self.play(
-            frame.animate.scale(1.2, about_edge=DOWN),
-            FadeIn(top_bar, 2 * DOWN),
-        )
-
-        # Show sum
-        for n in range(len(ka_copy)):
-            self.remove(*ka_copy)
-            self.add(ka_copy[n])
-            self.add(expr[:3 * n + 2])
-            self.wait(0.25)
-        self.remove(*ka_copy)
-        if convert_to_vect:
-            self.play(LaggedStart(*(
-                Transform(lil_pixel, rgb_vect)
-                for lil_pixel, rgb_vect in zip(lil_pixels, rgb_vects)
-            )))
-        self.wait()
-        result = VGroup(top_bar, expr)
-        return result
-
-
-class BoxBlurMario(ImageConvolution):
-    kernel_tex = "1 / 9"
-    image_name = "MarioSmall"
-    pixel_stroke_opacity = 0.5
-    stops = (131, 360)
-    final_run_time = 8
-
-    def construct(self):
-        # March
-        for index in self.stops:
-            self.set_index(index)
-            self.zoom_to_kernel()
-            if index == self.stops[0]:
-                top_bar = self.show_pixel_sum(tex=R"\frac{1}{9}")
-            self.wait()
-            self.zoom_to_new_pixel(run_time=8)
-            self.wait()
-            if index == self.stops[0]:
-                self.play(FadeOut(top_bar))
-            self.reset_frame()
-        self.set_index(len(self.pixel_array) - 1, run_time=self.final_run_time)
-        self.wait()
+    
+    def clear_updaters(self):
+        for obj in (self.m_counter, self.n_counter, self.pixel_highlight, self.kernel_highlight):
+            obj.clear_updaters()
+               

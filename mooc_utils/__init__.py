@@ -14,6 +14,7 @@ from .Generic_mooc_utils import *
 
 manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos-Mono.ttf")
 manimpango.register_font(r"Assets\Fonts\Microsoft Aptos Fonts\Aptos.ttf")
+manimpango.register_font(r"Assets\Fonts\Google Fonts\GoogleSansFlex.ttf")
 
 del os
 del manimpango

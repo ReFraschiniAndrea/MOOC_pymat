@@ -15,16 +15,17 @@ __all__ = [
     "ColabCodeBlock",
     "ColabBlockOutputText",
     "ColabEnv",
-    "ColabCodeWithLogo"
+    "ColabCodeWithLogo",
+    "draw_plot"
 ]
 
 from manim import *
-from .Generic_mooc_utils import FRAME_HEIGHT, FRAME_WIDTH, CODE_FONT, Cursor
+from .Generic_mooc_utils import FRAME_HEIGHT, FRAME_WIDTH, CODE_FONT, Cursor, FullScreenBackground
 from .custom_code import CustomCode, CodeWithLogo
 from typing import Any, List
 
 
-# Colab colors
+# Colab colors for the editor
 COLAB_LIGHTGRAY = "#f7f7f7" # Main color of colab cell
 COLAB_GRAY = "#eeeeee"  # Color of the left gutter of a colab cell
 COLAB_DARKGRAY ="#424242" # color of the run button of a colab cell
@@ -37,7 +38,13 @@ COLAB_DEEPBLUE = "#001080"
 COLAB_BROWN = "#795e26"
 COLAB_CRIMSON = "#a31515"
 
-COLAB_FONT_SIZE = 12
+COLAB_FONT_SIZE = 12   # Font size for code in the editor
+
+# Colab UI data
+GOOGLE_FONT = "Google Sans Flex"  # Font of the Colab UI
+_COLAB_UI_FONT_GRAY = "#1f1f1f"   # Color of the words in the Colab UI
+_COLAB_FILE_ICON = r"Assets\colab_file_icon.png"
+_COLAB_UI_FONT_SIZE = 12
 
 # colab environment constants
 _COLAB_LEFT_BUFF = 127/1440 * FRAME_WIDTH  # Distance of a colab cell from the left edge of the screen
@@ -105,18 +112,19 @@ class ColabCode(CustomCode):
             target = colab_env.cells[target_cell]
             # cells_to_fade = colab_env.cells[:target_cell] + colab_env.cells[target_cell+1:]
             cells_to_fade = colab_env.cells[target_cell+1:]
+        outputs_to_fade = Group(*[c.output for c in cells_to_fade if c.output is not None])
         if self.window is not None:
             return AnimationGroup(
                 ReplacementTransform(self.window, target.window, **kwargs),
                 ReplacementTransform(self.code, target.code, **kwargs),
                 # if we fade in the whole environment, also the new cell will appear before it should
-                FadeIn(colab_env.background, *cells_to_fade, colab_env.cursor,
+                FadeIn(colab_env.background, *cells_to_fade, outputs_to_fade, colab_env.cursor,
                        target.gutter, target.playButton, **kwargs)
             )
         else:
             return AnimationGroup(
                 ReplacementTransform(self.code, target.code, **kwargs),
-                FadeIn(colab_env.background, *cells_to_fade, colab_env.cursor,
+                FadeIn(colab_env.background, *cells_to_fade,outputs_to_fade, colab_env.cursor,
                        target.window, target.gutter, target.playButton, **kwargs)
             )
 
@@ -184,23 +192,7 @@ class ColabCodeBlock(ColabCode):
         self.output.align_to(self.code, LEFT)
 
         self.add(self.outputWindow)
-        self.add(self.output)
-    
-    def focus(self, scale=0.75, alignment=None):
-        '''Can be used with animate keyword'''
-        if self.outputWindow is None or self.output is None:
-            raise ValueError('Cell does not have output.')
-        
-        self.outputWindow.become(
-                Rectangle(
-                color=WHITE,
-                height=FRAME_HEIGHT,
-                width=FRAME_WIDTH,
-                fill_opacity=1)
-            )
-        self.output.scale_to_fit_width(FRAME_WIDTH*scale).center()
-        if alignment is not None:
-            self.output.to_edge(alignment)
+        # self.add(self.output)
 
 class ColabBlockOutputText(Paragraph):
     def __init__(self, text, **kwargs):
@@ -217,16 +209,26 @@ class ColabEnv():
             0
         ]
     
+    PIXEL = FRAME_HEIGHT/1080
     TOP_LEFT_CORNER_ = _pixel2p(77, 156)
+    # Button positions
     MENU_ = _pixel2p(25, 381)
     UPLOAD_ = _pixel2p(83, 206)
     PLUS_CODE_ = _pixel2p(210, 105)
+    # Side menu COnstants
+    SIDE_MENU_FIRST_FILE_ = _pixel2p(89, 319)
+    SIDE_MENU_WIDTH_ = (425-50) * PIXEL
+    FILE_ICON_HEIGHT_ = 26 * PIXEL
+    FILE_TO_FILE_BUFFER_ = 16 * PIXEL
+    ICON_TO_FILE_NAME_BUFFER_ = 10 * PIXEL
+
 
     def __init__(self, scene: Scene, background=None):
         self.scene : Scene = scene
         self.background : ImageMobject = ImageMobject(background).scale_to_fit_height(FRAME_HEIGHT).set_z_index(-4)
         self.cells : List[ColabCodeBlock] = []
         self.cursor : Cursor = Cursor().set_z_index(-2).move_to([-20,-20, 0])
+        self.sidemenu : List[Mobject] = []
 
     def set_image(self, image_path: str):
         self.background.become(ImageMobject(image_path).scale_to_fit_height(FRAME_HEIGHT)).set_z_index(-4)
@@ -259,6 +261,7 @@ class ColabEnv():
             if removed_cell.output is not None:
                 self.scene.remove(removed_cell.output)
                 self.scene.remove(*removed_cell.output.submobjects)
+            if removed_cell.outputWindow is not None:
                 self.scene.remove(removed_cell.outputWindow)
     
     def clear(self):
@@ -282,10 +285,11 @@ class ColabEnv():
                     height=FRAME_HEIGHT,
                     width=FRAME_WIDTH))
         cells_to_fade = self.cells[:-1]
+        outputs_to_fade = Group(*[c.output for c in cells_to_fade if c.output is not None])
         return AnimationGroup(
             Transform(cell.code, target.code, **kwargs),
             Transform(cell.window, target.window, **kwargs),
-            FadeOut(self.background, *cells_to_fade, cell.gutter, cell.playButton, self.cursor, **kwargs)
+            FadeOut(self.background, *cells_to_fade, outputs_to_fade, cell.gutter, cell.playButton, self.cursor, **kwargs)
         )
     
     def Run(
@@ -315,15 +319,44 @@ class ColabEnv():
         return Succession(*result)
     
     def FadeOut(self):
-        return FadeOut(self.background, self.get_cells(), self.cursor)
+        cells_to_fade = self.get_cells()
+        outputs_to_fade = Group(*[c.output for c in cells_to_fade if c.output is not None])
+        return FadeOut(self.background, cells_to_fade, outputs_to_fade, self.cursor)
     
-    def focus_output(self, cell: int, scale=0.75, alignment=None, **kwargs):
+    def FocusOutput(self, cell: int, scale=0.75, alignment=None, **kwargs):
         cell_to_focus = self.get_cell(cell)
-        if cell_to_focus.output is None:
-            raise ValueError("Selected cell has no output")
-        cell_to_focus.outputWindow.set_z_index(0)
-        cell_to_focus.output.set_z_index(0)  # any negative z_index will not work
-        return cell_to_focus.animate(**kwargs).focus(scale, alignment)
+        if cell_to_focus.output is None or cell_to_focus.outputWindow is None:
+            raise ValueError("Selected cell has no output.")
+        output = Group(cell_to_focus.outputWindow, cell_to_focus.output)
+        output.set_z_index(0)  # any negative z_index will not work
+        
+        def _focus(output: Group):
+            output[0].become(FullScreenBackground(WHITE))
+            output[1].scale_to_fit_width(FRAME_WIDTH*scale).center()
+            if alignment is not None:
+                output[1].to_edge(alignment)
+            return output
+        return ApplyFunction(_focus, output, **kwargs)
+    
+    def add_file_to_sidemenu(self, name: str, add_to_scene: bool = True):
+        file_icon = ImageMobject(_COLAB_FILE_ICON).scale_to_fit_height(self.FILE_ICON_HEIGHT_).set_resampling_algorithm(RESAMPLING_ALGORITHMS['nearest'])
+        if len(self.sidemenu) == 0:
+            file_icon.move_to(self.SIDE_MENU_FIRST_FILE_, aligned_edge=UL)
+        else:
+            file_icon.next_to(self.sidemenu[-1][0], DOWN, buff=self.FILE_TO_FILE_BUFFER_)
+        file_name = Text(name, color=_COLAB_UI_FONT_GRAY, font=GOOGLE_FONT, font_size=_COLAB_UI_FONT_SIZE, weight=MEDIUM)
+        file_name.next_to(file_icon, RIGHT, buff= self.ICON_TO_FILE_NAME_BUFFER_)
+        file_name.shift(DOWN*3*self.PIXEL)
+
+        self.sidemenu.append(Group(file_icon, file_name))
+        if add_to_scene:
+            self.scene.add(self.sidemenu[-1])
+    
+
+    def clear_sidemenu(self):
+        for file in self.sidemenu:
+            self.scene.remove(file)
+            self.scene.remove(*file.submobjects)
 
 class ColabCodeWithLogo(CodeWithLogo):
     def __init__(
@@ -341,3 +374,9 @@ class ColabCodeWithLogo(CodeWithLogo):
             logo_buff=logo_buff,
             logo_shift_buff=logo_shift_buff
         )
+
+def draw_plot(fig) -> ImageMobject:
+    """Convert matplotlib figure to ImageMobject"""
+    fig.canvas.draw()
+    buf1 = np.array(fig.canvas.buffer_rgba())
+    return ImageMobject(buf1)

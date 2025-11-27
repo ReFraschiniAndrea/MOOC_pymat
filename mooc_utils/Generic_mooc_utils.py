@@ -65,7 +65,7 @@ class FullScreenBackground(Rectangle):
     def __init__(self, color=WHITE, **kwargs):
         super().__init__(
             width=FRAME_WIDTH, height=FRAME_HEIGHT,
-            color=color, stroke_width=0, **kwargs)
+            color=color, fill_opacity=1, stroke_width=0, **kwargs)
         self.set_z_index(-1)
         
 class DynamicSplitScreen(Mobject):
@@ -84,8 +84,14 @@ class DynamicSplitScreen(Mobject):
     add_side_obj and the respective remove methods.
 
     Since in many cases some parts of the content should not appear yet but the should be moved
+    -follow_obj: object that should be moved exaclty like the main object, but it has not
+    appeared yet in the scene, and so it should not be animated while moved
+    -condsider_follow: sometimes, the follow_obj appears much later in the scene, and we
+    want to still move it entirely but consider only some part of it for the calculations
+    (centering on main rectangle). consider_follow is the part of the follow_obj actually
+    taken into account for calculations. (By default, the entire follo_obj)
 
-    -if `direction` is UP, then the secondary rectangle weell move in/move out from the top.
+    -if `direction` is UP, then the secondary rectangle will move in/move out from the top.
     if it is instead DOWN, it does so from the bottom of the screen.
     """
     def __init__(
@@ -354,13 +360,13 @@ class FunctionAbstraction(VMobject):
     def _get_spacing(self, n: int, relative_offset: float = 0.6):
         return relative_offset*self.Window.height / (n-1) if n > 1 else 0
 
-    def add_inputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6):
+    def add_inputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6, **kwargs):
         n_inputs = len(labels)
         spacing = self._get_spacing(n_inputs, relative_offset)
         self.InputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
         self.InputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, LEFT, buff=0)
         self.InputLabels = VGroup(
-            Text(l, color=BLUE, font=CODE_FONT)
+            Text(l, color=BLUE, font=CODE_FONT, **kwargs)
             if isinstance(l, str) else l  for l in labels
         )
         for i in range(n_inputs):
@@ -368,13 +374,13 @@ class FunctionAbstraction(VMobject):
         
         self.add(self.InputArrows, self.InputLabels)
 
-    def add_outputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6):
+    def add_outputs(self, *labels: VMobject | str, arrow_length=1.5, buff=SMALL_BUFF, relative_offset: float = 0.6, **kwargs):
         n_inputs = len(labels)
         spacing = self._get_spacing(n_inputs, relative_offset)
         self.OutputArrows = VGroup(Arrow(ORIGIN, RIGHT*arrow_length, color=BLUE, stroke_width=6) for _ in range(n_inputs))
         self.OutputArrows.arrange(DOWN, buff=spacing).next_to(self.Window, RIGHT, buff=0)
         self.OutputLabels = VGroup(
-            Text(l, color=BLUE, font=CODE_FONT)
+            Text(l, color=BLUE, font=CODE_FONT, **kwargs)
             if isinstance(l, str) else l  for l in labels
         )
         for i in range(n_inputs):
