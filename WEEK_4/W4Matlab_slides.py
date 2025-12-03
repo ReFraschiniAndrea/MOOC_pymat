@@ -3,47 +3,47 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
 from mooc_utils import *
-from mooc_utils.colab import *
+from mooc_utils.matlab import *
 from W4Anim import DiscreteConvolutionPseudoCode, separable_box_blur, LiveConvolution, SATURATED_BLUE, Kernel3X3IndexAnimation
-import matplotlib.pyplot as plt
 from PIL import Image
 from io import StringIO
 
+config.update(TEST_CONFIG)
 
-config.update(RELEASE_CONFIG)
+WINDOW_BUFF = 0.25
+PLOT_IMAGE_HEIGHT = 0.4*FRAME_HEIGHT
 
-
-class W4Python_slides(MOOCSlide):
+class W4Matlab_slides(MOOCSlide):
     def construct(self):
         # SLIDE 01:  ===========================================================
-        # EMPTY NOTEBOOK (FIRST CELL ALREADY PRESENT), PSEUDO-CODE APPEARS ON TOP
+        # EMPTY MATLAB ENVIRONMENT, PSEUDO-CODE APPEARS ON TOP
         self.next_slide(
             notes=
-            '''Let's open a notebook, and let's start to learn how to code the
-            discrete convolution algorithm to compute filtered images.
+            '''Let's open MATLAB, and let's explore how to code the discrete
+            convolution algorithm to compute filtered images.
             '''
         )
-        cl_env = ColabEnv(self, r'Assets\W4\colabDC.png')
-        cl_env.add_cell()
+        mat_env = MatlabEnv(self, r'Assets\W4\matlab_empty.png')
+        mat_env.RUN_BUTTON_ = MatlabEnv._pixel2p(1099, 67)
+        mat_env.SAVE_PROMPT_BUTTON_ = MatlabEnv._pixel2p(877, 859)
+        mat_env.OK_PROMPT_ = MatlabEnv._pixel2p(877, 816)
+
         pc = DiscreteConvolutionPseudoCode()
         pc.scale_to_fit_width(FRAME_WIDTH*0.65).center()
         pc.save_state()
         surrounding_rect = SurroundingRectangle(pc, fill_color=WHITE, fill_opacity=1, stroke_width=0.5,
                                               stroke_color=BLACK, corner_radius=0.2, buff=0.5).set_z_index(-0.5)
-        self.play(
-            Succession(
-                FadeIn(cl_env.background, *cl_env.cells),
-                Wait(1),
-                FadeIn(surrounding_rect, pc)
-            )
-        )
+        
+        self.play(FadeIn(mat_env.background))
+        self.wait(1)
+        self.play(FadeIn(surrounding_rect, pc))
 
         # SLIDE 02:  ===========================================================
         # PSEUDO-CODE FADES, CURSOR APPEARS
         self.next_slide(
             notes=
-            '''First, we need to load an image and some support functionalities.
-            By clicking [CLICK] on
+            '''First, we need to load an image and some additional functions. To
+            do this, ...
             '''
         )
         hand_cursor = Cursor()
@@ -56,287 +56,251 @@ class W4Python_slides(MOOCSlide):
         )
 
         # SLIDE 03:  ===========================================================
-        # CURSOR MOVES TO FOLDER ICON AND CLICKS IT
-        # SIDE BAR APPEARS, CELL SHIFTS RIGHT ACCORDINGLY
+        # CURSOR MOVES TO BROWSE FOLDER AND CLICKS IT
         self.next_slide(
             notes=
-            '''on the folder icon on the left, [CLICK] a side bar appears
-            showing the list of available files.
+            '''...click on the "Browse for folder" button and select the folder
+            containing the files compare_images.m and the image part.png.
             '''
         )
-        self.play(hand_cursor.animate.move_to(cl_env.MENU_))
-        self.play(hand_cursor.Click())
-        cl_env.set_image(r'Assets\W4\colabDC_sidemenu.png')
-        cl_env.get_cell(0).shift(RIGHT*cl_env.SIDE_MENU_WIDTH_)
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.BROWSE_FOLDER_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_browsefolder.png')
 
         # SLIDE 04:  ===========================================================
-        # CURSOR MOVES TO UPLOAD BUTTON AND CLICKS IT
-        # HELPERS AND IMAGE APPEAR IN SIDEBAR
+        # CLICK OK, RETURN TO EMPTY ENVIRONMENT
+        # CLCIK CURRENT FOLDER, SIDEMENU APPEARS
+        # HIGHLIGHT FILES IN CURRENT FOLDER
         self.next_slide(
             notes=
-            '''Let us click [CLICK] on the upload button and select from your
-            local file system the file [CLICK] helper_functions.py and the image
-            "part.png".
+            '''Then, check that the file appears in the "Current Folder" panel
+            [CLICK]. This confirms that MATLAB can locate the file before we
+            proceed with reading it. The function compare_images helps us to
+            visualize the results with respect to the orginal image. While, some
+            of the functions we use for the images comes from the Image
+            Processing Toolbox, which is installed with matlab by defualt.
             '''
         )
-        self.play(Succession(hand_cursor.animate.move_to(cl_env.UPLOAD_), hand_cursor.Click()))
-        cl_env.add_file_to_sidemenu('helper_functions.py')
-        cl_env.add_file_to_sidemenu('part.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.OK_PROMPT_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_empty.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SIDEMENU_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_sidemenu.png')
+        phony_files = Rectangle(width=180*mat_env.PIXEL, height=48*mat_env.PIXEL).move_to(MatlabEnv._pixel2p(58, 248), aligned_edge=UL).set_opacity(0)
+        self.wait(0.5)
+        self.play(Circumscribe(phony_files, color=BLUE, run_time=2))
 
         # SLIDE 05:  ===========================================================
-        # FOLDER ICON CLICKED AGAIN, SIDE BAR DISAPPEARS, CELL SHIFTS LEFT
-        # OUT OF COLAB
-        # IMPORT NUMPY AND MATPLOTLIB WRITTEN
+        # CURSOR CLICKS NEW SCRIPT, SCRIPT IS SAVED WITH NAME
         self.next_slide(
             notes=
-            '''We need to import the numpy and matplotlib modules.
+            '''Now we are ready to create a new script, named "week4.m".
             '''
         )
-        self.play(Succession(hand_cursor.animate.move_to(cl_env.MENU_), hand_cursor.Click()))
-        cl_env.clear_sidemenu()
-        cl_env.set_image(r'Assets\W4\colabDC.png')
-        cl_env.get_cell(0).shift(LEFT*cl_env.SIDE_MENU_WIDTH_)
-        self.wait(0.3)
-        # DSS = DynamicSplitScreen(main_color=COLAB_LIGHTGRAY, side_color=WHITE)
-        import_code = ColabCode(
-            r'''
-            import numpy as np
-            import matplotlib.pyplot as plt
-            from PIL import Image
-            from helper_functions import *
-            '''
-        )
-        self.play(cl_env.OutofColab(cell=0), FadeOut(hand_cursor))
-        self.play(import_code.TypeLetterbyLetter(lines=[0]))
-        self.play(import_code.TypeLetterbyLetter(lines=[1]))
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.NEW_SCRIPT_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_newscript.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_saveW4.png')
+        self.play(Succession(hand_cursor.animate.move_to(mat_env.SAVE_PROMPT_BUTTON_), hand_cursor.Click()))
+        mat_env.set_image(r'Assets\W4\matlab_week4.png')
 
         # SLIDE 06:  ===========================================================
-        # IMPORT PIL IMAGE WRITTEN
+        # OUT OF MATLAB
+        # IMREAD WRITTEN
         self.next_slide(
             notes=
-            '''Then, from the Python imaging library we import the module
-            "Image",
+            '''Let us load the image as a matrix: First, we use the function
+            imread to load the image contained in "part.png".
             '''
         )
-        self.play(import_code.TypeLetterbyLetter(lines=[2]))
+        mat_env.add_cell()
+        self.play(mat_env.OutofMatlab(cell=0), FadeOut(hand_cursor))
 
-        # SLIDE 07:  ===========================================================
-        # IMPORT HELPER_FUNCTIONS WRITTEN
-        self.next_slide(
-            notes=
-            '''and with this syntax we import all the functions contained in
-            helper_functions.py, ...
-            '''
-        )
-        self.play(import_code.TypeLetterbyLetter(lines=[3]))
-
-        # SLIDE 08:  ===========================================================
-        # INTO COLAB, RUN CELL
-        self.next_slide(
-            notes=
-            '''... to help us visualize the results.
-            '''
-        )
-        import_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
-        cl_env.remove_cell()
-        self.play(import_code.IntoColab(cl_env))
-        self.play(cl_env.Run(cell=0))
-
-        # SLIDE 09:  ===========================================================
-        # CURSOR CLICKS +CODE, NEW CELL APPEARS, OUT OF COLAB
-        # IMAGE.OPEN WRITTEN
-        self.next_slide(
-            notes=
-            '''Let us load the image as a matrix: First, we use the Image module
-            to load the image contained in "part.png".
-            '''
-        )
-        self.play(Succession(cl_env.cursor.animate.move_to(cl_env.PLUS_CODE_), cl_env.cursor.Click()))
-        cl_env.add_cell()
-        self.wait(0.3)
-        self.play(cl_env.OutofColab(cell=1))
-
-        load_image_code = ColabCode(
+        load_image_code = MatlabCode(
             r'''
-            file_name = "part.png"
-            A_color = Image.open(file_name)
-            A_g = A_color.convert('L')
-            A = np.array(A_g)
-            print("type", type(A), "shape", A.shape)
+            % Load the image
+            file_name = "part.png";
+            A_color = imread(file_name);
+            A_g = rgb2gray(A_color);
+            A = double(A_g);
+            whos A
             '''
         )
 
         self.play(load_image_code.TypeLetterbyLetter(lines=[0]))
-        self.play(load_image_code.TypeLetterbyLetter(lines=[1]))
+        self.play(load_image_code.TypeLetterbyLetter(lines=[1,2]))
 
-        # SLIDE 10:  ===========================================================
-        # CONVERT LINE WRITTEN, "L" HIGHLIGHTED
+        # SLIDE 07:  ===========================================================
+        # CONVERT LINE WRITTEN
         self.next_slide(
             notes=
-            '''Then, we convert A_color in greyscale using the method "convert"
-            and the option "L",
+            '''Then, we convert A_color in greyscale using the function
+            "rgb2gray".
             '''
         )
-        L_highlight = HighlightRectangle(load_image_code[2][-4:-1])
-        self.play(load_image_code.TypeLetterbyLetter(lines=[2]))
-        self.play(Create(L_highlight))
+        self.play(load_image_code.TypeLetterbyLetter(lines=[3]))
 
-        # SLIDE 11:  ===========================================================
-        # NP.ARRAY() LINE WRITTEN
+        # SLIDE 08:  ===========================================================
+        # DOUBLE() LINE WRITTEN
         self.next_slide(
             notes=
-            '''And finally we convert this greyscale image into a numpy array
-            with this syntax.
-            '''
-        )
-        self.play(
-            AnimationGroup(
-                FadeOut(L_highlight),
-                load_image_code.TypeLetterbyLetter(lines=[3]),
-                lag_ratio=0.5
-            )
-        )
-
-        # SLIDE 12:  ===========================================================
-        # PRINT TYPE AND SHAPE LINE WRITTEN
-        self.next_slide(
-            notes=
-            '''With the instructions "type" and "shape" we can extract some
-            information on A:
+            '''And finally, we convert the values from integer to double with
+            this syntax.
             '''
         )
         self.play(load_image_code.TypeLetterbyLetter(lines=[4]))
 
-        # SLIDE 13:  ===========================================================
-        # INTO COLAB, RUN CELL, OUTPUT APPEARS
+        # SLIDE 09:  ===========================================================
+        # WHOS A LINE WRITTEN
         self.next_slide(
             notes=
-            '''as we can see it is an n-dimensional numpy array of shape 12X12
+            '''With the instruction "whos" we can extract some information on A:
             '''
         )
-        load_image_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
-        cl_env.remove_cell()
-        self.play(load_image_code.IntoColab(cl_env))
+        self.play(load_image_code.TypeLetterbyLetter(lines=[5]))
 
-        cl_env.get_cell(1).add_output(
-            r"data type <class 'numpy.ndarray'> shape (12, 12)"
-        )
-        self.play(cl_env.Run(cell=1, new_cursor=False))
-        
-        # SLIDE 14:  ===========================================================
-        # CURSOR CLICKS +CODE, NEW CELL APEARS, OUT OF COLAB
-        # PRINT(A[1,2]) WRITTEN
+        # SLIDE 10:  ===========================================================
+        # INTO MATLAB, RUN CODE, OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''How does a 2D-numpy array work? To access to an element we use
-            square brackets. For example the element in position 1, 2 can be
-            accessed as A[1, 2].
+            '''as we can see it is a matrix of shape 12X12.
+            '''
+        )
+        load_image_code.add_background_window(FullScreenBackground(WHITE))
+        mat_env.remove_cell()
+        self.play(load_image_code.IntoMatlab(mat_env))
+
+        mat_env.add_output(
+            "A\t\t12x12\t\t1152\tdouble"
+        )
+        self.play(mat_env.Run())
+        
+        # SLIDE 11:  ===========================================================
+        # OUT OF MATLAB
+        # DISP(A(2,3)) WRITTEN
+        self.next_slide(
+            notes=
+            '''To access a matrix element, we use round brackets.
             '''
         )
         sample_A = np.array(Image.open(r'Assets\W4\part.png'), dtype=np.uint8)
 
-        bp = FullScreenBackground(COLAB_LIGHTGRAY)
+        bp = FullScreenBackground(WHITE)
         self.play(FadeIn(bp))
-        cl_env.clear()
+        # Switch to wider command window for later
+        mat_env.clear()
+        mat_env.set_image(r"Assets\W4\matlab_week4Large.png")
+        mat_env.OUTPUT_TOP_LEFT_CORNER_ = MatlabEnv._pixel2p(80, 715)
 
-        square_brackets_code = ColabCode(
+        square_brackets_code = MatlabCode(
             r'''
-            print(A[1, 2])
+            disp(A(2, 3));
             '''
         )
         self.play(square_brackets_code.TypeLetterbyLetter())
 
-        # SLIDE 15:  ===========================================================
-        # INTO COLAB, RUN CELL, OUTOUT APPEARS
+        # SLIDE 12:  ===========================================================
+        # INTO MATLAB, RUN CODE, OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''For example the element in position 1, 2 can be accessed as A[1,
-            2].
+            '''For example, the element in position 2, 3 can be accessed as A(2,
+            3).
             '''
         )
         square_brackets_code.add_background_window(bp)
-        cl_env.remove_cell()
-        self.play(square_brackets_code.IntoColab(cl_env))
-        cl_env.get_cell(0).add_output(
+        mat_env.remove_cell()
+        self.play(square_brackets_code.IntoMatlab(mat_env))
+        mat_env.add_output(
             str(sample_A[1,2])
         )
-        self.play(cl_env.Run(cell=0))
+        self.play(mat_env.Run())
 
-        # SLIDE 16:  ===========================================================
-        # CURSOR CLICKS +CODE, NEW CELL APEARS
-        # WRITE LINE IN NEW CELL
-        # CELL IS RUN, OUTPUT APPEARS
+        # SLIDE 13:  ===========================================================
+        # DISP(A) WRITTEN
+        # RUN CODE, OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''We can also print the matrix A. Notice the values 255 for the
+            '''We can also display the matrix A. Notice the values 255 for the
             white parts of the image.
             '''
         )
-        self.play(Succession(cl_env.cursor.animate.move_to(cl_env.PLUS_CODE_), cl_env.cursor.Click()))
-        print_matrix_cell = ColabCodeBlock(
+        print_matrix_cell = MatlabCodeBlock(
             r'''
-            print(A)
+            disp(A);
             '''
         )
-        cl_env.add_cell(print_matrix_cell)
+        mat_env.add_cell(print_matrix_cell)
         self.remove(print_matrix_cell.code)
-        self.wait(0.3)
-        self.play(print_matrix_cell.TypeLetterbyLetter())
        
-        # self.play(square_brackets_code.TypeLetterbyLetter())
-        # square_brackets_code.add_background_window(cl_env.get_cell(3).window.copy())
-        # cl_env.remove_cell()
-        # self.play(square_brackets_code.IntoColab())
         print_A_result_stream = StringIO()
         print(sample_A, file=print_A_result_stream)
-        print_matrix_cell.add_output(
-            print_A_result_stream.getvalue()
-        )
+        print_A_result = print_A_result_stream.getvalue()
         print_A_result_stream.close()
-        self.play(cl_env.Run(cell=1, new_cursor=False))
+        print_A_result = print_A_result.replace('[', '').replace(']', '')
+        mat_env.add_output(
+            print_A_result
+        )
+
+        self.play(print_matrix_cell.TypeLetterbyLetter())
+        self.wait(1)
+        self.play(mat_env.Run(new_cursor=False))
     
-        # SLIDE 17:  ===========================================================
-        # CURSOR CLICKS +CODE, NEW CELL APPEARS, OUT OF COLAB
+        # SLIDE 14:  ===========================================================
+        # OUT OF MATLAB
         # IMSHOW LINE WRITTEN
         self.next_slide(
             notes=
-            '''Instead, by using imshow from matplot lib we can display the
-            matrix as an image;
+            '''Instead, by using imshow we can display the matrix as an image.
             '''
         )
-        self.play(Succession(cl_env.cursor.animate.move_to(cl_env.PLUS_CODE_), cl_env.cursor.Click()))
-        cl_env.add_cell()
-        self.wait(0.3)
-        self.play(cl_env.OutofColab(cell=2))
-        imshow_code = ColabCode(
+        mat_env.add_cell()
+        self.play(mat_env.OutofMatlab(cell=2))
+        imshow_code = MatlabCode(
             r'''
-            plt.imshow(A, "grey")
+            imshow(A, [0, 255], 'InitialMagnification', 6000);
             '''
         )
         self.play(imshow_code.TypeLetterbyLetter())
 
-        # SLIDE 18:  ===========================================================
-        # INTO COLAB, RUN CELL, IMAGE APPEARS
+        # SLIDE 15:  ===========================================================
+        # HIGHLIGHT 0-255 RANGE
         self.next_slide(
             notes=
-            '''we just need to specify that we are working with a greyscale
-            image.
+            '''We need to specify the range 0, 255 for the greyscale.
             '''
         )
-        imshow_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
-        cl_env.remove_cell()
+        range_0255_highlight = HighlightRectangle(imshow_code[0][10:15])
+        self.play(Create(range_0255_highlight))
 
-        fig, ax = plt.subplots(figsize=(8, 8), dpi=300)
-        ax.imshow(sample_A, cmap='gray')
-        image_plot = draw_plot(fig).scale_to_fit_height(0.3*FRAME_HEIGHT)
-
-        self.play(imshow_code.IntoColab(cl_env))
-        cl_env.get_cell(2).add_output(
-            image_plot
+        # SLIDE 16:  ===========================================================
+        # HIGHLIGHT INITIAL MAGNIFICATION
+        self.next_slide(
+            notes=
+            '''Moreover, since it's very small image, we zoom in using the
+            option "InitialMagnification",6000
+            '''
         )
-        self.play(cl_env.Run(cell=2, new_cursor=False))
+        magnification_highlight = HighlightRectangle(imshow_code[0][17:-2])
+        self.play(ReplacementTransform(range_0255_highlight, magnification_highlight))
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 17:  ===========================================================
+        # INTO MATLAB, RUN CODE, IMAGE APPEARS
+        self.next_slide(
+            notes=
+            '''[...]
+            '''
+        )
+        imshow_code.add_background_window(FullScreenBackground(WHITE))
+        mat_env.remove_cell()
+        mat_env.remove_cursor()
+        image_plot = ImageMobject(sample_A).set_resampling_algorithm(RESAMPLING_ALGORITHMS['nearest']).scale_to_fit_height(PLOT_IMAGE_HEIGHT)
+
+        self.play(FadeOut(magnification_highlight))
+        self.play(imshow_code.IntoMatlab(mat_env))
+        mat_env.add_output_plot(
+            image_plot, window_buff=WINDOW_BUFF
+        )
+        self.play(mat_env.Run())
+
+        # SLIDE 18:  ===========================================================
         # FADEOUT ALL
         # PSEUDO-CODE APPEARS
         self.next_slide(
@@ -345,40 +309,43 @@ class W4Python_slides(MOOCSlide):
             pixel in position i.j as in this pseudocode.
             '''
         )
-        self.play(cl_env.FadeOut())
+        self.play(mat_env.FadeOut())
         self.clear()
-        cl_env.clear()
+        mat_env.clear()
+        mat_env.set_image(r"Assets\W4\matlab_week4.png")
         pc.restore()
 
         self.play(FadeIn(pc))
 
-        # SLIDE 20:  ===========================================================
-        # PSEUDO-CODE MOVED TO TOP RECTANGLE
+        # SLIDE 19:  ===========================================================
+        # PSEUDO-CODE FADES OUT
         # FUNCTION DEFINITION LINE WRITTEN
         self.next_slide(
             notes=
             '''Let us create a function called local_convolution.
             '''
         )
-        DSS = DynamicSplitScreen(main_color=COLAB_LIGHTGRAY, side_color=WHITE)
+        DSS = DynamicSplitScreen(main_color=WHITE, side_color=MATLAB_LIGHTGRAY)
 
-        local_convolution_code = ColabCode(
+        local_convolution_code = MatlabCode(
             r'''
-            def local_convolution(A, K, i, j):
-                v = 0
-                for m in range(3):      # kernel rows
-                    for n in range(3):  # kernel columns
-                        v += A[i - 1 + m, j - 1 + n] * K[m, n]
-                return v
+            function [v] = local_convolution(A, K, i, j):
+                v = 0;
+                for m = 1 : 3      % kernel rows
+                    for n = 1 : 3  % kernel columns
+                        v = v + A(i - 2 + m, j - 2 + n) * K(m, n);
+                    end
+                end
+            end
             '''
         ).move_to(DSS.mainRect)
         pc.set_z_index(-2)
         self.play(FadeIn(DSS))
         self.remove(pc)
-        self.play(local_convolution_code.TypeLetterbyLetter(lines=[0]))
+        self.play(local_convolution_code.TypeLetterbyLetter(lines=[0,-1]))
 
-        # SLIDE 21:  ===========================================================
-        # PSEUDO-CODE MOVED TO TOP RECTANGLE
+        # SLIDE 20:  ===========================================================
+        # FUNCTION SCHEME INPUTS APPEAR
         self.next_slide(
             notes=
             '''This function takes as input the matrix, the kernel, and the
@@ -387,7 +354,7 @@ class W4Python_slides(MOOCSlide):
         )
         fscheme1 = FunctionAbstraction(scale=0.7)
         DSS.add_side_obj(fscheme1)
-        DSS.add_main_obj(local_convolution_code[0], local_convolution_code[1:]) 
+        DSS.add_main_obj(VGroup(local_convolution_code[0], local_convolution_code[-1]), local_convolution_code[1:-1]) 
         self.play(DSS.bringIn())     
         fscheme1.add_inputs("A", "K", "i", "j", font_size=32, relative_offset=0.5)
         self.remove(fscheme1.InputArrows, fscheme1.InputLabels)
@@ -403,11 +370,14 @@ class W4Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 22:  ===========================================================
-        # PSEUDO-CODE MOVED TO TOP RECTANGLE
+        # SLIDE 21:  ===========================================================
+        # FUNCTION SCHEME "V" OUTPUT APPEARS
         self.next_slide(
             notes=
-            '''... and returns the value of the filtered pixel.
+            '''... and returns the value of the filtered pixel. Before
+            continuing, we remark there are different ways to do that, for
+            instance, one could use vectorized operations and SUM. However, we
+            implement loops as in the pseudocode.
             '''
         )
         fscheme1.add_outputs("v", font_size=32)
@@ -415,10 +385,9 @@ class W4Python_slides(MOOCSlide):
 
         self.play(
             FadeIn(fscheme1.OutputLabels, fscheme1.OutputArrows, v_label),
-            local_convolution_code.TypeLetterbyLetter(lines=[-1])
         )
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 22:  ===========================================================
         # BRING OUT FUNCTION SCHEME, BRING IN PSEUDO-CODE
         # V = 0 LINE WRITTEN
         self.next_slide(
@@ -435,7 +404,7 @@ class W4Python_slides(MOOCSlide):
         v_highlight = HighlightRectangle(pc[2][2:])
         self.play(local_convolution_code.TypeLetterbyLetter(lines=[1]), Create(v_highlight))
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 23:  ===========================================================
         # FIRST FOR LOOP WRITTEN
         self.next_slide(
             notes=
@@ -444,9 +413,9 @@ class W4Python_slides(MOOCSlide):
             '''
         )
         first_loop_highlight = HighlightRectangle(pc[3][2:])
-        self.play(local_convolution_code.TypeLetterbyLetter(lines=[2]), ReplacementTransform(v_highlight, first_loop_highlight))
+        self.play(local_convolution_code.TypeLetterbyLetter(lines=[2,-2]), ReplacementTransform(v_highlight, first_loop_highlight))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # SECOND FOR LOOP WRITTEN
         self.next_slide(
             notes=
@@ -455,9 +424,9 @@ class W4Python_slides(MOOCSlide):
             '''
         )
         second_loop_highlight = HighlightRectangle(pc[4][2:])
-        self.play(local_convolution_code.TypeLetterbyLetter(lines=[3]), ReplacementTransform(first_loop_highlight, second_loop_highlight))
+        self.play(local_convolution_code.TypeLetterbyLetter(lines=[3,-3]), ReplacementTransform(first_loop_highlight, second_loop_highlight))
 
-        # SLIDE 26:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # CONVOLUTION LINE WRITTEN
         # (i,j) (m,n) INDEX ANIMATION SHOWN ON THE SIDE
         self.next_slide(
@@ -487,37 +456,57 @@ class W4Python_slides(MOOCSlide):
         self.play(KIA.IndexAnimation(slide_dt=0.65, wait_dt=0.75))
         KIA.clear_updaters()
 
+        # SLIDE 26:  ===========================================================
+        # HIGHLIGHT MATRIX INDICES
+        self.next_slide(
+            notes=
+            '''Note the indices. Since matlab does not allow negative and null
+            indices, we start from m=1, n=1, which correspond to i-1, j-1 if we
+            use a shift of -2.
+            '''
+        )
+        matrix_indices_highlight =  HighlightRectangle(local_convolution_code[4][6:17])
+        self.play(Create(matrix_indices_highlight))
+
         # SLIDE 27:  ===========================================================
-        # RETURN LINE WRITTEN
+        # HIGHLIGHT [V] IN FUNCTION DEFINTION
         self.next_slide(
             notes=
             '''Finally, we return v, the value of a single filtered pixel.
             '''
         )
+        DSS.add_main_obj(VGroup(local_convolution_code, matrix_indices_highlight))
         self.play(DSS.bringOut())
 
-        return_highlight = HighlightRectangle(local_convolution_code[5])
-        self.play(FadeIn(return_highlight))
-        self.wait(1)
-        self.play(FadeOut(return_highlight))
-
-        DSS.remove_main_obj()
-        local_convolution_code.add_background_window(DSS.mainRect.suspend_updating())
-        self.play(
-            DSS.bringOut(),
-            local_convolution_code.IntoColab(cl_env)
-        )
-        self.play(cl_env.Run(cell=-1))
+        return_highlight = HighlightRectangle(local_convolution_code[0][8:11])
+        self.play(ReplacementTransform(matrix_indices_highlight, return_highlight))
 
         # SLIDE 28:  ===========================================================
+        # INTO MATLAB
+        self.next_slide(
+            notes=
+            '''[...]
+            '''
+        )
+        DSS.remove_main_obj()
+        local_convolution_code.add_background_window(DSS.mainRect.suspend_updating())
+        self.play(FadeOut(return_highlight))
+        self.play(
+            DSS.bringOut(),
+            local_convolution_code.IntoMatlab(mat_env)
+        )
+        # self.play(mat_env.Run())
+
+        # SLIDE 29:  ===========================================================
         # SLIDING KERNEL WHILE BLURRED IMAGE FILLS IN (3b1b ANIMATION)
         self.next_slide(
             notes=
-            '''Now we need to loop over all the internal rows and columns of the
-            original matrix to process the whole image!
+            '''Now to blur the image we loop over all the internal rows and
+            columns of the original matrix and for each internal pixel we apply
+            the function local_convolution.
             '''
         )
-        self.play(cl_env.FadeOut())
+        self.play(mat_env.FadeOut())
         self.clear()
 
         sample_A_PA: PixelArray = PixelArray(sample_A, stroke_width=0.75).set_height(0.6*FRAME_HEIGHT)
@@ -536,7 +525,7 @@ class W4Python_slides(MOOCSlide):
         blurred_A_PA.pixel_array.set_fill(opacity=1)
         LC.clear_updaters()
 
-        # SLIDE 29:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # SCHEMATIC DRAWING OF THE FUNCTION IS BROUGHT IN
         self.next_slide(
             notes=
@@ -551,19 +540,20 @@ class W4Python_slides(MOOCSlide):
         self.play(DSS.bringOut(), VGroup(sample_A_PA, blurred_A_PA, kernel, kernel, pixel_highlight).animate.shift(FRAME_HEIGHT*UP))
         self.remove(sample_A_PA, blurred_A_PA, kernel, kernel, pixel_highlight)
 
-        im_filtering_code = ColabCode(
+        im_filtering_code = MatlabCode(
             r'''
-            # Image Convolution
-            def im_filtering(A, K):
-                rows, cols = A.shape
-                # Create an output matrix for the result
-                R = np.zeros(shape=(rows - 2, cols - 2))
+            % Image Convolution
+            function [R] = im_filtering(A, K)
+                [rows, cols] = size(A);
+                % Create an output matrix for the result
+                R = zeros(rows - 2, cols - 2);
 
-                for i in range(1, rows - 1):      # internal rows
-                    for j in range(1, cols - 1):  # internal columns
-                        R[i - 1, j - 1] = local_convolution(A, K, i, j)
-
-                return R
+                for i = 2 : rows - 1     % internal rows
+                    for j = 2 : cols -1  % internal columns
+                        R(i - 1, j - 1) = local_convolution(A, K, i, j);
+                    end
+                end
+            end
             '''
         )
 
@@ -581,13 +571,13 @@ class W4Python_slides(MOOCSlide):
        
         self.play(
             Succession(
-                im_filtering_code.TypeLetterbyLetter(lines=[1]),
+                im_filtering_code.TypeLetterbyLetter(lines=[1,-1]),
                 FadeIn(fscheme.InputArrows[0], fscheme.InputLabels[0], A_label),
                 FadeIn(fscheme.InputArrows[1], fscheme.InputLabels[1], K_label)
             )
         )
 
-        # SLIDE 30:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # OUTPUTS OF FUNCTION SCHEME APPEAR
         # RETURN LINE WRITTEN
         self.next_slide(
@@ -598,14 +588,9 @@ class W4Python_slides(MOOCSlide):
         fscheme.add_outputs("R")
         R_label = MathTex("R", color=BLACK).next_to(fscheme.OutputLabels, RIGHT, buff=1)
        
-        self.play(
-            Succession(
-                im_filtering_code.TypeLetterbyLetter(lines=[-1]),
-                FadeIn(fscheme.OutputArrows, fscheme.OutputLabels, R_label)
-            )
-        )
+        self.play(FadeIn(fscheme.OutputArrows, fscheme.OutputLabels, R_label))
 
-        # SLIDE 31:  ===========================================================
+        # SLIDE 32:  ===========================================================
         # FOR LOOPS WRITTEN
         self.next_slide(
             notes=
@@ -620,10 +605,10 @@ class W4Python_slides(MOOCSlide):
         self.play(DSS.bringOut(), VGroup(A_label, K_label, R_label).animate.shift(UP*DSS.secondaryRect.height))
 
         self.play(im_filtering_code.TypeLetterbyLetter(lines=[2,3,4]))
-        rows_cols_2_highlight = HighlightRectangle(im_filtering_code[4][18:31])
+        rows_cols_2_highlight = HighlightRectangle(im_filtering_code[4][8:21])
         self.play(Create(rows_cols_2_highlight))
 
-        # SLIDE 32:  ===========================================================
+        # SLIDE 33:  ===========================================================
         # FOR LOOPS WRITTEN
         self.next_slide(
             notes=
@@ -631,25 +616,27 @@ class W4Python_slides(MOOCSlide):
             '''
         )
         self.play(FadeOut(rows_cols_2_highlight))
-        self.play(im_filtering_code.TypeLetterbyLetter(lines=[6,7]))
+        self.play(im_filtering_code.TypeLetterbyLetter(lines=[6,-2]))
+        self.wait(0.5)
+        self.play(im_filtering_code.TypeLetterbyLetter(lines=[7,-3]))
 
-        # SLIDE 33:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # HIGHLIGHT THE INDICES IN THE CODE
         self.next_slide(
             notes=
-            '''Notice that the index i starts from one and ends before rows-1,
-            to skip the first and last rows of the original matrix, and
-            similarly for the columns
+            '''Notice that the index i starts from two and ends with rows-1, to
+            skip the first and last rows of the original matrix, and similarly
+            for the columns.
             '''
         )
         indices_highlight = VGroup(
-            HighlightRectangle(im_filtering_code[6][12:20]),
-            HighlightRectangle(im_filtering_code[7][12:20]),
+            HighlightRectangle(im_filtering_code[6][5:13]),
+            HighlightRectangle(im_filtering_code[7][5:13]),
         )
 
         self.play(Create(indices_highlight))
 
-        # SLIDE 34:  ===========================================================
+        # SLIDE 35:  ===========================================================
         # LOCAL CONVOLUTION LINE WRITTEN
         self.next_slide(
             notes=
@@ -661,7 +648,7 @@ class W4Python_slides(MOOCSlide):
         self.play(FadeOut(indices_highlight))
         self.play(im_filtering_code.TypeLetterbyLetter(lines=[8]))
 
-        # SLIDE 35:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # HIGHLIGHT INDEX EXPRESSION
         self.next_slide(
             notes=
@@ -672,17 +659,17 @@ class W4Python_slides(MOOCSlide):
         ij_highlight = HighlightRectangle(im_filtering_code[8][2:9])
         self.play(Create(ij_highlight))
 
-        # SLIDE 36:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # HIGHLIGHT RETURN R 
         self.next_slide(
             notes=
             '''We finally return the result.
             '''
         )
-        return_highlight = HighlightRectangle(im_filtering_code[-1])
+        return_highlight = HighlightRectangle(im_filtering_code[1][8:11])
         self.play(ReplacementTransform(ij_highlight, return_highlight))
 
-        # SLIDE 37:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # INTO COLAB, RUN CELL
         # CURSOR CLICKS +CODE, NEW CELL APPEARS, OUT OF COLAB
         # BLURRING KERNEL COMMENT WRITTEN
@@ -695,25 +682,25 @@ class W4Python_slides(MOOCSlide):
         self.play(FadeOut(return_highlight))
         im_filtering_code.add_background_window(DSS.mainRect.suspend_updating())
         self.remove(DSS) # not needed anymore
-        self.play(im_filtering_code.IntoColab(cl_env))
-        self.play(cl_env.Run(cell=1, new_cursor=False))
-        self.play(Succession(cl_env.cursor.animate.move_to(cl_env.PLUS_CODE_), cl_env.cursor.Click()))
-        cl_env.add_cell()
+        self.play(im_filtering_code.IntoMatlab(mat_env))
+        self.play(mat_env.Run(new_cursor=False))
+        mat_env.add_cell()
         self.wait(0.3)
-        self.play(cl_env.OutofColab(cl_env.get_cell(2)))
+        self.play(mat_env.OutofMatlab(cell=2))
         
-        blurring_code = ColabCode(
+        blurring_code = MatlabCode(
             r'''
-            # Blurring kernel
-            K = np.ones([3, 3]) / 9
-            R = im_filtering(A, K)
+            % Blurring kernel
+            K = ones(3, 3) / 9;
+            R = im_filtering(A, K);
+            R_g = uint8(R);
             compare_images(A, R)
             '''
         )
 
         self.play(blurring_code.TypeLetterbyLetter(lines=[0]))
 
-        # SLIDE 38:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # KERNEL DEFINTION WRITTEN
         self.next_slide(
             notes=
@@ -722,7 +709,7 @@ class W4Python_slides(MOOCSlide):
         )
         self.play(blurring_code.TypeLetterbyLetter(lines=[1]))
 
-        # SLIDE 39:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # IM_FILTERING LINE WRITTEN
         self.next_slide(
             notes=
@@ -732,7 +719,16 @@ class W4Python_slides(MOOCSlide):
         )
         self.play(blurring_code.TypeLetterbyLetter(lines=[2]))
 
-        # SLIDE 40:  ===========================================================
+        # SLIDE 41:  ===========================================================
+        # IM_FILTERING LINE WRITTEN
+        self.next_slide(
+            notes=
+            '''Then we convert the result into an image.
+            '''
+        )
+        self.play(blurring_code.TypeLetterbyLetter(lines=[3]))
+
+        # SLIDE 42:  ===========================================================
         # COMPARE_IMAGES LINE WRITTEN
         # INTO COLAB; RUN CELL, OUTPUT APPEARS
         self.next_slide(
@@ -741,42 +737,42 @@ class W4Python_slides(MOOCSlide):
             original and the filtered images.
             '''
         )
-        self.play(blurring_code.TypeLetterbyLetter(lines=[3]))
+        self.play(blurring_code.TypeLetterbyLetter(lines=[4]))
         self.wait(0.5)
-        blurring_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
-        cl_env.remove_cell()
-        self.play(blurring_code.IntoColab(cl_env))
+        blurring_code.add_background_window(FullScreenBackground(WHITE))
+        mat_env.remove_cell()
+        self.play(blurring_code.IntoMatlab(mat_env))
 
         # Create the output of compare_images
-        sample_A_image = ImageMobject(sample_A).scale_to_fit_height(0.25*FRAME_HEIGHT)
+        sample_A_image = ImageMobject(sample_A).scale_to_fit_height(PLOT_IMAGE_HEIGHT)
         sample_A_image.set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
         blur_result_image = ImageMobject(blurred_A[1:-1, 1:-1]).scale_to_fit_height(sample_A_image.height*10/12)
         blur_result_image.set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
-        Group(sample_A_image, blur_result_image).arrange(buff=0.5)
+        Group(sample_A_image, blur_result_image).arrange(buff=0.8)  # also this is scaled up
         image_titles = VGroup(
-            Text("Image 1", font=CODE_FONT, font_size=14, color=BLACK).next_to(sample_A_image, UP),
-            Text("Image 2", font=CODE_FONT, font_size=14, color=BLACK).next_to(blur_result_image, UP),
+            Text("Image 1", font=CODE_FONT, font_size=14, color=BLACK, weight=SEMIBOLD).next_to(sample_A_image, UP),
+            Text("Image 2", font=CODE_FONT, font_size=14, color=BLACK, weight=SEMIBOLD).next_to(blur_result_image, UP),
         )
         image_titles[1].match_y(image_titles[0])
         compare_image_output = Group(sample_A_image, blur_result_image, image_titles)
         for obj in compare_image_output:
             obj.save_state() 
-        cl_env.get_cell(2).add_output(
-            compare_image_output
+        mat_env.add_output_plot(
+            image=compare_image_output, window_buff=WINDOW_BUFF
         )
 
-        self.play(cl_env.Run(cell=2, new_cursor=False))
+        self.play(mat_env.Run(new_cursor=True))
 
-        # SLIDE 41:  ===========================================================
+        # SLIDE 43:  ===========================================================
         # FOCUS ON OUTPUT
         # HIGHLIGHT THAT THE SECOND IMAGE IS SMALLER 
         self.next_slide(
             notes=
-            '''As we can see, the original image has been blurred. But it's also
-            a bit smaller! Can we avoid this "side effect"?
+            '''As we can see, the original image has been blurred. But, as said,
+            it's also a bit smaller! Can we avoid this "side effect"?
             '''
         )
-        self.play(cl_env.FocusOutput(cell=2))
+        self.play(mat_env.FocusPlot())
 
         # Create the border highlight (square with square hole)
         size_difference_highlight = VMobject(fill_color=SATURATED_BLUE, fill_opacity=0.4, stroke_color=SATURATED_BLUE, stroke_width=4)
@@ -792,7 +788,7 @@ class W4Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 42:  ===========================================================
+        # SLIDE 44:  ===========================================================
         # ORIGINAL IMAGE IS MOVED TO CENTER; SECOND ONE DISAPPEARS
         # BLACK SQUARES PADDING IS ADDED TO ORIGINAL IMAGE
         self.next_slide(
@@ -814,7 +810,8 @@ class W4Python_slides(MOOCSlide):
         )
 
         # Create padding pixels
-        padded_pixel_array = PixelArray(np.zeros((14, 14)), stroke_width=0.75).scale_to_fit_height(sample_A_image.height*14/12).move_to(sample_A_image)
+        sample_A_image.set_z_index(1)
+        padded_pixel_array = PixelArray(np.zeros((14, 14)), stroke_width=1.25).scale_to_fit_height(sample_A_image.height*14/12).move_to(sample_A_image)
         padding_pixels = VGroup()
         for i in range(14):
             padding_pixels.add(padded_pixel_array.pixel_array[0, i])
@@ -831,7 +828,7 @@ class W4Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 43:  ===========================================================
+        # SLIDE 45:  ===========================================================
         # FADEOUT TO CODE
         # INITIALIZE A PADDED WRITTEN
         self.next_slide(
@@ -840,27 +837,28 @@ class W4Python_slides(MOOCSlide):
             rows and two columns more than A.
             '''
         )
-        bp = FullScreenBackground(COLAB_LIGHTGRAY).set_z_index(0)
+        bp = FullScreenBackground(WHITE).set_z_index(2)
         self.play(FadeIn(bp))
-        cl_env.clear()
+        mat_env.clear()
         self.remove(sample_A_image, padding_title, padding_pixels, *padding_pixels.submobjects)
         bp.set_z_index(-1)
 
-        padding_code = ColabCode(  # Careful with the white spaces!
+        padding_code = MatlabCode(
             r'''
-            # Padding
-            Ap = np.zeros((A.shape[0] + 2, A.shape[1] + 2))
-            Ap[1:-1, 1:-1] = A
+            % Padding
+            Ap = zeros(size(A, 1) + 2, size(A, 2) + 2);
+            Ap(2 : end - 1, 2 : end - 1) = A;
 
-            Rp = im_filtering(Ap, K) 
-            compare_images(A, Rp)
+            Rp = im_filtering(Ap, K);
+            Rp_g = uint8(Rp);  
+            compare_images(A, Rp_g)
             '''
         )
 
         self.play(padding_code.TypeLetterbyLetter(lines=[0, 1]))
 
-        # SLIDE 44:  ===========================================================
-        # COPY A to A PADDED WRITTEN
+        # SLIDE 46:  ===========================================================
+        # COPY A TO A PADDED WRITTEN
         self.next_slide(
             notes=
             '''Then we copy A in Ap, starting from the second to the second to
@@ -869,19 +867,19 @@ class W4Python_slides(MOOCSlide):
         )
         self.play(padding_code.TypeLetterbyLetter(lines=[2]))
 
-        # SLIDE 45:  ===========================================================
+        # SLIDE 47:  ===========================================================
         # IMAGE FILTERING LINES WRITTEN
-        # INTO COLAB, RUN CELL, OUTPUT APPEARS
+        # INTO MATLAB, RUN CODE, OUTPUT APPEARS
         self.next_slide(
             notes=
             '''And now, we can repeat image filtering giving Ap as an input, and
             obtain a blurred image which has the same size of the original.
             '''
         )
-        self.play(padding_code.TypeLetterbyLetter(lines=[4,5]))
+        self.play(padding_code.TypeLetterbyLetter(lines=[4,5,6]))
         padding_code.add_background_window(bp)
         self.wait(0.5)
-        self.play(padding_code.IntoColab(cl_env))
+        self.play(padding_code.IntoMatlab(mat_env))
         
         # Create updated output for compare_images
         for obj in compare_image_output:
@@ -890,13 +888,13 @@ class W4Python_slides(MOOCSlide):
         padded_blur_result_image = ImageMobject(blurred_A).set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
         padded_blur_result_image.match_height(sample_A_image).next_to(image_titles[1], DOWN).match_y(sample_A_image)
         compare_image_output.add(padded_blur_result_image)
-        cl_env.get_cell(0).add_output(
-            compare_image_output
+        mat_env.add_output_plot(
+            compare_image_output, window_buff=WINDOW_BUFF
         )
 
-        self.play(cl_env.Run(cell=0))
+        self.play(mat_env.Run())
 
-        # SLIDE 46:  ===========================================================
+        # SLIDE 48:  ===========================================================
         # FOCUS ON OUTPUT
         self.next_slide(
             notes=
@@ -904,4 +902,4 @@ class W4Python_slides(MOOCSlide):
             privacy. [END]
             '''
         )
-        self.play(cl_env.FocusOutput(cell=0))
+        self.play(mat_env.FocusPlot())
