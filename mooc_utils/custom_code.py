@@ -207,3 +207,9 @@ class CodeWithLogo(Mobject):
              self.logo.align_to(self.codeMobject.window, UP).shift(DOWN*logo_shift_buff)
         self.add(self.codeMobject)
         self.add(self.logo)
+
+    def __getitem__(self, value):
+        return self.codeMobject.__getitem__(value)
+    
+    def __len__(self):
+        return len(self.codeMobject)

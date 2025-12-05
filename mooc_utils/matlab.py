@@ -26,7 +26,7 @@ _MATLAB_PLOT_Z_INDEX = -2
 class MatlabCode(CustomCode):
     # override default options
     default_background_config: dict[str, Any] = {
-        "buff": 0.3,
+        "buff": MED_SMALL_BUFF,
         "fill_color": WHITE,
         "stroke_color": BLACK,
         "corner_radius": 0.2,
