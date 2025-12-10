@@ -246,7 +246,7 @@ class ColabEnv():
             self.scene.add(cell)
 
     def get_cell(self, index: int) -> ColabCodeBlock:
-        if index > len(self.cells):
+        if index >= len(self.cells):
             raise IndexError(f'Cell index {index} out of range.')
         return self.cells[index]
     
@@ -256,13 +256,30 @@ class ColabEnv():
     def remove_cell(self):
         if len(self.cells) > 0:
             removed_cell = self.cells.pop()
-            self.scene.remove(removed_cell)
-            self.scene.remove(*removed_cell.submobjects)
-            if removed_cell.output is not None:
-                self.scene.remove(removed_cell.output)
-                self.scene.remove(*removed_cell.output.submobjects)
-            if removed_cell.outputWindow is not None:
-                self.scene.remove(removed_cell.outputWindow)
+            self._delete_cell(removed_cell)
+
+    def _delete_cell(self, removed_cell: ColabCodeBlock):
+        self.scene.remove(removed_cell)
+        self.scene.remove(*removed_cell.submobjects)
+        if removed_cell.output is not None:
+            self.scene.remove(removed_cell.output)
+            self.scene.remove(*removed_cell.output.submobjects)
+        if removed_cell.outputWindow is not None:
+            self.scene.remove(removed_cell.outputWindow)
+
+    def remove_cell_from_top(self, n: int = 1):
+        # Delete cells from the list beginning
+        if len(self.cells) < n:
+            raise ValueError("Not enouvh cells to be deleted")
+        for _ in range(n):
+            removed_cell = self.cells.pop(0)
+            self._delete_cell(removed_cell)
+        # Move the remaining cells to the top of the screen
+        if len(self.cells) > 0:
+            remaining_cells = self.get_cells()
+            remaining_outputs = [c.output for c in remaining_cells if c.output is not None]
+            remaining_cells.add(*remaining_outputs)
+            remaining_cells.move_to(self.TOP_LEFT_CORNER_, UL)
     
     def clear(self):
         while len(self.cells) > 0:

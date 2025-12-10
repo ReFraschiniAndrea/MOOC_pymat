@@ -119,6 +119,7 @@ class MatlabEnv():
     BROWSE_FOLDER_ = _pixel2p(107, 170)
     OK_PROMPT_ = _pixel2p(874, 848)
     SIDEMENU_ = _pixel2p(23, 227)
+    FIRST_SCRIPT_TAB_ = _pixel2p(105, 203)
 
     PIXEL = FRAME_WIDTH/1400
     OUTPUT_TO_OUTPUT_BUFF_ = 8*PIXEL
@@ -160,8 +161,23 @@ class MatlabEnv():
     def remove_cell(self):
         if len(self.cells) > 0:
             removed_cell = self.cells.pop()
-            self.scene.remove(removed_cell)
-            self.scene.remove(*removed_cell.submobjects)
+            self._delete_cell(removed_cell)
+            
+    def _delete_cell(self, removed_cell: MatlabCodeBlock):
+        self.scene.remove(removed_cell)
+        self.scene.remove(*removed_cell.submobjects)
+
+    def remove_cell_from_top(self, n: int = 1):
+        # Delete cells from the list beginning
+        if len(self.cells) < n:
+            raise ValueError("Not enough cells to be deleted")
+        for _ in range(n):
+            removed_cell = self.cells.pop(0)
+            self._delete_cell(removed_cell)
+        # Move the remaining cells to the top of the screen
+        if len(self.cells) > 0:
+            remaining_cells = self.get_cells()
+            remaining_cells.move_to(self.TOP_LEFT_CORNER_, UL)
     
     def remove_output(self):
         while len(self.command_window_output) > 0:

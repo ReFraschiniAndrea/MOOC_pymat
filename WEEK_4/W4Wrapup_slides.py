@@ -515,7 +515,7 @@ class W4Wrapup_slides(MOOCSlide):
             '''
         )
         box_blur_kernel_5x5 = VGroup(
-            MathTex(r'k=\frac{1}{25}', color=BLACK),
+            MathTex(r'K=\frac{1}{25}', color=BLACK),
             IntegerMatrix(np.ones((5,5))).set_color(BLACK)
         ).arrange()
 
@@ -543,11 +543,11 @@ class W4Wrapup_slides(MOOCSlide):
         self.play(FadeOut(box_blur_kernel_5x5, car_plate_gray_box_blurred))
 
         sharpening_kernel = VGroup(
-            MathTex('k=', color=BLACK),
+            MathTex('K=', color=BLACK),
             Matrix([[-1, 2, -1] for _ in range(3)]).set_color(BLACK)
         ).arrange()
         vertical_edge_detection_kernel = VGroup(
-            MathTex('k=', color=BLACK),
+            MathTex('K=', color=BLACK),
             Matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]).set_color(BLACK)
         ).arrange()
 

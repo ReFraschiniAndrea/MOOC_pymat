@@ -8,7 +8,7 @@ from W4Anim import DiscreteConvolutionPseudoCode, separable_box_blur, LiveConvol
 from PIL import Image
 from io import StringIO
 
-config.update(TEST_CONFIG)
+config.update(RELEASE_CONFIG)
 
 WINDOW_BUFF = 0.25
 PLOT_IMAGE_HEIGHT = 0.4*FRAME_HEIGHT
@@ -24,7 +24,7 @@ class W4Matlab_slides(MOOCSlide):
             '''
         )
         mat_env = MatlabEnv(self, r'Assets\W4\matlab_empty.png')
-        mat_env.RUN_BUTTON_ = MatlabEnv._pixel2p(1099, 67)
+        mat_env.RUN_BUTTON_ = MatlabEnv._pixel2p(1100, 67)
         mat_env.SAVE_PROMPT_BUTTON_ = MatlabEnv._pixel2p(877, 859)
         mat_env.OK_PROMPT_ = MatlabEnv._pixel2p(877, 816)
 
@@ -183,12 +183,8 @@ class W4Matlab_slides(MOOCSlide):
         )
         sample_A = np.array(Image.open(r'Assets\W4\part.png'), dtype=np.uint8)
 
-        bp = FullScreenBackground(WHITE)
-        self.play(FadeIn(bp))
-        # Switch to wider command window for later
-        mat_env.clear()
-        mat_env.set_image(r"Assets\W4\matlab_week4Large.png")
-        mat_env.OUTPUT_TOP_LEFT_CORNER_ = MatlabEnv._pixel2p(80, 715)
+        mat_env.add_cell()
+        self.play(mat_env.OutofMatlab(cell=-1))
 
         square_brackets_code = MatlabCode(
             r'''
@@ -205,8 +201,14 @@ class W4Matlab_slides(MOOCSlide):
             3).
             '''
         )
-        square_brackets_code.add_background_window(bp)
+        square_brackets_code.add_background_window(FullScreenBackground(WHITE))
         mat_env.remove_cell()
+        mat_env.remove_cursor()
+        mat_env.set_image(r'Assets\W4\matlab_week4Large.png') # We use larger command window
+        NEW_OUTPUT_TOP_LEFT_CORNER_ = MatlabEnv._pixel2p(80, 667)
+        mat_env.command_window_output[0].shift(UP*(NEW_OUTPUT_TOP_LEFT_CORNER_[1]-mat_env.OUTPUT_TOP_LEFT_CORNER_[1]))
+        mat_env.OUTPUT_TOP_LEFT_CORNER_ = NEW_OUTPUT_TOP_LEFT_CORNER_  
+
         self.play(square_brackets_code.IntoMatlab(mat_env))
         mat_env.add_output(
             str(sample_A[1,2])
@@ -234,7 +236,7 @@ class W4Matlab_slides(MOOCSlide):
         print(sample_A, file=print_A_result_stream)
         print_A_result = print_A_result_stream.getvalue()
         print_A_result_stream.close()
-        print_A_result = print_A_result.replace('[', '').replace(']', '')
+        print_A_result = " " + print_A_result.replace('[', '').replace(']', '')
         mat_env.add_output(
             print_A_result
         )
@@ -252,7 +254,7 @@ class W4Matlab_slides(MOOCSlide):
             '''
         )
         mat_env.add_cell()
-        self.play(mat_env.OutofMatlab(cell=2))
+        self.play(mat_env.OutofMatlab(cell=-1))
         imshow_code = MatlabCode(
             r'''
             imshow(A, [0, 255], 'InitialMagnification', 6000);
@@ -312,7 +314,6 @@ class W4Matlab_slides(MOOCSlide):
         self.play(mat_env.FadeOut())
         self.clear()
         mat_env.clear()
-        mat_env.set_image(r"Assets\W4\matlab_week4.png")
         pc.restore()
 
         self.play(FadeIn(pc))
@@ -329,7 +330,7 @@ class W4Matlab_slides(MOOCSlide):
 
         local_convolution_code = MatlabCode(
             r'''
-            function [v] = local_convolution(A, K, i, j):
+            function [v] = local_convolution(A, K, i, j)
                 v = 0;
                 for m = 1 : 3      % kernel rows
                     for n = 1 : 3  % kernel columns
@@ -436,25 +437,28 @@ class W4Matlab_slides(MOOCSlide):
             corresponding pixel in the image... and we add this value to v.
             '''
         )
-        convolution_highlight = HighlightRectangle(pc[5][2:])
-        self.play(local_convolution_code.TypeLetterbyLetter(lines=[4]), ReplacementTransform(second_loop_highlight, convolution_highlight))
-        self.wait()
-        # DSS.remove_main_obj()
-        self.play(DSS.bringOut(), convolution_highlight.animate.shift(UP*DSS.secondaryRect.height))
+        self.play(FadeOut(second_loop_highlight))
+        self.play(local_convolution_code.TypeLetterbyLetter(lines=[4]))
 
-        # Create the animation for the indices
-        three_by_three: PixelArray = PixelArray(sample_A[:3,:3], stroke_width=2, stroke_color=WHITE).set_height(0.45*FRAME_HEIGHT)
-        kernel_array, kernel_values = three_by_three.get_kernel_array(np.ones((3,3))/9, kernel_color=BLACK, kernel_stroke_width=4, add_values=True, kernel_tex = " 1 / 9", values_size_fator=0.5)
-        kernel = VGroup(kernel_array, kernel_values).match_height(three_by_three)
-        KIA = Kernel3X3IndexAnimation(three_by_three, kernel, highlight_color=SATURATED_BLUE, highlight_stroke_width=6)
+        # convolution_highlight = HighlightRectangle(pc[5][2:])
+        pc_A_K_highlights = VGroup(
+            HighlightRectangle(pc[5][6:20]),
+            HighlightRectangle(pc[5][-6:], color=ORANGE)
+        )
+        code_A_K_highlights = VGroup(
+            HighlightRectangle(local_convolution_code[4][4:18]),
+            HighlightRectangle(local_convolution_code[4][-7:-1], color=ORANGE)
+        )
 
-        DSS.add_side_obj(KIA.scale(0.7))
-        DSS.add_main_obj(local_convolution_code[:])
-        self.play(DSS.bringIn())
-        self.wait(0.75)
-        KIA.setup()
-        self.play(KIA.IndexAnimation(slide_dt=0.65, wait_dt=0.75))
-        KIA.clear_updaters()
+        self.play(
+            Succession(
+                Create(pc_A_K_highlights[1]),
+                Create(code_A_K_highlights[1]),
+                Wait(1),
+                Create(pc_A_K_highlights[0]),
+                Create(code_A_K_highlights[0]),
+            )
+        )
 
         # SLIDE 26:  ===========================================================
         # HIGHLIGHT MATRIX INDICES
@@ -465,8 +469,25 @@ class W4Matlab_slides(MOOCSlide):
             use a shift of -2.
             '''
         )
-        matrix_indices_highlight =  HighlightRectangle(local_convolution_code[4][6:17])
-        self.play(Create(matrix_indices_highlight))
+        self.play(FadeOut(pc_A_K_highlights, code_A_K_highlights))
+
+        # matrix_indices_highlight =  HighlightRectangle(local_convolution_code[4][6:17])
+        ones_highlights = VGroup(
+            HighlightRectangle(local_convolution_code[2][5]),
+            HighlightRectangle(local_convolution_code[3][5])
+        )
+        min_2_highligths = VGroup(
+            HighlightRectangle(local_convolution_code[4][7:9]),
+            HighlightRectangle(local_convolution_code[4][13:15])
+        )
+        
+        self.play(
+            Succession(
+                Create(ones_highlights),
+                Wait(0.5),
+                Create(min_2_highligths)
+            )
+        )
 
         # SLIDE 27:  ===========================================================
         # HIGHLIGHT [V] IN FUNCTION DEFINTION
@@ -475,14 +496,15 @@ class W4Matlab_slides(MOOCSlide):
             '''Finally, we return v, the value of a single filtered pixel.
             '''
         )
-        DSS.add_main_obj(VGroup(local_convolution_code, matrix_indices_highlight))
+        self.play(FadeOut(ones_highlights, min_2_highligths))
+        DSS.add_main_obj(VGroup(local_convolution_code))
         self.play(DSS.bringOut())
 
         return_highlight = HighlightRectangle(local_convolution_code[0][8:11])
-        self.play(ReplacementTransform(matrix_indices_highlight, return_highlight))
+        self.play(FadeIn(return_highlight))
 
         # SLIDE 28:  ===========================================================
-        # INTO MATLAB
+        # INTO MATLAB, WITH NEW SCRIPT WITH SAME NAME AS FUNCTION
         self.next_slide(
             notes=
             '''[...]
@@ -490,6 +512,8 @@ class W4Matlab_slides(MOOCSlide):
         )
         DSS.remove_main_obj()
         local_convolution_code.add_background_window(DSS.mainRect.suspend_updating())
+        mat_env.set_image(r"Assets\W4\matlab_localConv.png")
+
         self.play(FadeOut(return_highlight))
         self.play(
             DSS.bringOut(),
@@ -670,9 +694,7 @@ class W4Matlab_slides(MOOCSlide):
         self.play(ReplacementTransform(ij_highlight, return_highlight))
 
         # SLIDE 38:  ===========================================================
-        # INTO COLAB, RUN CELL
-        # CURSOR CLICKS +CODE, NEW CELL APPEARS, OUT OF COLAB
-        # BLURRING KERNEL COMMENT WRITTEN
+        # INTO MATLAB, WITH NEW SCRIPT WITH SAME NAME AS FUNCTION
         self.next_slide(
             notes=
             '''We are almost ready to use this function, but first we have to
@@ -682,11 +704,32 @@ class W4Matlab_slides(MOOCSlide):
         self.play(FadeOut(return_highlight))
         im_filtering_code.add_background_window(DSS.mainRect.suspend_updating())
         self.remove(DSS) # not needed anymore
+        mat_env.clear()
+        mat_env.set_image(r'Assets\W4\matlab_imfiltering.png')
+
         self.play(im_filtering_code.IntoMatlab(mat_env))
-        self.play(mat_env.Run(new_cursor=False))
-        mat_env.add_cell()
+
+        # SLIDE 39:  ===========================================================
+        # SWITCH TO MAIN SCRIPT, OUT OF MATLAB
+        # KERNEL DEFINTION WRITTEN
+        self.next_slide(
+            notes=
+            '''We create a 3x3 matrix of ones, and then divide it by 9!.
+            '''
+        )
+        mat_env.cursor.center()
+        self.play(
+            Succession(
+                GrowFromCenter(mat_env.cursor),
+                ApplyMethod(mat_env.cursor.move_to, mat_env.FIRST_SCRIPT_TAB_),
+                mat_env.cursor.Click()
+            )
+        )
+        mat_env.set_image(r'Assets\W4\matlab_week4Back.png')
+        mat_env.remove_cell()
         self.wait(0.3)
-        self.play(mat_env.OutofMatlab(cell=2))
+        mat_env.add_cell()
+        self.play(mat_env.OutofMatlab(cell=0))
         
         blurring_code = MatlabCode(
             r'''
@@ -698,16 +741,7 @@ class W4Matlab_slides(MOOCSlide):
             '''
         )
 
-        self.play(blurring_code.TypeLetterbyLetter(lines=[0]))
-
-        # SLIDE 39:  ===========================================================
-        # KERNEL DEFINTION WRITTEN
-        self.next_slide(
-            notes=
-            '''We create a 3x3 matrix of ones, and then divide it by 9!.
-            '''
-        )
-        self.play(blurring_code.TypeLetterbyLetter(lines=[1]))
+        self.play(blurring_code.TypeLetterbyLetter(lines=[0,1]))
 
         # SLIDE 40:  ===========================================================
         # IM_FILTERING LINE WRITTEN
@@ -741,6 +775,7 @@ class W4Matlab_slides(MOOCSlide):
         self.wait(0.5)
         blurring_code.add_background_window(FullScreenBackground(WHITE))
         mat_env.remove_cell()
+        mat_env.remove_cursor()
         self.play(blurring_code.IntoMatlab(mat_env))
 
         # Create the output of compare_images
@@ -839,7 +874,7 @@ class W4Matlab_slides(MOOCSlide):
         )
         bp = FullScreenBackground(WHITE).set_z_index(2)
         self.play(FadeIn(bp))
-        mat_env.clear()
+        mat_env.remove_plot()
         self.remove(sample_A_image, padding_title, padding_pixels, *padding_pixels.submobjects)
         bp.set_z_index(-1)
 
@@ -877,8 +912,10 @@ class W4Matlab_slides(MOOCSlide):
             '''
         )
         self.play(padding_code.TypeLetterbyLetter(lines=[4,5,6]))
-        padding_code.add_background_window(bp)
         self.wait(0.5)
+    
+        padding_code.add_background_window(bp)
+        mat_env.remove_cursor()
         self.play(padding_code.IntoMatlab(mat_env))
         
         # Create updated output for compare_images

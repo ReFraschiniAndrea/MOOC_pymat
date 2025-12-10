@@ -467,25 +467,28 @@ class W4Python_slides(MOOCSlide):
             corresponding pixel in the image... and we add this value to v.
             '''
         )
-        convolution_highlight = HighlightRectangle(pc[5][2:])
-        self.play(local_convolution_code.TypeLetterbyLetter(lines=[4]), ReplacementTransform(second_loop_highlight, convolution_highlight))
-        self.wait()
-        # DSS.remove_main_obj()
-        self.play(DSS.bringOut(), convolution_highlight.animate.shift(UP*DSS.secondaryRect.height))
+        self.play(FadeOut(second_loop_highlight))
+        self.play(local_convolution_code.TypeLetterbyLetter(lines=[4]))
 
-        # Create the animation for the indices
-        three_by_three: PixelArray = PixelArray(sample_A[:3,:3], stroke_width=2, stroke_color=WHITE).set_height(0.45*FRAME_HEIGHT)
-        kernel_array, kernel_values = three_by_three.get_kernel_array(np.ones((3,3))/9, kernel_color=BLACK, kernel_stroke_width=4, add_values=True, kernel_tex = " 1 / 9", values_size_fator=0.5)
-        kernel = VGroup(kernel_array, kernel_values).match_height(three_by_three)
-        KIA = Kernel3X3IndexAnimation(three_by_three, kernel, highlight_color=SATURATED_BLUE, highlight_stroke_width=6)
+        # convolution_highlight = HighlightRectangle(pc[5][2:])
+        pc_A_K_highlights = VGroup(
+            HighlightRectangle(pc[5][6:20]),
+            HighlightRectangle(pc[5][-6:], color=ORANGE)
+        )
+        code_A_K_highlights = VGroup(
+            HighlightRectangle(local_convolution_code[4][3:17]),
+            HighlightRectangle(local_convolution_code[4][-6:], color=ORANGE)
+        )
 
-        DSS.add_side_obj(KIA.scale(0.7))
-        DSS.add_main_obj(local_convolution_code[:])
-        self.play(DSS.bringIn())
-        self.wait(0.75)
-        KIA.setup()
-        self.play(KIA.IndexAnimation(slide_dt=0.65, wait_dt=0.75))
-        KIA.clear_updaters()
+        self.play(
+            Succession(
+                Create(pc_A_K_highlights[1]),
+                Create(code_A_K_highlights[1]),
+                Wait(1),
+                Create(pc_A_K_highlights[0]),
+                Create(code_A_K_highlights[0]),
+            )
+        )
 
         # SLIDE 27:  ===========================================================
         # RETURN LINE WRITTEN
@@ -494,7 +497,7 @@ class W4Python_slides(MOOCSlide):
             '''Finally, we return v, the value of a single filtered pixel.
             '''
         )
-        self.play(DSS.bringOut())
+        self.play(FadeOut(pc_A_K_highlights, code_A_K_highlights))
 
         return_highlight = HighlightRectangle(local_convolution_code[5])
         self.play(FadeIn(return_highlight))
@@ -631,7 +634,9 @@ class W4Python_slides(MOOCSlide):
             '''
         )
         self.play(FadeOut(rows_cols_2_highlight))
-        self.play(im_filtering_code.TypeLetterbyLetter(lines=[6,7]))
+        self.play(im_filtering_code.TypeLetterbyLetter(lines=[6]))
+        self.wait(0.5)
+        self.play(im_filtering_code.TypeLetterbyLetter(lines=[7]))
 
         # SLIDE 33:  ===========================================================
         # HIGHLIGHT THE INDICES IN THE CODE
@@ -748,24 +753,27 @@ class W4Python_slides(MOOCSlide):
         self.play(blurring_code.IntoColab(cl_env))
 
         # Create the output of compare_images
-        sample_A_image = ImageMobject(sample_A).scale_to_fit_height(0.25*FRAME_HEIGHT)
+        sample_A_image = ImageMobject(sample_A).scale_to_fit_height(0.22*FRAME_HEIGHT)
         sample_A_image.set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
         blur_result_image = ImageMobject(blurred_A[1:-1, 1:-1]).scale_to_fit_height(sample_A_image.height*10/12)
         blur_result_image.set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
         Group(sample_A_image, blur_result_image).arrange(buff=0.5)
         image_titles = VGroup(
-            Text("Image 1", font=CODE_FONT, font_size=14, color=BLACK).next_to(sample_A_image, UP),
-            Text("Image 2", font=CODE_FONT, font_size=14, color=BLACK).next_to(blur_result_image, UP),
+            Text("Image 1", font=CODE_FONT, font_size=14, color=BLACK).next_to(sample_A_image, UP, buff=0.15),
+            Text("Image 2", font=CODE_FONT, font_size=14, color=BLACK).next_to(blur_result_image, UP, buff=0.15),
         )
         image_titles[1].match_y(image_titles[0])
         compare_image_output = Group(sample_A_image, blur_result_image, image_titles)
-        for obj in compare_image_output:
-            obj.save_state() 
         cl_env.get_cell(2).add_output(
             compare_image_output
         )
 
         self.play(cl_env.Run(cell=2, new_cursor=False))
+
+        # Save last cell to be reused later
+        cl_env.get_cell(2).save_state()
+        for obj in compare_image_output:
+            obj.save_state() 
 
         # SLIDE 41:  ===========================================================
         # FOCUS ON OUTPUT
@@ -814,6 +822,7 @@ class W4Python_slides(MOOCSlide):
         )
 
         # Create padding pixels
+        sample_A_image.set_z_index(1)
         padded_pixel_array = PixelArray(np.zeros((14, 14)), stroke_width=0.75).scale_to_fit_height(sample_A_image.height*14/12).move_to(sample_A_image)
         padding_pixels = VGroup()
         for i in range(14):
@@ -822,7 +831,7 @@ class W4Python_slides(MOOCSlide):
         for i in range(14):
             padding_pixels.add(padded_pixel_array.pixel_array[i, -1])
             padding_pixels.add(padded_pixel_array.pixel_array[-1, i])
-        
+        padding_pixels.set_stroke(width=2)
         self.play(
             AnimationGroup(
                 *[GrowFromCenter(pixel) for pixel in padding_pixels],
@@ -840,11 +849,12 @@ class W4Python_slides(MOOCSlide):
             rows and two columns more than A.
             '''
         )
-        bp = FullScreenBackground(COLAB_LIGHTGRAY).set_z_index(0)
+        bp = FullScreenBackground(COLAB_LIGHTGRAY).set_z_index(2)
         self.play(FadeIn(bp))
-        cl_env.clear()
+        # cl_env.clear()
+        sample_A_image.set_z_index(0)
         self.remove(sample_A_image, padding_title, padding_pixels, *padding_pixels.submobjects)
-        bp.set_z_index(-1)
+        bp.set_z_index(0)
 
         padding_code = ColabCode(  # Careful with the white spaces!
             r'''
@@ -879,22 +889,28 @@ class W4Python_slides(MOOCSlide):
             '''
         )
         self.play(padding_code.TypeLetterbyLetter(lines=[4,5]))
-        padding_code.add_background_window(bp)
         self.wait(0.5)
+
+        bp.set_z_index(-1)
+        padding_code.add_background_window(bp)
+        # "restore" (which is just "become") does not apply the z_index of hte saved state
+        cl_env.get_cell(2).restore().set_z_index(-3)
+        for obj in compare_image_output:
+            obj.restore().set_z_index(-3)
+        cl_env.remove_cell_from_top(n=2)
+        cl_env.cursor.move_to(cl_env.get_cell(0).playButton)
         self.play(padding_code.IntoColab(cl_env))
         
         # Create updated output for compare_images
-        for obj in compare_image_output:
-            obj.restore() 
-        compare_image_output.remove(blur_result_image)
+        second_compare_image_output = Group(sample_A_image.copy(), image_titles.copy())
         padded_blur_result_image = ImageMobject(blurred_A).set_resampling_algorithm(RESAMPLING_ALGORITHMS["nearest"])
         padded_blur_result_image.match_height(sample_A_image).next_to(image_titles[1], DOWN).match_y(sample_A_image)
-        compare_image_output.add(padded_blur_result_image)
-        cl_env.get_cell(0).add_output(
-            compare_image_output
+        second_compare_image_output.add(padded_blur_result_image)
+        cl_env.get_cell(1).add_output(
+            second_compare_image_output
         )
 
-        self.play(cl_env.Run(cell=0))
+        self.play(cl_env.Run(cell=1, new_cursor=False))
 
         # SLIDE 46:  ===========================================================
         # FOCUS ON OUTPUT
@@ -904,4 +920,4 @@ class W4Python_slides(MOOCSlide):
             privacy. [END]
             '''
         )
-        self.play(cl_env.FocusOutput(cell=0))
+        self.play(cl_env.FocusOutput(cell=1))
