@@ -542,18 +542,18 @@ class W4Wrapup_slides(MOOCSlide):
         )
         self.play(FadeOut(box_blur_kernel_5x5, car_plate_gray_box_blurred))
 
-        sharpening_kernel = VGroup(
+        vertical_edge_detection_kernel = VGroup(
             MathTex('K=', color=BLACK),
             Matrix([[-1, 2, -1] for _ in range(3)]).set_color(BLACK)
         ).arrange()
-        vertical_edge_detection_kernel = VGroup(
+        sharpening_kernel = VGroup(
             MathTex('K=', color=BLACK),
             Matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]).set_color(BLACK)
         ).arrange()
 
-        VGroup(sharpening_kernel, vertical_edge_detection_kernel).arrange(buff=1)
+        VGroup(vertical_edge_detection_kernel, sharpening_kernel).arrange(buff=1)
 
-        self.play(Write(sharpening_kernel))
+        self.play(Write(vertical_edge_detection_kernel))
 
         # SLIDE 20:  ===========================================================
         # SHARPENING KERNEL APPEARS
@@ -562,4 +562,4 @@ class W4Wrapup_slides(MOOCSlide):
             '''... or this one, and see what happens to the image.
             '''
         )
-        self.play(Write(vertical_edge_detection_kernel))
+        self.play(Write(sharpening_kernel))
