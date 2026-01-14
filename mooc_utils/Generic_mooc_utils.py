@@ -2,9 +2,9 @@
 
 __all__ = [
     "FRAME_HEIGHT", "FRAME_WIDTH", "ASPECT_RATIO",
-    "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT",
+    "HALF_SCREEN_LEFT", "HALF_SCREEN_RIGHT", "TITLED_CENTER",
     "SANS_SERIF_FONT", "CODE_FONT",
-    "HighlightRectangle", "FullScreenBackground","Title", "DynamicSplitScreen",
+    "HighlightRectangle", "FullScreenBackground","SlideTitle", "DynamicSplitScreen",
     "Cursor", "FunctionAbstraction",
     "VectorArray", "PixelArray",
     "CustomDecimalNumber",
@@ -15,12 +15,14 @@ from manim import *
 from manim.typing import Vector3D
 import itertools as it
 
-FRAME_HEIGHT = 10.66  # In 4:3 frame height is 10.66, not 8!
+FRAME_HEIGHT = 8*4/3 # In 4:3 frame height is 10.666.., not 8! 
 ASPECT_RATIO = 4/3
-FRAME_WIDTH = FRAME_HEIGHT * ASPECT_RATIO
+FRAME_WIDTH = FRAME_HEIGHT * ASPECT_RATIO  # The frame width is the same: 8*16/9 = 8*(4/3)*(4/3)
 HALF_SCREEN_LEFT = [-FRAME_WIDTH/4, 0, 0]
 HALF_SCREEN_RIGHT = [+FRAME_WIDTH/4, 0, 0]
 
+TITLE_DOWN_ALIGNMENT = 3.75
+TITLED_CENTER = DOWN * (FRAME_HEIGHT/4 - TITLE_DOWN_ALIGNMENT/2)
 SANS_SERIF_FONT = 'Arial'
 CODE_FONT = 'Aptos Mono'
 
@@ -38,12 +40,13 @@ def custom_get_axis_labels(
         y_label.next_to(ax.get_axis(1).get_corner(UR), RIGHT),
     )
 
-class Title(Text):
+class SlideTitle(Text):
     def __init__(self, text: str):
         super().__init__(
             text, color=BLACK,
             font_size=64, font=SANS_SERIF_FONT, weight=LIGHT)
-        self.to_edge(UP).shift(UP*0.5)
+        self.center()
+        self.shift(UP*(TITLE_DOWN_ALIGNMENT - self[0].get_bottom()[1]))
 
 class HighlightRectangle(BackgroundRectangle):
     def __init__(
@@ -502,6 +505,7 @@ class PixelArray(VGroup):
         pixel_highlight : Square = self.pixel_array[*position].copy()
         pixel_highlight.set_fill(BLACK, 0)
         pixel_highlight.set_stroke(color, stroke_width, opacity=1)
+        pixel_highlight.set_z_index(self.pixel_array.z_index + 1)
         return pixel_highlight
 
     def get_kernel_array(
@@ -587,3 +591,9 @@ class PixelArray(VGroup):
     def remove_brackets(self):
         self.remove(self.brackets)
         self.brackets = None
+
+    def add_outline(self, color=DARK_BLUE, stroke_width=4):
+        self.outline = SurroundingRectangle(self.pixel_array, buff=0, fill_opacity=0, color=color, stroke_width=stroke_width)
+        self.set_z_index(1)
+        self.outline.move_to(self[0]).set_z_index(0)
+        self.add_to_back(self.outline)

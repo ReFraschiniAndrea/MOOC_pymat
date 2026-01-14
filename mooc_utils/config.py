@@ -19,6 +19,8 @@ RELEASE_CONFIG = {
    'background_color' : WHITE,
    'pixel_width': 1440,
    'pixel_height': 1080,
+   'frame_height': 8*4/3,
+   'frame_width': 8*16/9,
    'frame_rate': 60
 }
 
@@ -27,6 +29,8 @@ TEST_CONFIG = {
    'background_color' : WHITE,
    'pixel_width': 960,
    'pixel_height': 720,
+   'frame_height': 8*4/3,
+   'frame_width': 8*16/9,
    'frame_rate': 15
 }
 
