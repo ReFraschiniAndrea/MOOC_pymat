@@ -7,6 +7,7 @@ from PIL import Image
 from W5Anim import *
 
 config.update(RELEASE_CONFIG)
+config.max_files_cached = 200
 
 class w5intro(Scene):
     def construct(self):
@@ -295,7 +296,7 @@ class poolscene(Scene):
         self.play(max_result.animate.scale_to_fit_height(ms.pooling_highlight_1.height*0.95).move_to(ms.pooling_highlight_1))
         self.wait(0.5)
         
-        # DO ti a second time
+        # DO it a second time
         ms.conv_pool_gizmo[0].add_updater(
             lambda mob: mob.put_start_and_end_on(
                 ms.conv_highlight_2.get_corner(UL), ms.pooling_highlight_1.get_corner(UL)
@@ -334,42 +335,6 @@ class poolscene(Scene):
 
         ms.conv_pool_gizmo.clear_updaters()
         
-
-class flattening(Scene):
-    def construct(self):
-        digit = np.array(Image.open(r'Assets\W5\mnist8.png'))
-        ms = CNNDigitRecognitionScheme(digit, input_label=8, n_filters=5, pooling_factor=7,
-                                       pixel_size=(1.5/28, 1.5/28, 0.125, 0.125), horizontal_spacing=0.8,
-                                       highlights_kwargs={'color': GOLD, 'stroke_width': 3},
-                                       outline_kwargs={'color': DARK_BLUE, 'stroke_width': 6})
-        ms.save_state()
-        self.add(ms)
-
-        self.play(
-            FadeOut(*[mob for mob in ms.submobjects if mob not in [ms.pooling_layer, ms.flattened_vector]])
-        )
-        flattened_vector = VGroup(ms.flattened_vector.get_pixel_copy(i,0, stroke_width=1) for i in range(len(ms.flattened_)))
-        flattened_vector.add(ms.flattened_vector.outline.copy())
-        self.add(flattened_vector)
-        self.remove(ms.flattened_vector)
-
-        self.play(
-            flattened_vector.animate.rotate(PI/2).stretch_to_fit_width(80*ms.flattened_vector.get_pixel_width()).center().shift(2*UP),
-            ms.pooling_layer.animate.scale(4).arrange(RIGHT, buff=0.5).center().shift(2*DOWN),
-            run_time=2
-        )
-
-        self.play(
-            Succession(
-                AnimationGroup(
-                    *[VGroup(pooled.get_pixel_copy(i, j).rotate(PI/2) for j in range(pooled.im_width)).animate.become(flattened_vector[16*k + 4*i:16*k + 4*i+4])
-                    for i in range(pooled.im_height)],
-                    lag_ratio = 0.25,
-                    run_time=1
-                )
-                for k, pooled in enumerate(ms.pooling_layer)
-            )
-        )
 
 class flattening2(Scene):
     def construct(self):
@@ -445,6 +410,136 @@ class flattening2(Scene):
             )
         )
  
+
+class softmaxexp(Scene):
+    def construct(self):
+        digit = np.array(Image.open(r'Assets\W5\mnist8.png'))
+
+        # Create the full main scheme for later 
+        ms = CNNDigitRecognitionScheme(digit, input_label=8, n_filters=5, pooling_factor=7,
+                                       pixel_size=(1.5/28, 1.5/28, 0.125, 0.125), horizontal_spacing=0.8,
+                                       highlights_kwargs={'color': GOLD, 'stroke_width': 3},
+                                       outline_kwargs={'color': DARK_BLUE, 'stroke_width': 6})
+        dense_lay = VGroup(ms.dense_layer, ms.dense_layer_title, ms.softmax).center()
+        self.add(dense_lay)
+        softmax_title = SlideTitle('Softmax') 
+        softmax_eq = MathTex(r'S(y_i)=\frac{e^{y_i}}{\sum_{j=1}^K e^{y_j}}', color=BLACK)
+        softmax_eq.add(SurroundingRectangle(softmax_eq, stroke_color=DARK_BLUE, fill_color=WHITE, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25))
+        softmax_eq.move_to(TITLED_CENTER)
+        ms.softmax.background_rectangle.set_fill(opacity=0)
+
+        self.play(
+            AnimationGroup(
+                FadeOut(ms.dense_layer, ms.dense_layer_title),
+                AnimationGroup(
+                    ReplacementTransform(ms.softmax.background_rectangle, softmax_eq[1]),
+                    ReplacementTransform(ms.softmax.text, softmax_eq[0]),
+                ),
+                Write(softmax_title),
+                lag_ratio=0.5
+            )
+        )
+
+        output_layer = DigitRecognitionOutputLayer()
+        def softmax(array):
+            exps = np.exp(array)
+            return exps/np.sum(exps)
+        np.random.seed(42)
+        output_values = 5*(2*np.random.random(10)-1)
+        output_values[8] = 4.9
+        softmaxed = softmax(output_values)
+        array_config = {'color':BLUE, 'include_dots':False, 'v_buff':0.4, 'h_buff': 0.3,
+                        'elem_to_mob_class': CustomDecimalNumber,
+                        'elem_to_mob_config': {'num_decimal_places':2, 'font': SANS_SERIF_FONT, 'color':BLACK, 'font_size':28},
+                        'line_config':{'stroke_width':4}}
+        example_probabilities = VectorArray(softmaxed, **array_config).match_height(output_layer)
+        array_config['elem_to_mob_config'].update({'include_sign':True})
+        example_raw_output = VectorArray(output_values, **array_config).match_height(output_layer)
+        raw_output_label = LayerTitle('Raw Output')
+        raw_output_label_tex = MathTex('y_i', color=BLACK).next_to(raw_output_label, DOWN)
+        raw_output_label.add(raw_output_label_tex)
+        probabilities_label = LayerTitle('Probabilities')
+        probabilities_label_tex = MathTex('S(y_i)', color=BLACK).next_to(probabilities_label, DOWN)
+        probabilities_label.add(probabilities_label_tex)
+        # probabilites histogram on the side
+        PROBABILITY_SCALE=2
+        probablities_rects = VGroup(
+            Rectangle(height=output_layer[i].height*0.6, width = PROBABILITY_SCALE*softmaxed[i]/np.max(softmaxed),
+                      color=BLUE, fill_opacity=1
+                      ).next_to(output_layer[i], buff=0.25)
+            for i in range(10)
+        ) 
+        rect_line = Line(UP, DOWN, stroke_width=2, color=DARK_BLUE).match_height(output_layer).next_to(probablities_rects, LEFT, buff=0)
+
+        # Arrange + arrows
+        phony_rect = softmax_eq[1].copy()
+        softmax_exp_scheme = VGroup(example_raw_output, phony_rect, example_probabilities, VGroup(output_layer, probablities_rects, rect_line)).arrange(buff=0.5).move_to(TITLED_CENTER)
+        arrow_config = {'color': DARK_BLUE, 'stroke_width':4, 'max_stroke_width_to_length_ratio': 20, 'buff':0}
+        raw_output_label.next_to(example_raw_output, UP)
+        probabilities_label.next_to(example_probabilities, UP)
+        arrow_1 = Arrow(example_raw_output.get_right(), phony_rect.get_left(), **arrow_config)
+        arrow_2 = Arrow(phony_rect.get_right(), example_probabilities.get_left(), **arrow_config)
+        softmax_exp_scheme.add(raw_output_label, probabilities_label, arrow_1, arrow_2)
+        softmax_exp_scheme.move_to(TITLED_CENTER)
+
+        self.play(
+            Succession(
+                AnimationGroup(
+                    Create(example_raw_output),
+                    FadeIn(raw_output_label),
+                    softmax_eq.animate.move_to(phony_rect)
+                ),
+                Create(arrow_1, run_time=0.5),
+                Create(arrow_2, run_time=0.5),
+                AnimationGroup(
+                    Create(example_probabilities),
+                    FadeIn(probabilities_label),
+                ),
+                FadeIn(output_layer),
+                AnimationGroup(
+                    *[GrowFromEdge(rect, LEFT)
+                    for rect in probablities_rects],
+                )
+            )
+        )
+        self.play(output_layer.Activate(8))
+
+
+class Test(Scene):
+    def construct(self):
+        np.random.seed(0)
+        def scale_pulse(m, alpha):
+            # alpha goes from 0 → 1 during the animation
+            scale = 1 + 0.3 * np.sin(np.pi * alpha)
+            m.scale_to_fit_height(0.2* scale)
+        matrix_config = {'v_buff':0.6, 'h_buff':0.6, 'bracket_h_buff':0.1, 'bracket_v_buff':0.1}
+        initialized_filters = VGroup(
+            Matrix(
+                np.round(7.5*(2*np.random.random((3,3))-1),1),  **matrix_config,
+                element_to_mobject=ValueDisplay, element_to_mobject_config={'include_sign':True, 'font_size':24, 'num_decimal_places':1},
+            ).set_color(BLACK) for i in range(3)
+        ).arrange(RIGHT)
+
+    
+        initialized_weights = VGroup(
+            ValueDisplay(7.5*(2*np.random.random()-1), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}).set_color(BLACK)
+        ).arrange().shift(UP*3)  # align with the \dots (weights_eq[-1] is ',\dots]')
+
+        initialized_biases = VGroup(
+            ValueDisplay(
+                7.5*(2*np.random.random()-1), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}
+            ).set_color(BLACK)
+            for i in range(3)
+        ).arrange().shift(DOWN*3)
+
+        learnable_coeffs = VGroup(*[elem for filter in initialized_filters for elem in filter.elements], *initialized_weights, *initialized_biases)
+        for mob in learnable_coeffs:
+            print(mob)
+
+        
+        self.add(learnable_coeffs)
+        self.play(UpdateLearnableCoefficients(learnable_coeffs, u_range=2))
+
 
 class W5Theory_slides(MOOCSlide):
     def construct(self):
@@ -637,7 +732,7 @@ class W5Theory_slides(MOOCSlide):
             Write(CNN_title),
             FadeIn(
                 *[mob for mob in ms.submobjects if mob not in (
-                    ms.output_layer, ms.output_layer_title, ms.conv_layer_title, ms.pooling_layer_title, ms.dense_layer_title, ms.output_arrow
+                    ms.output_layer, ms.output_layer_title, ms.conv_layer_title, ms.pooling_layer_title, ms.flattening_layer_title, ms.dense_layer_title, ms.output_arrow
                 )]
             )
         )
@@ -654,7 +749,7 @@ class W5Theory_slides(MOOCSlide):
             '''
         )
         highlight_config = {'color': GOLD, 'stroke_width': 4}
-        conv_highlight = ms.get_layer_highlight(0, **highlight_config)
+        conv_highlight = ms.get_layer_highlight('conv', **highlight_config)
         self.play(FadeIn(ms.conv_layer_title), Create(conv_highlight))
 
         # SLIDE 10:  ===========================================================
@@ -666,22 +761,33 @@ class W5Theory_slides(MOOCSlide):
             the image
             '''
         )
-        pool_highlight = ms.get_layer_highlight(1, **highlight_config)
+        pool_highlight = ms.get_layer_highlight('pool', **highlight_config)
         self.play(FadeIn(ms.pooling_layer_title), ReplacementTransform(conv_highlight, pool_highlight))
 
         # SLIDE 11:  ===========================================================
+        # FLATTENING LAYER HIGHLIGHTED AND NAME APPEARS
+        self.next_slide(
+            notes=
+            '''The flattening layer then arranges the data in a long linear
+            vector;
+            '''
+        )
+        flatten_highlight = ms.get_layer_highlight('flat', **highlight_config)
+        self.play(FadeIn(ms.flattening_layer_title), ReplacementTransform(pool_highlight, flatten_highlight))
+
+        # SLIDE 12:  ===========================================================
         # DENSE LAYER HIGHLIGHTED AND NAME APPEARS
         self.next_slide(
             notes=
-            '''A dense neural network completes the classification task by
-            mapping a compressed vector to a category, corresponding to the
+            '''Finally, a dense neural network completes the classification task
+            by mapping the compressed vector to a category, corresponding to the
             predicted digit
             '''
         )
-        dense_highlight = ms.get_layer_highlight(2, **highlight_config)
-        self.play(FadeIn(ms.dense_layer_title), ReplacementTransform(pool_highlight, dense_highlight))
+        dense_highlight = ms.get_layer_highlight('dense', **highlight_config)
+        self.play(FadeIn(ms.dense_layer_title), ReplacementTransform(flatten_highlight, dense_highlight))
 
-        # SLIDE 12:  ===========================================================
+        # SLIDE 13:  ===========================================================
         # FOCUS ON DENSE LAYER
         self.next_slide(
             notes=
@@ -689,32 +795,45 @@ class W5Theory_slides(MOOCSlide):
             from the last one.
             '''
         )
-        # We save the state of the full scheme so that we can go back to it easily
-        dense_layer_vg = Group(ms.dense_layer_title, ms.dense_layer)
+        dense_layer_vg = VGroup(ms.dense_layer_title, ms.dense_layer)
+        full_dense_layer_g = Group(ms.dense_layer_title, ms.dense_layer, ms.softmax)
+        # saved_state = dense_layer_vg.copy()
 
         self.play(
             FadeOut(
                 CNN_title,
                 dense_highlight,
-                *[mob for mob in ms.submobjects if (mob not in dense_layer_vg)]
+                *[mob for mob in ms.submobjects if (mob not in full_dense_layer_g)]
             )
         )
-        self.play(dense_layer_vg.animate.center())
+        self.play(full_dense_layer_g.animate.center())
+        dense_layer_vg.save_state()
 
-        # SLIDE 13:  ===========================================================
+        # SLIDE 14:  ===========================================================
         # HIGHLIGHT NODES OF THE DENSE LAYER
         self.next_slide(
             notes=
             '''A standard dense neural network is made of interconnected nodes.
             '''
         )
+        target = dense_layer_vg.copy()
+        target[0].match_x(target[1])
+        target.set_x(0)
+        self.play(
+            AnimationGroup(
+                FadeOut(ms.softmax),
+                dense_layer_vg.animate.become(target),
+                lag_ratio=0.5
+            )
+        )
+
         VGroup(ms.dense_layer.input_nodes, ms.dense_layer.output_nodes).set_z_index(1)
         self.play(
             ms.dense_layer.EdgePropagationAnimation(color=RED, stroke_width=2, run_time=2.5, lag_ratio=0.01, time_width=0.5)
         )
         VGroup(ms.dense_layer.input_nodes, ms.dense_layer.output_nodes).set_z_index(0)
 
-        # SLIDE 14:  ===========================================================
+        # SLIDE 15:  ===========================================================
         # SCHEME OF A SINGLE NODE APPEARS ON THE RIGHT (SHIFT DENSE LAYER LEFT)
         # INPUT ARROWS AND LABELS APPEAR
         # OUTPUT ARROW AND LABEL APPEAR
@@ -738,15 +857,15 @@ class W5Theory_slides(MOOCSlide):
         substrings = ['y=', r'\sigma', '(', ')', '+', 'b'] + [f'w_{i}' for i in range(3)] + [f'x_{i}' for i in range(3)]
         # NOTE: Putting spaces in the Tex strings makes numbering unreliable due to adding invisible mobjects!
         node_equation_2 = MathTex(r'y=\sigma(w_0x_0+w_1x_1+w_2x_2+b)', color=BLACK, substrings_to_isolate=substrings).next_to(node_scheme_rect, DOWN, buff=0.5)
-        node_equation_1 = MathTex(r'y=w_0x_0+w_1x_1+w_2x_2+b', color=BLACK, substrings_to_isolate=substrings)
-        node_equation_1.shift(node_equation_2[0].get_center()-node_equation_1[0].get_center())
+        # node_equation_1 = MathTex(r'y=\sigma(w_0x_0+w_1x_1+w_2x_2)', color=BLACK, substrings_to_isolate=substrings)
+        # node_equation_1.shift(node_equation_2[0].get_center()-node_equation_1[0].get_center())
 
         self.play(ReplacementTransform(ms.dense_layer.output_nodes[0].copy(), node_scheme.circle))
         self.play(FadeIn(node_scheme_rect, curve_arrow))
         self.play(FadeIn(node_scheme.input_labels, node_scheme.input_arrows))
         self.play(FadeIn(node_scheme.output_label, node_scheme.output_arrow))
 
-        # SLIDE 15:  ===========================================================
+        # SLIDE 16:  ===========================================================
         # WWEIGHT LABELS APPEAR
         # SUM SYMBOL AND BIAS "b" LABEL APPEAR
         # FOMULA FOR Y APPEARS BELOW, HIGHLIGHTING WEIGHTS AND BIAS ACCORDINGLY
@@ -758,10 +877,10 @@ class W5Theory_slides(MOOCSlide):
             '''
         )
         self.play(FadeIn(node_scheme.weight_labels))
-        self.play(FadeIn(node_scheme.sum, node_equation_1[:-2]))
-        self.play(FadeIn(node_scheme.top_middle_arrow, node_scheme.middle_arrow, node_scheme.b, node_equation_1[-2:]))
+        self.play(FadeIn(node_scheme.sum, node_equation_2[:-3], node_equation_2[-1]))
+        self.play(FadeIn(node_scheme.top_middle_arrow, node_scheme.middle_arrow, node_scheme.b, node_equation_2[-3:-1]))
 
-        # SLIDE 16:  ===========================================================
+        # SLIDE 17:  ===========================================================
         # ACTIVATION FUNCTION ILLUSTRATION APPEARS, SIGMA APPEARS IN THE FORMULA
         # SIGMA HIGHLIGHTED IN FORMULA AND SCHEME
         self.next_slide(
@@ -772,10 +891,10 @@ class W5Theory_slides(MOOCSlide):
             '''
         )
         self.play(FadeIn(node_scheme.activation_function))
-        self.play(TransformMatchingTex(node_equation_1, node_equation_2))
+        # self.play(TransformMatchingTex(node_equation_1, node_equation_2))
         
-        # SLIDE 17:  ===========================================================
-        # HIGHLIGHT WEIGTHS AND BIASES IN FORMULA
+        # SLIDE 18:  ===========================================================
+        # HIGHLIGHT WEIGHTS AND BIASES IN FORMULA
         self.next_slide(
             notes=
             '''The choice of the adjustable coefficients is crucial, and it
@@ -793,7 +912,7 @@ class W5Theory_slides(MOOCSlide):
         self.play(FadeIn(weights_highlight, weights_label))
         self.play(FadeIn(bias_highlight, bias_label))
         
-        # SLIDE 18:  ===========================================================
+        # SLIDE 19:  ===========================================================
         # DENSE LAYER NODE SCHEME DISAPPEARS
         # MATHEMATICAL INTERPRETATION OF NN IS WRITTEN
         # CHANGE NODES AND PARAMETERS TO MATCHING COLORS
@@ -810,32 +929,171 @@ class W5Theory_slides(MOOCSlide):
         
         # Explanation of adjustable coefficients
         NN_equation = MathTex(r'\mathbf{y} = \mathcal{NN}(\mathbf{x}; \mathbf{W}, \mathbf{b})', color=BLACK, font_size=48)
-        adjustable_coeff_t =  LayerTitle('Adjustable coefficients:')
+        adjustable_coeff_t =  LayerTitle('Learnable coefficients:')
         weights_eq = MathTex(r'\mathbf{W} = [w_0,w_1,w_2,w_0,w_1,w_2,w_0,w_1,w_2,\dots]', color=BLACK, font_size=48, substrings_to_isolate=[f'w_{i}' for i in range(3)])
         bias_eq = MathTex(r'\mathbf{b} = [b,b,b,\dots]', color=BLACK, font_size=48) # isolating 'b' breaks here
         
         adj_coeff_expl = VGroup(NN_equation, adjustable_coeff_t, weights_eq, bias_eq).arrange(DOWN, buff=0.8).shift(RIGHT*1.5)
         adj_coeff_rect = SurroundingRectangle(adj_coeff_expl, stroke_color=GOLD, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25)
-        ms.flattened_vector.next_to(ms.dense_layer, LEFT, buff=0.25)
-        flattened_vector_highlight = SurroundingRectangle(ms.flattened_vector, buff=0.15, color=BLUE, stroke_width=4, corner_radius = 0.075)
-        nn_x_highlight = HighlightRectangle(NN_equation[0][5])
-        node_colors = [RED, ManimColor("#83C167"), ORANGE]
         
+        wees = weights_eq[1:1+3*3*2:2] # 3 groups of 3 weights each
+        bees: VGroup = bias_eq[0][3:8:2]
+        node_colors = [RED, ManimColor("#83C167"), ORANGE]
+        node_scale_factor = 1.1
         self.play(FadeIn(adj_coeff_expl, adj_coeff_rect))
         self.play(
-            Succession(
-                FadeIn(ms.flattened_vector),
-                AnimationGroup(Create(flattened_vector_highlight), Create(nn_x_highlight)),
-                *[AnimationGroup(
-                    ms.dense_layer.output_nodes[i].animate.set_color(node_colors[i]),
-                    weights_eq[1+6*i:1+6*(i+1):2].animate.set_color(node_colors[i]),
-                    bias_eq[0][3+i*2].animate.set_color(node_colors[i])
+            Succession(*[
+                AnimationGroup(
+                    ms.dense_layer.output_nodes[i].animate.set_color(node_colors[i]).scale(node_scale_factor),
+                    *[
+                        weight.animate.set_color(node_colors[i]).scale(node_scale_factor)
+                        for weight in wees[3*i:3*(i+1)]
+                    ],
+                    bees[i].animate.set_color(node_colors[i]).scale(node_scale_factor)
                 )
                 for i in range(3)]
             )
         )
 
-        # SLIDE 19:  ===========================================================
+        # SLIDE 20:  ===========================================================
+        # DENSE LAYER GOES BACK TO CENTER, SOFTMAX REAPPEARS
+        # SOFTMAX IS EXPANDED TO FORMULA
+        self.next_slide(
+            notes=
+            '''The raw output of the dense layer is then processed by the
+            softmax function. What is it?
+            '''
+        )
+        self.play(
+            AnimationGroup(
+                FadeOut(adj_coeff_expl, adj_coeff_rect),
+                dense_layer_vg.animate.restore(),
+                FadeIn(ms.softmax),
+                lag_ratio=0.5
+            )
+        )
+
+        softmax_title = SlideTitle('Softmax') 
+        softmax_eq = MathTex(r'S(y_i)=\frac{e^{y_i}}{\sum_{j=1}^K e^{y_j}}', color=BLACK)
+        softmax_eq.add(SurroundingRectangle(softmax_eq, stroke_color=DARK_BLUE, fill_color=WHITE, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25))
+        softmax_eq.move_to(TITLED_CENTER)
+        ms.softmax.background_rectangle.set_fill(opacity=0)
+
+        self.play(
+            AnimationGroup(
+                FadeOut(ms.dense_layer, ms.dense_layer_title),
+                AnimationGroup(
+                    ReplacementTransform(ms.softmax.background_rectangle, softmax_eq[1]),
+                    ReplacementTransform(ms.softmax.text, softmax_eq[0]),
+                ),
+                Write(softmax_title),
+                lag_ratio=0.5
+            )
+        )
+
+        # SLIDE 21:  ===========================================================
+        # SOFTMAX EXPLANATION
+        self.next_slide(
+            notes=
+            '''The SoftMax function is used for multi-class classification. It
+            converts the raw output scores of the network into a probability
+            distribution over the possible classes.
+            '''
+        )
+        output_layer = DigitRecognitionOutputLayer()
+        # Create the two array wit raw values and probabilities
+        def softmax(array):
+            exps = np.exp(array)
+            return exps/np.sum(exps)
+        np.random.seed(42)
+        output_values = 5*(2*np.random.random(10)-1)
+        output_values[8] = 4.9
+        softmaxed = softmax(output_values)
+        array_config = {'color':BLUE, 'include_dots':False, 'v_buff':0.4, 'h_buff': 0.3,
+                        'elem_to_mob_class': CustomDecimalNumber,
+                        'elem_to_mob_config': {'num_decimal_places':2, 'font': SANS_SERIF_FONT, 'color': BLACK, 'font_size':28},
+                        'line_config':{'stroke_width':4}}
+        
+        example_probabilities = VectorArray(softmaxed, **array_config).match_height(output_layer)
+        array_config['elem_to_mob_config'].update({'include_sign':True})
+        example_raw_output = VectorArray(output_values, **array_config).match_height(output_layer)
+        raw_output_label = LayerTitle('Raw Output')
+        raw_output_label_tex = MathTex('y_i', color=BLACK).next_to(raw_output_label, DOWN)
+        raw_output_label.add(raw_output_label_tex)
+        probabilities_label = LayerTitle('Probabilities')
+        probabilities_label_tex = MathTex('S(y_i)', color=BLACK).next_to(probabilities_label, DOWN)
+        probabilities_label.add(probabilities_label_tex)
+
+        # probabilites histogram on the side of the output layer
+        PROBABILITY_SCALE=2
+        probablities_rects = VGroup(
+            Rectangle(height=output_layer[i].height*0.6, width = PROBABILITY_SCALE*softmaxed[i]/np.max(softmaxed),
+                      color=BLUE, fill_opacity=1
+                      ).next_to(output_layer[i], buff=0.25)
+            for i in range(10)
+        ) 
+        rect_line = Line(UP, DOWN, stroke_width=2, color=DARK_BLUE).match_height(output_layer).next_to(probablities_rects, LEFT, buff=0)
+
+        # Arrange + arrows
+        phony_rect = softmax_eq[1].copy()
+        softmax_exp_scheme = VGroup(example_raw_output, phony_rect, example_probabilities, VGroup(output_layer, probablities_rects, rect_line)).arrange(buff=0.5).move_to(TITLED_CENTER)
+        arrow_config = {'color': DARK_BLUE, 'stroke_width':4, 'max_stroke_width_to_length_ratio': 20, 'buff':0}
+        raw_output_label.next_to(example_raw_output, UP)
+        probabilities_label.next_to(example_probabilities, UP)
+        arrow_1 = Arrow(example_raw_output.get_right(), phony_rect.get_left(), **arrow_config)
+        arrow_2 = Arrow(phony_rect.get_right(), example_probabilities.get_left(), **arrow_config)
+        softmax_exp_scheme.add(raw_output_label, probabilities_label, arrow_1, arrow_2)
+        softmax_exp_scheme.move_to(TITLED_CENTER)
+
+        self.play(
+            Succession(
+                AnimationGroup(
+                    Create(example_raw_output),
+                    FadeIn(raw_output_label),
+                    softmax_eq.animate.move_to(phony_rect)
+                ),
+                Create(arrow_1, run_time=0.5),
+                Create(arrow_2, run_time=0.5),
+                AnimationGroup(
+                    Create(example_probabilities),
+                    FadeIn(probabilities_label),
+                ),
+                FadeIn(output_layer),
+                AnimationGroup(
+                    *[GrowFromEdge(rect, LEFT)
+                    for rect in probablities_rects],
+                )
+            )
+        )
+        self.play(output_layer.Activate(8))
+
+        # SLIDE 22:  ===========================================================
+        # DENSE LAYER + SOFTMAX + OUTPUT LAYER APPEAR
+        # FLATTENED LAYER APPEARS AND HIS HIGHLIGHTED
+        self.next_slide(
+            notes=
+            '''Now let's see how the dense layer input vector is constructed.
+            '''
+        )
+        ms.restore()
+        ms.output_layer.activate(8)
+        flat_to_end_g = Group(ms.flattened_vector, ms.dense_layer, ms.softmax, ms.dense_layer, ms.output_arrow, ms.dense_layer_title, ms.output_layer)
+        flat_to_end_g.center()
+        self.play(
+            FadeOut(*[mob for mob in self.mobjects if mob not in [output_layer]]),
+            ReplacementTransform(output_layer, ms.output_layer))
+        self.play(FadeIn(flat_to_end_g[1:-1]))
+
+        # flat_to_end_g.center()
+        flattened_vector_highlight = SurroundingRectangle(ms.flattened_vector, buff=0.25, color=BLUE, stroke_width=4, corner_radius = 0.075)
+        self.play(
+            Succession(
+                FadeIn(ms.flattened_vector),
+                Create(flattened_vector_highlight)
+            )
+        )
+
+        # SLIDE 23:  ===========================================================
         # FULL DIGIT RECOGNITION SCHEME REAPPEARS, CONVOLUTIONAL LAYER HIGHLIGHT
         self.next_slide(
             notes=
@@ -845,23 +1103,22 @@ class W5Theory_slides(MOOCSlide):
             with a filter.
             '''
         )
-        dense_layer_vg.add(ms.flattened_vector)
         for mob in ms.submobjects:
-            if (mob not in dense_layer_vg): mob.restore();
-        ms.output_layer.activate(8)
-        conv_highlight = ms.get_layer_highlight(0, **highlight_config)
+            if (mob not in flat_to_end_g): mob.restore();
+        ms.output_layer.saved_state.activate(8)  # instead of saving the full scheme again, hack the current saved copy
+        conv_highlight = ms.get_layer_highlight('conv', **highlight_config)
 
         self.play(
             AnimationGroup(
-                FadeOut(adj_coeff_expl, adj_coeff_rect, flattened_vector_highlight, nn_x_highlight),
-                AnimationGroup(mob.animate.restore() for mob in dense_layer_vg),
-                FadeIn(*[mob for mob in ms.submobjects if mob not in dense_layer_vg]),
+                FadeOut(flattened_vector_highlight),
+                AnimationGroup(mob.animate.restore() for mob in flat_to_end_g),
+                FadeIn(*[mob for mob in ms.submobjects if mob not in flat_to_end_g]),
                 lag_ratio=0.5
             )
         )
         self.play(Create(conv_highlight))
     
-        # SLIDE 20:  ===========================================================
+        # SLIDE 24:  ===========================================================
         # FOCUS ON INPUT AND CONVOLUTION LAYER WHILE ADDING A 3X3 KERNEL
         self.next_slide(
             notes=
@@ -905,7 +1162,7 @@ class W5Theory_slides(MOOCSlide):
             Succession(Wait(1),  Create(new_giz2,lag_ratio=0,run_time=0.5)),
         )
 
-        # SLIDE 21:  ===========================================================
+        # SLIDE 25:  ===========================================================
         # GRID WITH: INPUT * KERNEL = RESULT IS CREATED, WITH THE EXAMPLE RESULT
         # BECOMING THE FIRST ROW
         self.next_slide(
@@ -942,7 +1199,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 22:  ===========================================================
+        # SLIDE 26:  ===========================================================
         # LIST ADJUSTABLE FILTER COEFFICIENTS
         self.next_slide(
             notes=
@@ -965,10 +1222,10 @@ class W5Theory_slides(MOOCSlide):
             buff=0.5, corner_radius = 0.25,
             color=GOLD, stroke_width=4, fill_opacity=0
         )
-        adj = LayerTitle('Adjustable Coefficients').next_to(kernels_highlight, UP)
+        adj = LayerTitle('Learnable Coefficients').next_to(kernels_highlight, UP)
         self.play(Create(kernels_highlight), FadeIn(adj))
 
-        # SLIDE 23:  ===========================================================
+        # SLIDE 27:  ===========================================================
         # FULL DIGIT RECOGNITION SCHEME REAPPEARS, POOLING LAYER HIGHLIGHT
         self.next_slide(
             notes=
@@ -977,7 +1234,8 @@ class W5Theory_slides(MOOCSlide):
             '''
         )
         ms.restore()
-        pool_highlight = ms.get_layer_highlight(1)
+        pool_highlight = ms.get_layer_highlight('pool', **highlight_config)
+
         self.play(
             Succession(
                 FadeOut(kernels_highlight, adj, kernels),
@@ -986,7 +1244,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 24:  ===========================================================
+        # SLIDE 28:  ===========================================================
         # MAX POOLING TITLE APPEARS
         self.next_slide(
             notes=
@@ -1010,7 +1268,7 @@ class W5Theory_slides(MOOCSlide):
         )
         self.play(Write(max_pooling_title))
 
-        # SLIDE 25:  ===========================================================
+        # SLIDE 29:  ===========================================================
         # 3X3 OF THE CONVOLUTION OUTPUT SI EXTRACTED, GRAYSCALE VALUES APPEAR
         # MAX()=ENCLOSES THE 3X3
         # THE MAXIMUM  IS HIGHLIGHTED AND "COPIED" TO THE SIDE AND TO THE RESULT
@@ -1026,7 +1284,12 @@ class W5Theory_slides(MOOCSlide):
         to_pool.match_height(ms.conv_highlight_2).move_to(ms.conv_highlight_2)
         to_pool.add_pixel_values(color=SATURATED_RED)
         to_pool.set_z_index(ms.conv_highlight_2.z_index + 1)
+        grid_factor_highlight = VGroup(
+            ms.conv_highlight_2.copy() for _ in range(16)
+        ).set_stroke(WHITE, 3).arrange_in_grid(4,4, buff=0).move_to(pooling_example_g[0]).set_z_index(pooling_example_g[0].z_index + 0.5)
+        pooling_example_g.add(grid_factor_highlight)
         
+        self.play(Create(grid_factor_highlight, run_time=0.5))
         self.play(Create(to_pool.pixel_array), Create(to_pool.pixel_values))
         self.play(
             pooling_example_g.animate.next_to(max_pooling_title, DOWN, buff=0.5),
@@ -1060,7 +1323,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
         
-        # SLIDE 26:  ===========================================================
+        # SLIDE 30:  ===========================================================
         # MAX POOLING A SECOND TIME
         self.next_slide(
             notes=
@@ -1108,17 +1371,17 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 27:  ===========================================================
+        # SLIDE 31:  ===========================================================
         # HIGHLIGHT POOLING OUTPUT MATRICES IN FULL SCHEME
         self.next_slide(
             notes=
-            '''This layer still produces compressed matrices, one for each
-            filter.
+            '''This layer produces smaller matrices, one for each filter.
             '''
         )
         ms.conv_pool_gizmo.clear_updaters()
+        pooling_example_g.remove(grid_factor_highlight)
         self.play(
-           FadeOut(max_pooling_title, to_pool.brackets, max_label, equal_label, to_pool_2, max_result),
+           FadeOut(max_pooling_title, to_pool.brackets, max_label, equal_label, to_pool_2, max_result, grid_factor_highlight),
            AnimationGroup(Wait(0.5), AnimationGroup(mob.animate.restore() for mob in pooling_example_g), lag_ratio=1),
            AnimationGroup(Wait(1), FadeIn(*[mob for mob in ms.submobjects if mob not in (*pooling_example_g, ms.conv_layer, ms.pooling_layer)], ms.conv_layer[1:], ms.pooling_layer[1:]), lag_ratio=1),
         )
@@ -1126,8 +1389,8 @@ class W5Theory_slides(MOOCSlide):
         pooled_matrices_highlight = SurroundingRectangle(ms.pooling_layer, color=GOLD, stroke_width=4, buff=0.5, corner_radius = 0.25)
         self.play(Create(pooled_matrices_highlight))
 
-        # SLIDE 28:  ===========================================================
-        # 
+        # SLIDE 32:  ===========================================================
+        # POOLED MATRICES ARE EXTRACTED, FLATTENING TITLE APPEARS
         self.next_slide(
             notes=
             '''Finally we need to map the matrices resulting from max pooling
@@ -1145,8 +1408,8 @@ class W5Theory_slides(MOOCSlide):
         )
         self.add(pooled_PA)
         
-        # SLIDE 29:  ===========================================================
-        # 
+        # SLIDE 33:  ===========================================================
+        # CREATE BRACES WITH MATRIX DIMENSIONS
         self.next_slide(
             notes=
             ''' In the example, flattening simply takes all the entries from the
@@ -1166,21 +1429,20 @@ class W5Theory_slides(MOOCSlide):
 
         self.play(
             Succession(
+                FadeIn(brace_length, l),
+                Wait(0.5),
                 FadeIn(brace_width, w),
                 FadeIn(brace_height, h),
-                Wait(0.5),
-                FadeIn(brace_length, l),
             )
         )
 
-        # SLIDE 30:  ===========================================================
+        # SLIDE 34:  ===========================================================
         # REMOVE BRACES WITH MATRIX DIMENSIONS
         # MATRICES ARE FLATTENED AND CONCATENATED
-        # 
         self.next_slide(
             notes=
             '''..., resulting from max pooling and lines them in a vector of
-            length 5x16=80.
+            length 5x16=80, which is the dense layer input.
             '''
         )
         self.play(
@@ -1205,8 +1467,8 @@ class W5Theory_slides(MOOCSlide):
         self.play(Create(pooled_PA_outline), FadeIn(brace_tot, tot))
         pooled_PA.add(pooled_PA_outline)
 
-        # SLIDE 31:  ===========================================================
-        # RETURN TO CNN SCHEME, PUTTING FLATTENED VECTOR IN CORRRECT POSITION
+        # SLIDE 35:  ===========================================================
+        # RETURN TO CNN SCHEME, PUTTING FLATTENED VECTOR IN CORRECT POSITION
         self.next_slide(
             notes=
             '''Now that we have examined each layer of the convolutional neural
@@ -1216,7 +1478,6 @@ class W5Theory_slides(MOOCSlide):
         )
         ms.restore()
         ms.move_to(TITLED_CENTER)
-        ms.output_layer.activate(8)
 
         self.play(
             AnimationGroup(
@@ -1227,7 +1488,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 32:  ===========================================================
+        # SLIDE 36:  ===========================================================
         # SCHEME OF ALL CNN ADJUSTABLE COEFFICIENTS SHOWN
         self.next_slide(
             notes=
@@ -1240,16 +1501,16 @@ class W5Theory_slides(MOOCSlide):
         self.clear()
 
         # Create the scheme with the adjustable coefficients
-        CNN_t =  LayerTitle('Convolutional Neural Network')
-        adjustable_coeff_t =  Text(' Adjustable coefficients:', font=SANS_SERIF_FONT, font_size=32, color=BLACK)
+        # CNN_t =  LayerTitle('Convolutional Neural Network')
+        adjustable_coeff_t =  Text('Learnable coefficients:', font=SANS_SERIF_FONT, weight=BOLD, font_size=32, color=BLACK)
         filter_entries_t = Text('Filter entries:', font=SANS_SERIF_FONT, font_size=28, color=BLACK)
-        weights_and_biases_t =  Text('Weights and biases of the dense NN:', font=SANS_SERIF_FONT, font_size=28, color=BLACK)
+        weights_and_biases_t =  Text('Weights and biases of the dense layer:', font=SANS_SERIF_FONT, font_size=28, color=BLACK)
 
         # Filter entries
         node_colors = [RED, GREEN, ORANGE]
         matrix_config = {'v_buff':0.6, 'h_buff':0.6, 'bracket_h_buff':0.1, 'bracket_v_buff':0.1}
         filter_matrix = Matrix([[f'l_{3*i +j}' for j in range(3)] for i in range(3)], color=BLACK, **matrix_config)
-        filters = VGroup(filter_matrix.copy().set_color(c) for c in node_colors)
+        filters: VGroup[Matrix] = VGroup(filter_matrix.copy().set_color(c) for c in node_colors)
         filters.add(MathTex(r'\dots', color=BLACK, font_size=48))
         filters.arrange(RIGHT, buff=0.5)
 
@@ -1261,19 +1522,20 @@ class W5Theory_slides(MOOCSlide):
                           substrings_to_isolate=substr_bias_eq)  # isolating 'b' breaks here
         
         # Arrange vertically
-        VGroup(CNN_t, adjustable_coeff_t, filter_entries_t).arrange(DOWN, buff=0.5)
+        # VGroup(CNN_t, adjustable_coeff_t, filter_entries_t).arrange(DOWN, buff=0.5)
         filters.next_to(filter_entries_t, DOWN, buff=0.3)
         weights_and_biases_t.next_to(filters, DOWN, buff=0.5)
         VGroup(weights_eq, bias_eq).arrange(DOWN, buff=0.5).next_to(weights_and_biases_t, DOWN, buff=0.25)
 
         # Add surrounding rectangle
-        CNN_coeff = VGroup(CNN_t,adjustable_coeff_t, filter_entries_t, filters, weights_and_biases_t, weights_eq, bias_eq).center()
-        CNN_coeff_rect = SurroundingRectangle(CNN_coeff, stroke_color=GOLD, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25)
+        CNN_coeff = VGroup(adjustable_coeff_t, filter_entries_t, filters, weights_and_biases_t, weights_eq, bias_eq).center()
+        CNN_coeff_rect = SurroundingRectangle(CNN_coeff, stroke_color=BLUE, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25)
+        adjustable_coeff_t.next_to(CNN_coeff_rect, UP, buff=0.5)
         CNN_coeff.add(CNN_coeff_rect)
 
         self.play(FadeIn(CNN_coeff))
 
-        # SLIDE 33:  ===========================================================
+        # SLIDE 37:  ===========================================================
         # TRAINING TITLE APPEARS
         self.next_slide(
             notes=
@@ -1294,7 +1556,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 34:  ===========================================================
+        # SLIDE 38:  ===========================================================
         # EXAMPLES OF LABELED IMAGES SHOWN
         self.next_slide(
             notes=
@@ -1317,22 +1579,22 @@ class W5Theory_slides(MOOCSlide):
 
         self.play(FadeIn(training_data))
         
-        # SLIDE 35:  ===========================================================
+        # SLIDE 39:  ===========================================================
         # 1. INITIALIZATION TITLES APPEARS
         # FILTERS, WEIGHTS AND BIASES ARE SUBSTITUTED BY RANDOM VALUES
         self.next_slide(
             notes=
             '''Step 1 is initialization. We assign random values to the
-            parameters to the neural network. This produces a first prediction.
+            parameters of the neural network.
             '''
         )
         self.play(FadeOut(training_title, training_data))
         initialization_title = SlideTitle('1. Initialization')
 
-        # Remake the adjustable coefficients schem removing some parts for space
-        CNN_coeff_remix = CNN_coeff[2:-1]
-        CNN_coeff_remix.add(SurroundingRectangle(CNN_coeff_remix, stroke_color=GOLD, stroke_width=4, fill_opacity=0, buff=0.3, corner_radius=0.25))
-        CNN_coeff_remix.align_to(CNN_coeff_rect, UP)
+        # Remake the adjustable coefficients scheme removing some parts for space
+        CNN_coeff_remix = VGroup(filter_entries_t, filters, weights_and_biases_t, weights_eq, bias_eq)
+        CNN_coeff_remix.add(SurroundingRectangle(CNN_coeff_remix, stroke_color=BLUE, stroke_width=4, fill_opacity=0, buff=0.3, corner_radius=0.25))
+        CNN_coeff_remix.move_to(TITLED_CENTER)
 
         # ARROWS CONFIG
         line_config = {'color': DARK_BLUE, 'stroke_width':4}
@@ -1340,19 +1602,24 @@ class W5Theory_slides(MOOCSlide):
 
         # Create random initial values
         np.random.seed(0)
+        def init_function(shape=None):
+            return np.round(7.5*(2*np.random.random(shape)-1),1)
         value_display_config = {'include_sign':True, 'font_size':28, 'num_decimal_places':1}
         initialized_filters = VGroup(
             Matrix(
-                7.5*(2*np.random.random((3,3))-1),  **matrix_config,
+                init_function((3,3)),  **matrix_config,
                 element_to_mobject=ValueDisplay, element_to_mobject_config={'include_sign':True, 'font_size':24, 'num_decimal_places':1},
             ).set_color(node_colors[i]).move_to(filters[i]) for i in range(3)
         )
+        for filter in initialized_filters:
+            filter.remove(filter.brackets)
+
         initialized_weights = VGroup(
-            ValueDisplay(7.5*(2*np.random.random()-1), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}).set_color(BLACK).move_to(w)
+            ValueDisplay(init_function(), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}).set_color(BLACK).move_to(w)
             for w in weights_eq[1:19:2]
         ).align_to(weights_eq[-1][1], DOWN)  # align with the \dots (weights_eq[-1] is ',\dots]')
 
-        # For the biases we need more space; this requires much more work by creatina target "empty" expression
+        # For the biases we need more space; this requires much more work by creating a target "empty" expression
         bees = bias_eq[3:8:2]
         not_bees = VGroup(*bias_eq[:3], *bias_eq[4:9:2], *bias_eq[-2:])
         blank_space = r'\hspace{0.5cm}'
@@ -1360,21 +1627,31 @@ class W5Theory_slides(MOOCSlide):
                        substrings_to_isolate=substr_bias_eq).move_to(bias_eq)
         initialized_biases = VGroup(
             ValueDisplay(
-                7.5*(2*np.random.random()-1), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}
+                init_function(), **{'include_sign':True, 'font_size':28, 'num_decimal_places':1}
             ).set_color(BLACK).match_x(beq2[2+2*i:3+2*(i+1):2])
             for i in range(3)
         ).align_to(beq2[-2], DOWN)
 
-        initialized_filters.suspend_updating()  # otherwise the transform does not work
-        initialized_weights.suspend_updating()
-        initialized_biases.suspend_updating()
+        learnable_coeffs = VGroup(*[elem for filter in initialized_filters for elem in filter.elements], *initialized_weights, *initialized_biases)
+        learnable_coeffs.suspend_updating()  # otherwise the transform does not work
 
-        self.play(FadeIn(CNN_coeff_remix), Write(initialization_title))
-        self.play(ReplacementTransform(filters[i].elements, initialized_filters[i].elements) for i in range(3))
-        self.play(ReplacementTransform(w, wi) for w, wi in zip(weights_eq[1:19:2], initialized_weights))
+        self.play(
+            Succession(
+                FadeIn(CNN_coeff_remix), Write(initialization_title),
+                Wait(0.2),
+                AnimationGroup(
+                    ReplacementTransform(filters[i].elements, initialized_filters[i].elements) for i in range(3)
+                ),
+                Wait(0.3),
+                AnimationGroup(
+                    ReplacementTransform(w, wi) for w, wi in zip(weights_eq[1:19:2], initialized_weights)
+                ),
+                Wait(0.3),
+            )
+        )
         self.play(TransformMatchingShapes(not_bees, beq2), ReplacementTransform(bees, initialized_biases))
 
-        # SLIDE 36:  ===========================================================
+        # SLIDE 40:  ===========================================================
         # 2. FORWARD PROPAGATION TITLE
         # INPUT DATA APPEARS, THEN ARROW FROM IT TO CENTRAL SCHEME
         # OUTPUT LAYER APPEARS, THEN ARROW TO THE PREDICTION
@@ -1391,15 +1668,25 @@ class W5Theory_slides(MOOCSlide):
         forward_input = ms.input.copy().scale_to_fit_height(0.1*FRAME_HEIGHT).next_to(CNN_coeff_remix, LEFT)
         forward_input.set_x((-FRAME_WIDTH/2 + CNN_coeff_remix.get_left()[0])/2)  # middle point
         input_label =  LayerTitle('Input').next_to(forward_input, UP, buff=0.3)
-        input_arrow = Arrow(forward_input.get_right(), CNN_coeff_remix.get_left(), buff=0, max_stroke_width_to_length_ratio=20, **line_config)
 
-        output_layer = DigitRecognitionOutputLayer().next_to(CNN_coeff_remix, RIGHT)
-        output_layer.set_x((+FRAME_WIDTH/2 + CNN_coeff_remix.get_right()[0])/2).shift(DOWN*2)  # middle point
+        output_layer = DigitRecognitionOutputLayer().set_y(TITLED_CENTER[1]).shift(DOWN*0.7)
+        output_layer.set_x((+FRAME_WIDTH/2 + CNN_coeff_remix.get_right()[0])/2)  # middle point
         output_layer.save_state()
         output_label = LayerTitle('Output').next_to(output_layer, UP, buff=0.3)
-        output_arrow = BrokenArrow(CNN_coeff_remix.get_right(), output_layer[6].get_left(), **broken_arrow_config,
-                                   n_turns=2, first_direction='h')
-        output_arrow.add_tip(input_arrow.tip.copy())
+
+        # Start Creating the arrows
+        input_arrow = Arrow(forward_input.get_right(), CNN_coeff_remix.get_left(), buff=0, max_stroke_width_to_length_ratio=20, **line_config)
+        
+        def make_output_arrow(digit: int, start=None):
+            start = CNN_coeff_remix.get_right() if start is None else start
+            arr = BrokenArrow(start, output_layer[digit].circle.point_at_angle(3/4*PI), 
+                              n_turns=2, first_direction='h', **broken_arrow_config)
+            arr.keypoints[2] += UP*(arr.keypoints[3][0]-arr.keypoints[2][0])
+            arr.set_points_as_corners(arr.keypoints)
+            arr.add_tip(input_arrow.tip.copy())
+            return arr
+
+        output_arrow = make_output_arrow(6)
 
         self.play(
             Succession(
@@ -1411,7 +1698,7 @@ class W5Theory_slides(MOOCSlide):
         )
         self.play(output_layer.Activate(6))
 
-        # SLIDE 37:  ===========================================================
+        # SLIDE 41:  ===========================================================
         # 2. LOSS COMPUTATION TITLE
         # GROUND TRUTH AND LOSS SYMBOL APPEAR
         # ARROWS FROM PREDICTION AND GROUND TRUTH TO LOSS APPEAR
@@ -1422,28 +1709,45 @@ class W5Theory_slides(MOOCSlide):
             '''
         )
         self.play(FadeOut(forward_prop_title))
+
         loss_title = SlideTitle('3. Loss Computation')
-        self.play(Write(loss_title))
+        shift_into_place =  (loss_title.get_bottom() - CNN_coeff_remix.get_top() - 0.25)[1]*UP
+        target_output_arrow = make_output_arrow(6, start=CNN_coeff_remix.get_right() +shift_into_place)
+        CNN_coeff_remix.remove(bias_eq).add(beq2, initialized_biases)  # update the scheme to have the new equation
+        self.play(
+            Write(loss_title),
+            Group(forward_input, input_label, input_arrow, CNN_coeff_remix).animate.shift(shift_into_place),
+            output_arrow.animate.become(target_output_arrow)
+            )
         
         # loss function and its gradient
         loss_symbol = MathTex(r'\mathcal{L}', color=BLACK, font_size=64)
         square_ = Square(side_length=loss_symbol.height + 0.6, stroke_color=PURPLE, stroke_width=4, fill_opacity=0)
         loss_symbol.add_to_back(square_.move_to(loss_symbol))
-        loss_symbol.next_to(CNN_coeff_remix, DOWN, buff=1.8)
-        output_loss_arrow = BrokenArrow(output_arrow.keypoints[2], loss_symbol.get_right(), **broken_arrow_config,
-                                        n_turns=1, first_direction='v')
-        output_loss_arrow.add_tip(input_arrow.tip.copy())
-
         gradient_loss_symbol = MathTex(r'\nabla \mathcal{L}', color=BLACK, font_size=64)
         gradient_loss_symbol.add_to_back(square_.copy().move_to(gradient_loss_symbol))
-        gradient_loss_symbol.next_to(loss_symbol, UP, buff=0.4)
+        VGroup(gradient_loss_symbol, loss_symbol).arrange(DOWN, buff=0.3).next_to(CNN_coeff_remix, DOWN, buff=0.3)
+
+        def make_output_loss_arrow(digit: int):
+            arr = BrokenArrow(output_layer[digit].circle.point_at_angle(5/4*PI), loss_symbol.get_right(),
+                              n_turns=2, first_direction='h', **broken_arrow_config)
+            target_x = output_arrow.keypoints[1][0]
+            for i in range(1,3):
+                arr.keypoints[i][0] = target_x
+            arr.keypoints[1] += DOWN*(arr.keypoints[0][0]-arr.keypoints[1][0])
+            arr.set_points_as_corners(arr.keypoints)
+            arr.add_tip(input_arrow.tip.copy())
+            return arr
+        
+        output_loss_arrow = make_output_loss_arrow(6)
+
         loss_to_gradient_arrow = Line(loss_symbol.get_top(), gradient_loss_symbol.get_bottom(), **line_config)
         loss_to_gradient_arrow.add_tip(input_arrow.tip.copy())
         
         # Ground truth of the input
         ground_truth = DigitRecognitionOutputCircle(8, **ground_truth_config).next_to(forward_input, DOWN, buff=3.5)
         ground_truth_label = Paragraph('Ground\ntruth', color=BLACK, font=SANS_SERIF_FONT, font_size=32, weight=BOLD, alignment='center'
-                                       ).next_to(ground_truth, UP, buff=0.3)
+                                       ).scale(0.8).next_to(ground_truth, UP, buff=0.3)
         ground_truth_loss_arrow = BrokenArrow(ground_truth.get_bottom(), loss_symbol.get_left(), **broken_arrow_config,
                                               n_turns=1, first_direction='v')
         ground_truth_loss_arrow.add_tip(input_arrow.tip.copy())
@@ -1456,7 +1760,7 @@ class W5Theory_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 38:  ===========================================================
+        # SLIDE 42:  ===========================================================
         # 4. BACKPROPAGATION TITLE
         # LOSS GRADIENT SYMBOL APPEARS AND ARROW TO IT FROM LOSS
         self.next_slide(
@@ -1473,7 +1777,7 @@ class W5Theory_slides(MOOCSlide):
         self.play(FadeIn(gradient_loss_symbol))
         self.play(Create(loss_to_gradient_arrow))
         
-        # SLIDE 39:  ===========================================================
+        # SLIDE 43:  ===========================================================
         # 5. UPDATE TITLE
         # ARROW FROM LOSS GRADIENT TO MAIN SCHEME
         # ADJUSTABLE COEFFICIENTS ARE MODIFIED
@@ -1490,32 +1794,17 @@ class W5Theory_slides(MOOCSlide):
 
         update_arrow = Line(gradient_loss_symbol.get_top(), CNN_coeff_remix.get_bottom(), **line_config)
         update_arrow.add_tip(input_arrow.tip.copy())
-        new_output_arrow = BrokenArrow(CNN_coeff_remix.get_right(), output_layer[8].get_left(), **broken_arrow_config,
-                                       n_turns=2, first_direction='h')
-        new_output_arrow.add_tip(input_arrow.tip.copy())
 
         self.play(Create(update_arrow))
-        initialized_filters.resume_updating()  # otherwise the transform does not work
-        initialized_weights.resume_updating()
-        initialized_biases.resume_updating()
-        random_variations = 1.5*(2*np.random.rand(3*3*3 + 9 + 3)-1)
-        self.play(
-            AnimationGroup(
-                *[param.tracker.animate.set_value(param.tracker.get_value() + delta)
-                for param, delta in zip (
-                    [*[elem for filter in initialized_filters for elem in filter.elements], *initialized_weights, *initialized_biases],
-                    random_variations
-                )],
-                lag_ratio=0.05
-            )
-        )
-        self.play(FadeOut(output_arrow, output_loss_arrow), output_layer.animate.restore())
-        self.play(Create(new_output_arrow))
-        self.play(output_layer.Activate(8))
 
-        # SLIDE 40:  ===========================================================
+        learnable_coeffs.resume_updating()  # otherwise the transform does not work
+        self.play(
+            UpdateLearnableCoefficients(learnable_coeffs, u_range=1.5)
+        )
+
+        # SLIDE 44:  ===========================================================
         # TITLE DISAPPEARS
-        # REPLACE INPUT AND GROUND TRUTH AND REPEAT THE PROCEDURE
+        # REPLACE INPUT AND GROUND TRUTH AND REPEAT THE PROCEDURE TWICE
         self.next_slide(
             notes=
             '''Steps 2-5 are repeated many times with different input samples,
@@ -1531,23 +1820,23 @@ class W5Theory_slides(MOOCSlide):
         self.play(FadeIn(training_title))
         self.play(
             FadeOut(
-                forward_input, ground_truth, input_arrow, new_output_arrow, 
+                forward_input, ground_truth, input_arrow, output_arrow, output_loss_arrow,
                 ground_truth_loss_arrow, loss_to_gradient_arrow, update_arrow
             ),
             output_layer.animate.restore()
         )
 
         # Create new arrows for different output
-        output_arrow_2 = BrokenArrow(CNN_coeff_remix.get_right(), output_layer[3].get_left(), **broken_arrow_config,
-                                     n_turns=2, first_direction='h')
-        output_arrow_2.add_tip(input_arrow.tip.copy())
-        output_loss_arrow_2 = BrokenArrow(output_arrow_2.keypoints[2], loss_symbol.get_right(), **broken_arrow_config,
-                                     n_turns=1, first_direction='v')
-        output_loss_arrow_2.add_tip(input_arrow.tip.copy())
+        output_arrow_2 = make_output_arrow(3)
+        output_loss_arrow_2 = make_output_loss_arrow(3)
+        output_arrow_3 = make_output_arrow(3)
+        output_loss_arrow_3 = make_output_loss_arrow(3)
+
         # new input
-        # TODO: input image
         forward_input_2 = PixelImage(r'Assets\W5\mnist5.png', add_outline=True, outline_kwargs={'color':DARK_BLUE, 'stroke_width':6}).match_height(forward_input).move_to(forward_input)
         ground_truth_2 = DigitRecognitionOutputCircle(5, **ground_truth_config).move_to(ground_truth)
+        forward_input_3 = PixelImage(r'Assets\W5\mnist3.png', add_outline=True, outline_kwargs={'color':DARK_BLUE, 'stroke_width':6}).match_height(forward_input).move_to(forward_input)
+        ground_truth_3 = DigitRecognitionOutputCircle(3, **ground_truth_config).move_to(ground_truth)
         
         self.play(
             Succession(
@@ -1564,19 +1853,35 @@ class W5Theory_slides(MOOCSlide):
                 Create(update_arrow, run_time=CREATE_ARROW_RUNTIME)
             )
         )
-        random_variations = 2*np.random.rand(3*3*3 + 9 + 3) - 1
         self.play(
-            AnimationGroup(
-                *[param.tracker.animate.set_value(param.tracker.get_value() + delta)
-                for param, delta in zip (
-                    [*[elem for filter in initialized_filters for elem in filter.elements], *initialized_weights, *initialized_biases],
-                    random_variations
-                )],
-                lag_ratio=0.05
-            )
+            UpdateLearnableCoefficients(learnable_coeffs, u_range=1)
         )
 
-        # SLIDE 41:  ===========================================================
+        # Reset and repeat
+        self.play(
+            FadeOut(forward_input_2, ground_truth_2, input_arrow, output_arrow_2, ground_truth_loss_arrow, loss_to_gradient_arrow, update_arrow, output_loss_arrow_2),
+            output_layer.animate.restore()
+        )
+        self.play(
+            Succession(
+                FadeIn(forward_input_3, ground_truth_3),
+                Create(input_arrow, run_time=CREATE_ARROW_RUNTIME),
+                Create(output_arrow_3, run_time=CREATE_ARROW_RUNTIME),
+            )
+        )
+        self.play(output_layer.Activate(3))  # does not work in the middle of a succession
+        self.play(
+            Succession(
+                AnimationGroup(Create(output_loss_arrow_3), Create(ground_truth_loss_arrow), run_time=CREATE_ARROW_RUNTIME),
+                Create(loss_to_gradient_arrow, run_time=CREATE_ARROW_RUNTIME),
+                Create(update_arrow, run_time=CREATE_ARROW_RUNTIME)
+            )
+        )
+        self.play(
+            UpdateLearnableCoefficients(learnable_coeffs, u_range=0.75)
+        )
+
+        # SLIDE 45:  ===========================================================
         # FULL CNN SCHEME REAPPEARS
         self.next_slide(
             notes=
@@ -1588,7 +1893,6 @@ class W5Theory_slides(MOOCSlide):
         self.play(FadeOut(*[mob for mob in self.mobjects]))
         self.clear()
         ms.restore()
-        ms.output_layer.activate(8)
 
         self.play(FadeIn(ms))
         self.wait(0.05)
