@@ -270,7 +270,7 @@ class ColabEnv():
     def remove_cell_from_top(self, n: int = 1):
         # Delete cells from the list beginning
         if len(self.cells) < n:
-            raise ValueError("Not enouvh cells to be deleted")
+            raise ValueError("Not enough cells to be deleted")
         for _ in range(n):
             removed_cell = self.cells.pop(0)
             self._delete_cell(removed_cell)
@@ -284,7 +284,10 @@ class ColabEnv():
     def clear(self):
         while len(self.cells) > 0:
             self.remove_cell()
-        # cursor is removed from the scene but not from the environment
+        self.clear_sidemenu()
+        self.clear_cursor()
+
+    def clear_cursor(self):
         self.cursor.move_to([-20,-20, 0])
         self.scene.remove(self.cursor)
 
@@ -335,10 +338,15 @@ class ColabEnv():
  
         return Succession(*result)
     
+    def FadeIn(self):
+        return FadeIn(*self._get_obj_to_fade())
     def FadeOut(self):
+        return FadeOut(*self._get_obj_to_fade())
+    
+    def _get_obj_to_fade(self):
         cells_to_fade = self.get_cells()
         outputs_to_fade = Group(*[c.output for c in cells_to_fade if c.output is not None])
-        return FadeOut(self.background, cells_to_fade, outputs_to_fade, self.cursor)
+        return [self.background, cells_to_fade, outputs_to_fade, self.cursor, *self.sidemenu]
     
     def FocusOutput(self, cell: int, scale=0.75, alignment=None, **kwargs):
         cell_to_focus = self.get_cell(cell)
@@ -374,6 +382,7 @@ class ColabEnv():
         for file in self.sidemenu:
             self.scene.remove(file)
             self.scene.remove(*file.submobjects)
+        self.sidemenu = []
 
 class ColabCodeWithLogo(CodeWithLogo):
     def __init__(

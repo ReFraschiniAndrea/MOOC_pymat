@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from manim import *
-from mooc_utils.Generic_mooc_utils import SANS_SERIF_FONT, PixelArray
+from mooc_utils.Generic_mooc_utils import SANS_SERIF_FONT, CODE_FONT, PixelArray, custom_get_axis_labels
 from typing import List, Iterable
 import skimage
 import scipy.ndimage
@@ -72,6 +72,7 @@ class LayerTitle(Paragraph):
     def __init__(self, *text, line_spacing = -1, alignment = 'center', font_size=32):
         super().__init__(*text, line_spacing=line_spacing, alignment=alignment, 
                          color=BLACK, stroke_width=0, font=SANS_SERIF_FONT, font_size=font_size, weight=NORMAL, t2w={text[0]:BOLD})
+        self.scale(0.8)
         
 
 class DenseLayer(VMobject):
@@ -89,6 +90,7 @@ class DenseLayer(VMobject):
         horizonatl_buff: float = 1,
         line_color = BLUE,
         line_width = 1,
+        add_vdots: bool = False
     ):
         super().__init__()
         self.n_input_nodes = n_input_nodes
@@ -108,7 +110,15 @@ class DenseLayer(VMobject):
                 self.vlines.add(line)
 
         self.add(self.vlines, self.input_nodes, self.output_nodes)
+        if add_vdots:
+            self.add_vdots()
         self.center()
+
+    def add_vdots(self):
+        vdots = MathTex(r'\vdots', color=BLACK, font_size=32)
+        self.vdots_in = vdots.copy().next_to(self.input_nodes, DOWN)
+        self.vdots_out = vdots.copy().next_to(self.output_nodes, DOWN)
+        self.add(self.vdots_in, self.vdots_out)
 
     def get_lines_from_input_node(self, n: int):
         return VGroup(
@@ -327,6 +337,10 @@ class PixelImage(ImageMobject):
         self.outline.move_to(self[0]).set_z_index(0)
         self.add_to_back(self.outline)
 
+    def get_size_brace(self, direction, label: str, brace_config: dict = {}, label_config: dict = {}):
+        return get_labeled_brace(self, direction, label, brace_config, label_config)
+
+
 class ImageStack(Group):
     """Stack of images that are partially overlayed.
     The first one is the one on top, i.e completely visible."""
@@ -347,10 +361,19 @@ class ImageStack(Group):
     def restore(self):
         for mob in self.submobjects:
             mob.restore()
+        return self
     
     def save_state(self):
         for mob in self.submobjects:
             mob.save_state()
+
+    def get_stack_brace(self, direction, label, brace_config: dict = {}, label_config: dict = {}):
+        b_config = {'color':DARK_BLUE}; b_config.update(brace_config)
+        l_config = {'color': BLACK, 'font':SANS_SERIF_FONT, 'font_size':48}; l_config.update(label_config)
+        brace = BraceBetweenPoints(self[-1].get_corner(direction), self[0].get_corner(direction), direction, **b_config)
+        label_mob = Text(label, **l_config)
+        brace.put_at_tip(label_mob)
+        return VGroup(brace, label_mob)
 
 def create_gizmo(start: Rectangle,  end: Rectangle):
     line_config = {'stroke_width': start.stroke_width, 'stroke_color':start.stroke_color}
@@ -366,6 +389,11 @@ def create_gizmo(start: Rectangle,  end: Rectangle):
 
 
 class CNNDigitRecognitionScheme(Group):
+    def _filter(image: np.ndarray, kernel:np.ndarray):
+        f = scipy.ndimage.convolve(image.astype(np.float32), kernel.astype(np.float32))
+        f = np.clip((f+600)/(1200), 0, 1)
+        return (f*255).astype(np.uint8)
+    
     def __init__(
         self,
         input: np.ndarray,
@@ -386,8 +414,24 @@ class CNNDigitRecognitionScheme(Group):
 
         # Create intermediate values by generating random filters and then pooling
         np.random.seed(0)
-        self.filters_ =  [np.random.random((3,3)) for _ in range(n_filters)]
-        self.filtered_ = [scipy.ndimage.convolve(self.input_array_, filter).astype(np.uint8) for filter in self.filters_]
+        self.filters_ =  [
+            np.array([[-0.82,  0.01,  0.79],
+                      [-0.88,  0.05,  0.91],
+                      [-0.84,  0.02,  0.86],]),  # vertical edge
+            np.array([[-0.77, -0.81, -0.74],
+                      [ 0.02,  0.04,  0.01],
+                      [ 0.83,  0.88,  0.80],]),  # horizontal edge
+            np.array([[-0.65, -0.12,  0.05],
+                      [-0.10, -0.72,  0.11],
+                      [ 0.04,  0.13,  0.69],]),  # diagonal edge
+            np.array([[-0.48, -0.61, -0.50],
+                      [-0.59,  2.31, -0.62],
+                      [-0.52, -0.58, -0.47],]),  # laplacian (stroke width)
+            np.array([[ 0.71,  0.69, -0.03],
+                      [ 0.68, -0.92, -0.81],
+                      [-0.04, -0.78, -0.75],])  # corner detection
+        ]
+        self.filtered_ = [CNNDigitRecognitionScheme._filter(self.input_array_, filter) for filter in self.filters_]
         self.pooled_ = [skimage.measure.block_reduce(filtered, block_size=pooling_factor, func=np.max) for filtered in self.filtered_]
         self.flattened_ = np.concatenate([pooled.reshape((-1, 1)) for pooled in self.pooled_[::-1]], axis=0)  # reverse order
 
@@ -405,18 +449,20 @@ class CNNDigitRecognitionScheme(Group):
         )
         self.flattened_vector = PixelImage(self.flattened_, pixel_size=pixel_size[3], add_outline=True, outline_kwargs=outline_kwargs)
         self.dense_layer = DenseLayer(**dense_layer_kwargs)
-        self.softmax = SoftmaxLayer(font_size=54)
+        self.softmax = SoftmaxLayer(font_size=48)
         self.output_layer = DigitRecognitionOutputLayer()
-        self.flattened_vector.stretch_to_fit_height(self.dense_layer.height*1.3)
+        self.flattened_vector.stretch_to_fit_height(self.dense_layer.height*1.1)
 
         # Arrange Everything
-        self.flattened_vector.next_to(self.dense_layer, LEFT, buff=0.25)
+        # self.flattened_vector.next_to(self.dense_layer, LEFT, buff=0.25)
         self.softmax.next_to(self.dense_layer, RIGHT, buff=0.15)
         Group(
             self.input, self.conv_layer, self.pooling_layer,
-            Group(self.flattened_vector, self.dense_layer, self.softmax),
+            self.flattened_vector, Group(self.dense_layer, self.softmax),
             self.output_layer
         ).arrange(buff=horizontal_spacing)
+        # Add dense layer vdots afterwards, so that it remains centered
+        self.dense_layer.add_vdots()
         self.add(
             self.input, self.conv_layer, self.pooling_layer,
             self.flattened_vector, self.dense_layer, self.softmax,
@@ -425,11 +471,12 @@ class CNNDigitRecognitionScheme(Group):
 
         # Create Labels
         self.input_title = LayerTitle('Input').next_to(self.input, UP)
-        self.dense_layer_title = LayerTitle('Dense','layer').next_to(self.dense_layer, UP, buff=0.5)
+        self.dense_layer_title = LayerTitle('Dense','layer').next_to(VGroup(self.dense_layer, self.softmax), UP, buff=0.5)
         self.conv_layer_title = LayerTitle('Convolutional','layer').next_to(self.conv_layer, UP).align_to(self.dense_layer_title, UP)
+        self.flattening_layer_title = LayerTitle('Flatten','layer').next_to(self.flattened_vector, UP).align_to(self.dense_layer_title, UP)
         self.pooling_layer_title = LayerTitle('Pooling','layer').next_to(self.pooling_layer, UP).align_to(self.dense_layer_title, UP)
         self.output_layer_title = LayerTitle('Output').next_to(self.output_layer, UP)
-        self.add(self.input_title, self.conv_layer_title, self.pooling_layer_title, self.dense_layer_title, self.output_layer_title)
+        self.add(self.input_title, self.conv_layer_title, self.pooling_layer_title, self.flattening_layer_title, self.dense_layer_title, self.output_layer_title)
 
         # Create Gizmos for highlight
         self.input_highlight = self.input.get_pixel_highlight(position=self.CONV_HIGHLIGHT_POS, **highlights_kwargs).scale(3)
@@ -461,31 +508,174 @@ class CNNDigitRecognitionScheme(Group):
         output_arrow.add_tip(tip)
         return output_arrow
     
-    def get_layer_highlight(self, layer_to_highlight: int, stroke_width=4, color=GOLD,):
+    def get_layer_highlight(
+        self,
+        layer_to_highlight: str,
+        stroke_width=4, color=GOLD,
+        height=8, v_buff=0.5, h_buff=0.2
+    ):
         match layer_to_highlight:
-            case 0:
+            case 'conv' | 'convolutional':
                 layer = Group(self.conv_layer, self.conv_layer_title)
-            case 1:
+            case 'pool' | 'pooling':
                 layer = Group(self.pooling_layer, self.pooling_layer_title)
-            case 2:
-                layer = Group(self.dense_layer, self.dense_layer_title, self.flattened_vector, self.softmax)
+            case 'flat' | 'flattening':
+                layer = Group(self.flattened_vector, self.flattening_layer_title)
+            case 'dense' | 'NN':
+                layer = Group(self.dense_layer, self.dense_layer_title, self.softmax)
+            case 'all':
+                layer = Group(self.conv_layer, self.conv_layer_title, self.dense_layer_title, self.softmax)
             case _:
                 raise ValueError()
             
         highlight = RoundedRectangle(
-            width = layer.width + 2*0.35,
-            height = 8,
+            width=layer.width + 2*h_buff,
+            height=height,
             color=color, stroke_width=stroke_width, fill_opacity=0,
             corner_radius=0.25
         ).set_z_index(20)
-        highlight.move_to(layer).align_to(self.dense_layer_title.get_top() + 0.5*UP, UP)
+        highlight.move_to(layer).align_to(self.dense_layer_title.get_top() + v_buff*UP, UP)
 
         return highlight
 
     def restore(self):
         for mob in self.submobjects:
             mob.restore()
+        return self
     
     def save_state(self):
         for mob in self.submobjects:
             mob.save_state()
+
+class LearnableCoefficientsScheme(VMobject):
+    matrix_default_config =  {'v_buff':0.6, 'h_buff':0.6, 'bracket_h_buff':0.1, 'bracket_v_buff':0.1}
+    def __init__(
+        self,
+        font_size=28,
+        kernel_colors=[RED, GREEN, ORANGE],
+        matrix_config: dict = {}
+    ):
+        super().__init__()
+        self.filter_entries_t = Text('Filter entries:', font=SANS_SERIF_FONT, font_size=font_size, color=BLACK)
+        self.weights_and_biases_t =  Text('Weights and biases of the dense layer:', font=SANS_SERIF_FONT, font_size=font_size, color=BLACK)
+
+        # Filter entries
+        matrix_cfg = self.matrix_default_config.copy()
+        matrix_cfg.update(matrix_config)
+        filter_matrix = Matrix([[f'l_{3*i +j}' for j in range(3)] for i in range(3)], color=BLACK, **matrix_cfg)
+        self.filters: VGroup[Matrix] = VGroup(filter_matrix.copy().set_color(c) for c in kernel_colors)
+        self.filters.add(MathTex(r'\dots', color=BLACK, font_size=48))
+        self.filters.arrange(RIGHT, buff=0.5)
+
+        # NN parameters
+        self.weights_eq = MathTex(r'\mathbf{W}=[w_0,w_1,w_2,w_0,w_1,w_2,w_0,w_1,w_2,\dots]', color=BLACK, font_size=48,
+                             substrings_to_isolate=[f'w_{i}' for i in range(3)])
+        substr_bias_eq = [r'\mathbf{b}','=', '[', ']', r'\dots', ',']  # Needed for later
+        self.bias_eq = MathTex(r'\mathbf{b}=[b,b,b,\dots]', color=BLACK, font_size=48,
+                          substrings_to_isolate=substr_bias_eq)  # isolating 'b' breaks here
+        
+        # Arrange vertically
+        self.filters.next_to(self.filter_entries_t, DOWN, buff=0.3)
+        self.weights_and_biases_t.next_to(self.filters, DOWN, buff=0.5)
+        VGroup(self.weights_eq, self.bias_eq).arrange(DOWN, buff=0.5).next_to(self.weights_and_biases_t, DOWN, buff=0.25)
+
+        # Add surrounding rectangle
+        self.add(self.filter_entries_t, self.filters, self.weights_and_biases_t, self.weights_eq, self.bias_eq)
+        self.background_rectangle = SurroundingRectangle(self, stroke_color=BLUE, stroke_width=4, fill_opacity=0, buff=0.5, corner_radius=0.25)
+        self.add(self.background_rectangle)
+        self.center()
+
+def UpdateLearnableCoefficients(coefficients, updates=None, u_range=1, dt_per_inc=0.3):
+    if updates is  None:
+        updates = u_range*(2*np.random.random(len(coefficients)) - 1)
+        updates = np.round(updates, 1)
+        updates[updates==0]=0.1
+        run_times = np.abs(updates)/0.1 * dt_per_inc
+    return AnimationGroup(
+        value.tracker.animate(rate_func=linear, run_time = dt).set_value(value.tracker.get_value() + delta)
+        for value, delta, dt in zip(coefficients, updates, run_times) 
+    )
+
+
+class ReLUPlot(VMobject):
+    def __init__(self, color=BLUE, stroke_width=4, label_config = {'color':BLACK, 'font_size':48,'font': SANS_SERIF_FONT}):
+        super().__init__()
+        self.axes = Axes(x_range=[-3.5,3.5], y_range=[-0.5, 3.5], x_length=10, y_length=10*4/7, axis_config={'color': BLACK})
+        relu = lambda x: np.maximum(0,x)
+        self.relu = self.axes.plot(relu, x_range=[-3.5,3.25], color=color, stroke_width=stroke_width, use_smoothing=False)
+        x_label = Text('x', **label_config)
+        y_label = Text('ReLU(x)', **label_config)
+        self.labels = custom_get_axis_labels(self.axes, x_label, y_label)
+        self.add(self.axes, self.relu, self.labels)
+
+def get_labeled_brace(mob: Mobject, direction, label: str, brace_config: dict = {}, label_config: dict = {}):
+        b_config = {'color':DARK_BLUE}; b_config.update(brace_config)
+        l_config = {'color': BLACK, 'font':SANS_SERIF_FONT, 'font_size':48}; l_config.update(label_config)
+        brace = Brace(mob, direction, **b_config)
+        label_mob = Text(label, **l_config)
+        brace.put_at_tip(label_mob)
+        return VGroup(brace, label_mob)
+
+def get_labeled_braces(mob, dir1, lab1, dir2, lab2, brace_config: dict = {}, label_config: dict = {}):
+    return VGroup(
+        get_labeled_brace(mob, dir1, lab1, brace_config=brace_config, label_config=label_config),
+        get_labeled_brace(mob, dir2, lab2, brace_config=brace_config, label_config=label_config)
+    )
+
+class KerasCNNSummary(VMobject):
+    # Keras-like colors
+    KERAS_BLUE = ManimColor('#50acff')
+    KERAS_GREEN = ManimColor('#00af00')
+    KERAS_AQUA = ManimColor('#00d7ff')
+
+    def __init__(self, font=CODE_FONT, font_size=18):
+        col_labels_config={'font':font, 'font_size':font_size, 'color':BLACK, 'weight':ULTRABOLD}
+        entry_config={
+            'font':font, 'font_size':font_size, 'color':BLACK, 'weight':MEDIUM,
+            't2c':{
+                **{layer: self.KERAS_BLUE for layer in ['Conv2D', 'MaxPooling2D', 'Flatten', 'Dense']},
+                'None':self.KERAS_AQUA,
+                **{str(digit): self.KERAS_GREEN for digit in [28,32,4,512,10]}}
+        }
+        super().__init__()
+        # Table data
+        self.table = Table(
+            [
+                ["conv2d (Conv2D)", "(None, 28, 28, 32)", "320"],
+                ["max_pooling2d (MaxPooling2D)", "(None, 4, 4, 32)", "0"],
+                ["flatten (Flatten)", "(None, 512)", "0"],
+                ["dense (Dense)", "(None, 10)", "5,130"],
+            ],
+            col_labels=[
+                Text("Layer (type)", **col_labels_config),
+                Text("Output Shape", **col_labels_config),
+                Text("Param #", **col_labels_config),
+            ],
+            include_outer_lines=True,
+            line_config={"stroke_width": 2, 'color':BLACK},
+            arrange_in_grid_config={'cell_alignment':LEFT},
+            v_buff=0.4, h_buff=1,
+            element_to_mobject_config=entry_config
+        )
+        # Column 3 (green)
+        self.table.get_entries_without_labels()[2::3].set_color(self.KERAS_GREEN)
+    
+        # Title
+        self.title = Text('Model: "sequential"', **col_labels_config)
+        self.title.next_to(self.table, UP).align_to(self.table, LEFT)
+
+        # Footer
+        self.footer = Paragraph(
+            'Total params: 5,450 (21.29 KB)',
+            'Trainable params: 5,450 (21.29 KB)',
+            'Non-trainable params: 0 (0.00 B)',
+            font=font, color=BLACK, font_size=font_size,
+            alignment='left', line_spacing=0.5,
+            t2c={'5,450':self.KERAS_GREEN},
+            t2w={'Total params:':BOLD, 'Trainable params:':BOLD, 'Non-trainable params:':BOLD},
+        )
+        self.footer[2][20].set_color(self.KERAS_GREEN)
+        self.footer.next_to(self.table, DOWN).align_to(self.table, LEFT)
+
+        self.add(self.title, self.table, self.footer)
+        self.center()

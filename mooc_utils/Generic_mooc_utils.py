@@ -18,8 +18,8 @@ import itertools as it
 FRAME_HEIGHT = 8*4/3 # In 4:3 frame height is 10.666.., not 8! 
 ASPECT_RATIO = 4/3
 FRAME_WIDTH = FRAME_HEIGHT * ASPECT_RATIO  # The frame width is the same: 8*16/9 = 8*(4/3)*(4/3)
-HALF_SCREEN_LEFT = [-FRAME_WIDTH/4, 0, 0]
-HALF_SCREEN_RIGHT = [+FRAME_WIDTH/4, 0, 0]
+HALF_SCREEN_LEFT = np.array([-FRAME_WIDTH/4, 0, 0])
+HALF_SCREEN_RIGHT = np.array([+FRAME_WIDTH/4, 0, 0])
 
 TITLE_DOWN_ALIGNMENT = 3.75
 TITLED_CENTER = DOWN * (FRAME_HEIGHT/4 - TITLE_DOWN_ALIGNMENT/2)
@@ -86,13 +86,13 @@ class DynamicSplitScreen(Mobject):
     To manage what objects are affected by the DSS, there are 2 methods: add_main_obj,
     add_side_obj and the respective remove methods.
 
-    Since in many cases some parts of the content should not appear yet but the should be moved
+    Since in many cases some parts of the content should not appear yet but they should be moved
     -follow_obj: object that should be moved exaclty like the main object, but it has not
     appeared yet in the scene, and so it should not be animated while moved
     -condsider_follow: sometimes, the follow_obj appears much later in the scene, and we
     want to still move it entirely but consider only some part of it for the calculations
     (centering on main rectangle). consider_follow is the part of the follow_obj actually
-    taken into account for calculations. (By default, the entire follo_obj)
+    taken into account for calculations. (By default, the entire follow_obj)
 
     -if `direction` is UP, then the secondary rectangle will move in/move out from the top.
     if it is instead DOWN, it does so from the bottom of the screen.
@@ -245,7 +245,7 @@ class DynamicSplitScreen(Mobject):
             if animate:
                 return self.mainObj.animate(**kwargs).shift(shift)
             else:
-                self.mainObj.animate(**kwargs).shift(shift)
+                self.mainObj.shift(shift)
 
         return None
     
@@ -301,8 +301,13 @@ class Cursor(SVGMobject):
         self.stroke_width = 0  # avoid some bugs
 
     def Click(self):
-        # return self.animate(rate_func=there_and_back, run_time=0.1).scale(0.8)
         return ApplyMethod(self.scale, 0.8, rate_func=there_and_back, run_time=0.1)
+    
+    def MoveAndClick(self, point,**kwargs):
+        return Succession(
+            ApplyMethod(self.move_to, point, **kwargs),
+            self.Click()
+        )
     
     def fingertip(self):
         return self.get_top() + LEFT * 2.5/17*self.width# + DOWN*100/1200*self.height+
@@ -323,13 +328,14 @@ class CustomDecimalNumber(DecimalNumber):
         self,
         number: float = 0,
         font: str = '',
+        mob_class = Text,
         **kwargs
     ):
         self.font = font
-        if self.font not in self._FONT_STRING_TO_MOB_MAPS.keys():
-            self._FONT_STRING_TO_MOB_MAPS[font] = {}
-        self.string_to_mob_map = self._FONT_STRING_TO_MOB_MAPS[font]
-        super().__init__(number, **kwargs)
+        if self.font not in CustomDecimalNumber._FONT_STRING_TO_MOB_MAPS.keys():
+            CustomDecimalNumber._FONT_STRING_TO_MOB_MAPS[font] = {}
+        self.string_to_mob_map = CustomDecimalNumber._FONT_STRING_TO_MOB_MAPS[font]
+        super().__init__(number, **kwargs, mob_class=mob_class)
         self._set_submobjects_from_number(number) # update with new font
         self.set_color(self.color)
 
@@ -393,8 +399,17 @@ class FunctionAbstraction(VMobject):
 
 
 class VectorArray(Table):
-    def __init__(self, array, arrangement='vertical', include_dots=True, color=BLUE, h_buff=0.6, v_buff=1.0):
-        table = [Text(t, font=CODE_FONT, color=BLACK) for t in array]
+    def __init__(
+            self,
+            array,
+            arrangement='vertical',
+            elem_to_mob_class=Text,
+            elem_to_mob_config: dict = {'font':CODE_FONT, 'color':BLACK},
+            include_dots=True,
+            color=BLUE,
+            line_config={},
+            h_buff=0.6, v_buff=1.0):
+        table = [elem_to_mob_class(t ,**elem_to_mob_config) for t in array]
         if include_dots:
             if arrangement=='vertical':
                 table.insert(-1, MathTex(r'\vdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
@@ -402,11 +417,13 @@ class VectorArray(Table):
                 table.insert(-1, MathTex(r'\hdots', color=BLACK,stroke_width=4, stroke_color=BLACK))
         table = [[t] for t in table] if arrangement=='vertical' else [table]
 
+        line_kwargs = {'stroke_width':7, 'color':color}
+        line_kwargs.update(line_config)
         super().__init__(
             table, h_buff=h_buff, v_buff=v_buff,
             element_to_mobject= lambda m: m,  # identity
             include_outer_lines=False,
-            line_config={'stroke_width':7, 'color':color}
+            line_config=line_kwargs
         )
         # The outer rectangle should be added first so it is drawn first
         _lines =  self.get_horizontal_lines() + self.get_vertical_lines()
