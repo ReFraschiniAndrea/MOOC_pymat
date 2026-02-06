@@ -251,6 +251,7 @@ class W5Python_slides(MOOCSlide):
         self.play(cl_env.OutofColab(cell=1))
         # Unzip code
         self.play(unzip_code.TypeLetterbyLetter())
+        self.wait(1)
         unzip_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
         cl_env.remove_cell()
         self.play(unzip_code.IntoColab(cl_env))
@@ -1073,7 +1074,7 @@ class W5Python_slides(MOOCSlide):
         self.play(Create(to_pool))
         self.play(
             Group(ms.conv_layer, ms.conv_highlight_2, pool_factor_grid_highlight,pool_factor_braces).animate.scale(0.75).shift(1.25*UP+2*LEFT),
-            Group(ms.pooling_layer, ms.pooling_highlight_1).animate.scale(0.75).shift(1.25*UP+0.75*RIGHT),
+            Group(ms.pooling_layer, ms.pooling_highlight_1).animate.scale(0.75).shift(1.25*UP+0.5*RIGHT),
             to_pool.animate.scale_to_fit_height(1.8).set_x(0).align_to(DSS.secondaryRect.get_bottom()+0.5*UP, DOWN),
         )
         ms.conv_pool_gizmo.clear_updaters()
@@ -1116,7 +1117,7 @@ class W5Python_slides(MOOCSlide):
             AnimationGroup(
                 FadeOut(max_label, to_pool, max_result,*[mob for mob in pooling_example_g if mob not in [ms.conv_layer, ms.pooling_layer]],
                         pool_factor_grid_highlight, pool_factor_braces),
-                Group(ms.conv_layer, ms.pooling_layer).animate.scale(4/3).arrange(buff=4).match_y(DSS.secondaryRect),
+                Group(ms.conv_layer, ms.pooling_layer).animate.scale(4/3).arrange(buff=3).match_y(DSS.secondaryRect),
                 lag_ratio=0.5
             )
         )

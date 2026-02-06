@@ -61,7 +61,7 @@ class MatlabCode(CustomCode):
         ):
         if target_cell is None:
             target = MatlabCodeBlock(self.code_string)
-            matlab_env.add_cell(target)
+            matlab_env.add_cell(target, add_to_scene=False)
             cells_to_fade = matlab_env.cells[:-1]
         else:
             target = matlab_env.get_cell(target_cell)
@@ -109,6 +109,7 @@ class MatlabEnv():
     
     TOP_LEFT_CORNER_ = _pixel2p(155, 241)
     TOP_LEFT_CORNER_UNSAVED_ = _pixel2p(128, 218)
+    TOP_LEFT_CORNER_NOSCRIPT_ = _pixel2p(75,224)
     # OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 783)
     OUTPUT_TOP_LEFT_CORNER_ = _pixel2p(80, 833)
 
@@ -245,13 +246,13 @@ class MatlabEnv():
         self,
         image: str | Mobject,
         image_width: float = MATLAB_PLOT_WIDTH,
-        window_buff: float = 0.1,
-        add_to_scene: bool = False
+        add_to_scene: bool = False,
+        **kwargs
     ):
         if isinstance(image, str):
             image = ImageMobject(image)
             image.scale_to_fit_width(image_width).center()
-        self.plot = MatlabPlot(image, buff=window_buff)
+        self.plot = MatlabPlot(image, **kwargs)
         self.plot.set_z_index(_MATLAB_PLOT_Z_INDEX)
         if add_to_scene:
             self.scene.add(self.plot)
@@ -302,6 +303,16 @@ class MatlabEnv():
                 FadeIn(outputs_to_show, run_time=0),
                 Wait(0.1)
             )
+        
+    def FadeIn(self):
+        return FadeIn(*self._get_obj_to_fade())
+    def FadeOut(self):
+        return FadeOut(*self._get_obj_to_fade())
+    
+    def _get_obj_to_fade(self):
+        cells_to_fade = self.get_cells()
+        outputs_to_fade = self._get_shown_outputs()
+        return [self.background, cells_to_fade, *outputs_to_fade, self.cursor]
 
     def FocusOutput(
         self,
@@ -315,7 +326,7 @@ class MatlabEnv():
         if len(self.command_window_output) == 0:
             raise ValueError("Matlab environment has no output")
         output_to_focus = self.command_window_output[-1] if output_to_focus is None else self.command_window_output[output_to_focus]
-
+        output_to_focus.set_z_index(0)
         if not include_plot or self.plot is None:
             def _focusOutput(m: MatlabCommandWindowOutput):
                 m.object.scale_to_fit_width(FRAME_WIDTH*scale).center()
@@ -332,12 +343,12 @@ class MatlabEnv():
             return ApplyFunction(_focusOutput, Group(output_to_focus, self.plot))
             
 
-    def FocusPlot(self, scale=0.75, **kwargs):
+    def FocusPlot(self, scale=0.75, background_color = WHITE, **kwargs):
         def _focusPlot(m: MatlabPlot):
             m.set_z_index(0)
             m.plotWindow.become(
                 Rectangle(
-                    color=WHITE,
+                    color=background_color,
                     height=FRAME_HEIGHT,
                     width=FRAME_WIDTH,
                     fill_opacity=1)
@@ -358,19 +369,24 @@ class MatlabOutputText(Paragraph):
                         line_spacing=0.5, **kwargs)
 
 class MatlabCommandWindowOutput(Mobject):
-    def __init__(self, object):
+    def __init__(self, object: Mobject):
         super().__init__()
         self.object = object
         self.outputWindow = SurroundingRectangle(self.object, color=WHITE, corner_radius=0, fill_opacity=1, buff=0)
         self.add(self.outputWindow, self.object)
         self._shown : bool = False
 
+    def save_state(self):
+        self.object.save_state(); self.outputWindow.save_state(); return self
+    def restore(self):
+        self.object.restore(); self.outputWindow.restore(); return self
+
 class MatlabPlot(Mobject):
-    def __init__(self, image: Mobject, buff: float = 0.1):
+    def __init__(self, image: Mobject, buff: float = 0.1, color=MATLAB_GRAY):
         super().__init__()
         self.image = image
         self.plotWindow = SurroundingRectangle(
-            self.image, color=MATLAB_GRAY, 
+            self.image, color=color, 
             buff=buff, corner_radius=0.1,
             fill_opacity=1, stroke_width=0.5, stroke_color=BLACK
         )
