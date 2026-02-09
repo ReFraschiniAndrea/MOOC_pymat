@@ -69,9 +69,9 @@ class DigitRecognitionOutputLayer(VGroup):
     
     
 class LayerTitle(Paragraph):
-    def __init__(self, *text, line_spacing = -1, alignment = 'center', font_size=32):
+    def __init__(self, *text, line_spacing = -1, alignment = 'center', font_size=32, **kwargs):
         super().__init__(*text, line_spacing=line_spacing, alignment=alignment, 
-                         color=BLACK, stroke_width=0, font=SANS_SERIF_FONT, font_size=font_size, weight=NORMAL, t2w={text[0]:BOLD})
+                         color=BLACK, stroke_width=0, font=SANS_SERIF_FONT, font_size=font_size, weight=NORMAL, t2w={text[0]:BOLD}, **kwargs)
         self.scale(0.8)
         
 
@@ -375,25 +375,141 @@ class ImageStack(Group):
         brace.put_at_tip(label_mob)
         return VGroup(brace, label_mob)
 
-def create_gizmo(start: Rectangle,  end: Rectangle):
+def create_gizmo(start: Rectangle,  end: Rectangle, add_updaters: bool=False):
     line_config = {'stroke_width': start.stroke_width, 'stroke_color':start.stroke_color}
     # Naive and lazy way to determine direction: only "diagonal" ones are considered
     dir = normalize(end.get_center() - start.get_center())
     ortho_dir = np.array((-dir[1], dir[0], 0))
     # clamp to one of the 4 diagonals
-    # ortho_dir = np.sign(ortho_dir)
 
     line_1 = Line(start.get_critical_point(ortho_dir), end.get_critical_point(ortho_dir), **line_config)
     line_2 = Line(start.get_critical_point(-ortho_dir), end.get_critical_point(-ortho_dir), **line_config)
+
+    if add_updaters:
+        line_1.add_updater(
+            lambda m: m.put_start_and_end_on(
+                start.get_critical_point(ortho_dir), end.get_critical_point(ortho_dir)
+            )
+        )
+        line_2.add_updater(
+            lambda m: m.put_start_and_end_on(
+                start.get_critical_point(-ortho_dir), end.get_critical_point(-ortho_dir)
+            )
+        )
+        
     return VGroup(line_1, line_2).set_z_index(max(start.z_index, end.z_index))
 
+class _AbstractCNNDigitRecognition(Group):
+    _LEARNED_EDGE_DETECTION_KERNELS =  [
+        np.array([[-0.82,  0.01,  0.79],
+                  [-0.88,  0.05,  0.91],
+                  [-0.84,  0.02,  0.86],]),  # vertical edge
+        np.array([[-0.77, -0.81, -0.74],
+                  [ 0.02,  0.04,  0.01],
+                  [ 0.83,  0.88,  0.80],]),  # horizontal edge
+        np.array([[-0.65, -0.12,  0.05],
+                  [-0.10, -0.72,  0.11],
+                  [ 0.04,  0.13,  0.69],]),  # diagonal edge
+        np.array([[-0.48, -0.61, -0.50],
+                  [-0.59,  2.31, -0.62],
+                  [-0.52, -0.58, -0.47],]),  # laplacian (stroke width)
+        np.array([[ 0.71,  0.69, -0.03],
+                  [ 0.68, -0.92, -0.81],
+                  [-0.04, -0.78, -0.75],])  # corner detection
+    ]
 
-class CNNDigitRecognitionScheme(Group):
-    def _filter(image: np.ndarray, kernel:np.ndarray):
+    def _filter(image: np.ndarray, kernel:np.ndarray, bias=600):
         f = scipy.ndimage.convolve(image.astype(np.float32), kernel.astype(np.float32))
-        f = np.clip((f+600)/(1200), 0, 1)
+        f = np.clip((f+bias)/(2*bias), 0, 1)
         return (f*255).astype(np.uint8)
     
+    def _full_filter(images: np.ndarray, kernel:np.ndarray, bias=0):
+        f = np.sum(
+            scipy.ndimage.convolve(images[c].astype(np.float32), kernel[c].astype(np.float32), mode='reflect')
+            for c in range(len(kernel))
+        )
+        f = np.clip((f-f.min())/(f.max()-f.min()), 0, 1)
+        return (f*255).astype(np.uint8)
+    
+    def __init__(
+        self,
+        input: np.ndarray,
+        pixel_size: float  | Iterable[float]= 0.05,
+        dense_layer_kwargs : dict = {},
+        outline_kwargs : dict = {}
+    ):
+        self.input_array_: np.ndarray = input
+        self.input = PixelImage(input, pixel_size=pixel_size, add_outline=True, outline_kwargs=outline_kwargs)
+        self.dense_layer = DenseLayer(**dense_layer_kwargs)
+        self.softmax = SoftmaxLayer(font_size=48)
+        self.softmax.next_to(self.dense_layer, RIGHT, buff=0.15)
+        self.output_layer = DigitRecognitionOutputLayer()
+        super().__init__(self.input, self.dense_layer, self.softmax, self.output_layer)
+
+    def get_output_arrow(self, digit: int):
+        output_arrow = BrokenArrow(self.softmax.get_right(), self.output_layer[digit].get_left(),
+                                   color=DARK_BLUE, stroke_width=4,
+                                   n_turns=2, first_direction='h', add_tip=False)
+        tip = output_arrow.create_tip(tip_length=0.2, tip_width=0.2)
+        output_arrow.add_tip(tip)
+        return output_arrow
+    
+    def _make_convolution_layer(self, input, filters=None, pixel_size=0.05, offset_scale=4, outline_kwargs={}):
+        if filters is None:
+            filters = self._LEARNED_EDGE_DETECTION_KERNELS
+        filtered_ = [_AbstractCNNDigitRecognition._filter(input, filter) for filter in filters]
+        conv_layer = ImageStack(
+            filtered_,  offset=UL*offset_scale*pixel_size, pixel_size=pixel_size,
+            add_outline=True, outline_kwargs=outline_kwargs
+        )
+        return filtered_, conv_layer
+    
+    def _make_subsequent_convolution_layer(self, inputs, filters, pixel_size=0.05, offset_scale=4, outline_kwargs={}):
+        inputs = np.stack(inputs, axis=0)
+        filtered_ = [_AbstractCNNDigitRecognition._full_filter(inputs, filter) for filter in filters]
+        conv_layer = ImageStack(
+            filtered_,  offset=UL*offset_scale*pixel_size, pixel_size=pixel_size,
+            add_outline=True, outline_kwargs=outline_kwargs
+        )
+        return filtered_, conv_layer
+    
+    def _make_pooling_layer(self, inputs, pooling_factor=2,  pixel_size=0.05, offset_scale=1.5, outline_kwargs={}):
+        pooled_ = [skimage.measure.block_reduce(filtered, block_size=pooling_factor, func=np.max) for filtered in inputs]
+        pooling_layer = ImageStack(
+            pooled_, offset=UL*offset_scale*pixel_size, pixel_size=pixel_size,
+            add_outline=True, outline_kwargs=outline_kwargs
+        )
+        return pooled_, pooling_layer
+    
+    def _make_flattened_vector(self, pooled: np.ndarray, pixel_size=0.05, outline_kwargs={}):
+        flattened_ = np.concatenate([pooled.reshape((-1, 1)) for pooled in pooled[::-1]], axis=0)  # reverse order
+        flattened_vector = PixelImage(flattened_, pixel_size=pixel_size, add_outline=True, outline_kwargs=outline_kwargs)
+        flattened_vector.stretch_to_fit_height(self.dense_layer.height*1.1)
+        return flattened_, flattened_vector
+
+    def _make_pooling_highlight(self, covn_im: PixelImage, pool_im: PixelImage, highlight_pos, pooling_factor, **kwargs):
+        conv_highlight = covn_im.get_pixel_highlight(**kwargs).scale(pooling_factor).move_to(
+            covn_im.c2p(pooling_factor*highlight_pos[1], pooling_factor*highlight_pos[0],0), aligned_edge=UL)
+        pooling_highlight = pool_im.get_pixel_highlight(position=highlight_pos, **kwargs)
+        gizmo = create_gizmo(conv_highlight, pooling_highlight)
+        return conv_highlight, pooling_highlight, gizmo
+    
+    def _make_convolution_highlight(self, input_im: PixelImage, conv_im: PixelImage, highlight_pos, kernel_size, **kwargs):
+        input_highlight = input_im.get_pixel_highlight(position=highlight_pos, **kwargs).scale(kernel_size)
+        conv_highlight = conv_im.get_pixel_highlight(position=highlight_pos, **kwargs)
+        gizmo = create_gizmo(input_highlight, conv_highlight)
+        return input_highlight, conv_highlight, gizmo
+    
+    def restore(self):
+        for mob in self.submobjects:
+            mob.restore()
+        return self
+    
+    def save_state(self):
+        for mob in self.submobjects:
+            mob.save_state()
+
+class CNNDigitRecognitionScheme(Group):
     def __init__(
         self,
         input: np.ndarray,
@@ -414,24 +530,8 @@ class CNNDigitRecognitionScheme(Group):
 
         # Create intermediate values by generating random filters and then pooling
         np.random.seed(0)
-        self.filters_ =  [
-            np.array([[-0.82,  0.01,  0.79],
-                      [-0.88,  0.05,  0.91],
-                      [-0.84,  0.02,  0.86],]),  # vertical edge
-            np.array([[-0.77, -0.81, -0.74],
-                      [ 0.02,  0.04,  0.01],
-                      [ 0.83,  0.88,  0.80],]),  # horizontal edge
-            np.array([[-0.65, -0.12,  0.05],
-                      [-0.10, -0.72,  0.11],
-                      [ 0.04,  0.13,  0.69],]),  # diagonal edge
-            np.array([[-0.48, -0.61, -0.50],
-                      [-0.59,  2.31, -0.62],
-                      [-0.52, -0.58, -0.47],]),  # laplacian (stroke width)
-            np.array([[ 0.71,  0.69, -0.03],
-                      [ 0.68, -0.92, -0.81],
-                      [-0.04, -0.78, -0.75],])  # corner detection
-        ]
-        self.filtered_ = [CNNDigitRecognitionScheme._filter(self.input_array_, filter) for filter in self.filters_]
+        self.filters_ =  _AbstractCNNDigitRecognition._LEARNED_EDGE_DETECTION_KERNELS
+        self.filtered_ = [_AbstractCNNDigitRecognition._filter(self.input_array_, filter) for filter in self.filters_]
         self.pooled_ = [skimage.measure.block_reduce(filtered, block_size=pooling_factor, func=np.max) for filtered in self.filtered_]
         self.flattened_ = np.concatenate([pooled.reshape((-1, 1)) for pooled in self.pooled_[::-1]], axis=0)  # reverse order
 
@@ -547,6 +647,88 @@ class CNNDigitRecognitionScheme(Group):
         for mob in self.submobjects:
             mob.save_state()
 
+
+class DeeperCNNDigitRecognitionScheme(_AbstractCNNDigitRecognition):
+    def __init__(
+        self, input, input_label,
+        pixel_size = 0.05,
+        conv_layers_config = [
+            {'n_filters':5, 'pooling_factor':2, 'pixel_size': 0.05, 'offset_scale':1.5},
+            {'n_filters':10, 'pooling_factor':2, 'pixel_size': 0.05, 'offset_scale':1.5}
+        ],
+        horizontal_spacing = 0.8,
+        outline_kwargs = {},
+        dense_layer_kwargs = {},
+        highlights_kwargs = {}
+    ):
+        super().__init__(input, pixel_size, dense_layer_kwargs, outline_kwargs)
+        VGroup(self.dense_layer, self.softmax, self.output_layer).scale(0.8)
+        self.filtered_1_, self.conv_layer_1 = self._make_convolution_layer(self.input_array_, pixel_size=conv_layers_config[0]['pixel_size'], offset_scale=conv_layers_config[0]['offset_scale'], outline_kwargs=outline_kwargs)
+        self.pooled_1_, self.pooling_layer_1 = self._make_pooling_layer(self.filtered_1_, pixel_size=conv_layers_config[0]['pixel_size'], offset_scale=conv_layers_config[0]['offset_scale'], outline_kwargs=outline_kwargs)
+        
+        _first_second_layer_filter = np.array([
+            [[0.0, 0.6, 0.0],[0.0, 1.0, 0.0],[0.0, 0.6, 0.0]],
+            [[0.2, 0.4, 0.2],[0., 0., 0.],[-0.2, -0.4, -0.2]],
+            [[0, 0.5, 0.0],[0.5, 1.0, 0.5],[0.0, 0.5, 0.0]],
+            [[0, 0.5, 0.0],[0.5, 1.0, 0.5],[0.0, 0.5, 0.0]],
+        ])/5
+        _first_second_layer_filter = np.concatenate( [_first_second_layer_filter, np.zeros((conv_layers_config[0]['n_filters']-4, 3, 3))] , axis=0)
+        np.random.seed(0)
+        _second_filters = [_first_second_layer_filter, *[np.random.random((conv_layers_config[0]['n_filters'], 3, 3))/5 for i in range(conv_layers_config[1]['n_filters']-1)]]
+        
+        self.filtered_2_, self.conv_layer_2 = self._make_subsequent_convolution_layer(self.pooled_1_, _second_filters, pixel_size=conv_layers_config[1]['pixel_size'], offset_scale=conv_layers_config[1]['offset_scale'], outline_kwargs=outline_kwargs)
+        self.pooled_2_, self.pooling_layer_2 = self._make_pooling_layer(self.filtered_2_, pixel_size=conv_layers_config[1]['pixel_size'], offset_scale=conv_layers_config[1]['offset_scale'], outline_kwargs=outline_kwargs)
+        self.flattened_, self.flattened_vector = self._make_flattened_vector(self.pooled_2_, pixel_size=conv_layers_config[1]['pixel_size'], outline_kwargs=outline_kwargs)
+
+        # Arrange
+        self.softmax.next_to(self.dense_layer, RIGHT, buff=0.15)
+        Group(
+            self.input,
+            self.conv_layer_1, self.pooling_layer_1,
+            self.conv_layer_2, self.pooling_layer_2,
+            self.flattened_vector, Group(self.dense_layer, self.softmax),
+            self.output_layer
+        ).arrange(buff=horizontal_spacing)
+        # Add dense layer vdots afterwards, so that it remains centered
+        self.dense_layer.add_vdots()
+        self.add(
+            self.input,
+            self.conv_layer_1, self.pooling_layer_1,
+            self.conv_layer_2, self.pooling_layer_2,
+            self.flattened_vector, self.dense_layer, self.softmax,
+            self.output_layer
+        )
+
+        self.highlights_positions = [
+            (7,7),  # input conv
+            (10,8),  #  conv pool 1
+            (5,7),  #  pool conv
+            (5,4)  #  conv pool 2
+        ]
+
+        self.input_h, self.conv_h11, self.in_conv_giz = self._make_convolution_highlight(self.input, self.conv_layer_1.top(), self.highlights_positions[0], 3, **highlights_kwargs)
+        self.conv_h12, self.pool_h11, self.conv_pool_giz_1 = self._make_pooling_highlight(self.conv_layer_1.top(), self.pooling_layer_1.top(), self.highlights_positions[1], 2, **highlights_kwargs)
+        self.pool_h12, self.conv_h21, self.pool_conv_giz = self._make_convolution_highlight(self.pooling_layer_1.top(), self.conv_layer_2.top(), self.highlights_positions[2], 3, **highlights_kwargs)
+        self.conv_h22, self.pool_h21, self.conv_pool_giz_2 = self._make_pooling_highlight(self.conv_layer_2.top(), self.pooling_layer_2.top(), self.highlights_positions[3], 2, **highlights_kwargs)
+        # Flattening highlight
+        self.pooling_h22 = self.pooling_layer_2.images[-1].get_pixel_highlight(position=(0,0), **highlights_kwargs)
+        self.flattened_h = self.flattened_vector.get_pixel_highlight(position=(0,0), **highlights_kwargs)
+        self.flatten_giz = create_gizmo(self.pooling_h22, self.flattened_h)
+        self.add(
+            self.input_h, self.conv_h11, self.in_conv_giz,
+            self.conv_h12, self.pool_h11, self.conv_pool_giz_1,
+            self.pool_h12, self.conv_h21, self.pool_conv_giz,
+            self.conv_h22, self.pool_h21, self.conv_pool_giz_2,
+            self.pooling_h22,self.flattened_h,self.flatten_giz
+        )
+
+        # Arrow
+        self.output_arrow = self.get_output_arrow(input_label)
+        self.add(self.output_arrow)
+        
+        self.center()
+    
+
 class LearnableCoefficientsScheme(VMobject):
     matrix_default_config =  {'v_buff':0.6, 'h_buff':0.6, 'bracket_h_buff':0.1, 'bracket_v_buff':0.1}
     def __init__(
@@ -585,6 +767,7 @@ class LearnableCoefficientsScheme(VMobject):
         self.add(self.background_rectangle)
         self.center()
 
+
 def UpdateLearnableCoefficients(coefficients, updates=None, u_range=1, dt_per_inc=0.3):
     if updates is  None:
         updates = u_range*(2*np.random.random(len(coefficients)) - 1)
@@ -608,19 +791,21 @@ class ReLUPlot(VMobject):
         self.labels = custom_get_axis_labels(self.axes, x_label, y_label)
         self.add(self.axes, self.relu, self.labels)
 
-def get_labeled_brace(mob: Mobject, direction, label: str, brace_config: dict = {}, label_config: dict = {}):
+
+def get_labeled_brace(mob: Mobject, direction, label: str, brace_config: dict = {}, label_config: dict = {}, buff=0.25):
         b_config = {'color':DARK_BLUE}; b_config.update(brace_config)
         l_config = {'color': BLACK, 'font':SANS_SERIF_FONT, 'font_size':48}; l_config.update(label_config)
         brace = Brace(mob, direction, **b_config)
         label_mob = Text(label, **l_config)
-        brace.put_at_tip(label_mob)
+        brace.put_at_tip(label_mob, buff=buff)
         return VGroup(brace, label_mob)
 
-def get_labeled_braces(mob, dir1, lab1, dir2, lab2, brace_config: dict = {}, label_config: dict = {}):
+def get_labeled_braces(mob, dir1, lab1, dir2, lab2, **kwargs):
     return VGroup(
-        get_labeled_brace(mob, dir1, lab1, brace_config=brace_config, label_config=label_config),
-        get_labeled_brace(mob, dir2, lab2, brace_config=brace_config, label_config=label_config)
+        get_labeled_brace(mob, dir1, lab1, **kwargs),
+        get_labeled_brace(mob, dir2, lab2, **kwargs)
     )
+
 
 class KerasCNNSummary(VMobject):
     # Keras-like colors
@@ -679,3 +864,59 @@ class KerasCNNSummary(VMobject):
 
         self.add(self.title, self.table, self.footer)
         self.center()
+
+
+class GridOfConvolutions(Mobject):
+    def __init__(
+        self,
+        input_image: Mobject,
+        filtered_images: Group,
+        kernel: VMobject,
+        n_filters=5,
+        filter_colors=None,
+        im_side_length=0.75,
+        font_size=48,
+        h_buff=1.25,
+        v_buff=0.15,
+        add_vdots=True,
+        add_numbering=True
+        ):
+
+        super().__init__()
+        if filter_colors is None:
+            filter_colors = [GOLD, RED, GREEN, ORANGE, PURPLE] 
+        star_symbol = MathTex('*', color=BLACK, font_size=font_size)
+        equal_symbol = MathTex('=', color=BLACK, font_size=font_size)
+        
+        self.inputs = Group(*[input_image.copy().scale_to_fit_height(im_side_length) for _ in range(n_filters)])
+        self.filtered = Group(*[filtered_images[i].copy().scale_to_fit_height(im_side_length) for i in range(n_filters)])
+        self.kernels = VGroup(kernel.copy().scale_to_fit_height(im_side_length).set_color(filter_colors[i]) for i in range(n_filters))
+        self.stars = VGroup(star_symbol.copy() for _ in range(n_filters))
+        self.equals = VGroup(equal_symbol.copy() for _ in range(n_filters))
+        
+        grid_of_convolutions = Group( 
+            *[mob
+            for input, star, kernel, equal, out in zip(self.inputs, self.stars, self.kernels, self.equals, self.filtered)
+            for mob in [input, star, kernel, equal, out]]
+        ).arrange_in_grid(n_filters, 5, (h_buff, v_buff))
+
+        self.add(*grid_of_convolutions)
+
+        if add_vdots:
+            self.vdots = VGroup(
+                MathTex(r'\vdots', color=BLACK, font_size=32).match_x(grid_of_convolutions[j])
+                for j in [0,2,4]
+            )
+            self.vdots.next_to(grid_of_convolutions[:-5], DOWN, buff=0.15)
+            grid_of_convolutions[-5:].next_to(self.vdots, DOWN, buff=0.15)
+            self.add(self.vdots)
+
+        if add_numbering:
+            self.numbers = VGroup(
+                Text(f"{i}", color=BLACK, font=CODE_FONT, font_size=font_size).next_to(input, LEFT, buff=1)
+                for i, input in zip([*range(1,n_filters), 32], self.inputs)
+            )
+            for number in self.numbers[1:]:
+                number.match_x(self.numbers[0])
+            self.vdots.add(MathTex(r'\vdots', color=BLACK, font_size=32).next_to(self.numbers[-2], DOWN).match_y(self.vdots))
+            self.add(self.vdots, self.numbers)

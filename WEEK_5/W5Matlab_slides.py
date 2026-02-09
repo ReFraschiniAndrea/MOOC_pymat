@@ -31,7 +31,7 @@ class W5Matlab_slides(MOOCSlide):
         mat_env.OK_PROMPT_ = MatlabEnv._pixel2p(877, 816)
 
         # Create the full main scheme for later 
-        digit = np.array(Image.open(r'Assets\W5\mnist8.png'))
+        digit = np.array(Image.open(r'Assets\W5\mnist\mnist80.png'))
         ms = CNNDigitRecognitionScheme(digit, input_label=8, n_filters=5, pooling_factor=7,
                                        pixel_size=(1.5/28, 1.5/28, 0.125, 0.125), horizontal_spacing=0.8,
                                        highlights_kwargs={'color': GOLD, 'stroke_width': 3},
@@ -175,13 +175,37 @@ class W5Matlab_slides(MOOCSlide):
         self.play(mat_env.FadeOut())
 
         mnist_title = SlideTitle('MNIST Dataset')
-        training_sample = Group(
-            *[PixelImage(rf'Assets\W5\mnist{i}.png').scale_to_fit_height(0.25*FRAME_HEIGHT) for i in (3,5,8,6,1,9,)]
-        ).arrange_in_grid(2,3, buff=1).move_to(TITLED_CENTER)
+        training_sample = [
+            Group(
+                *[PixelImage(rf'Assets\W5\mnist\mnist{i}{j}.png').scale_to_fit_height(0.24*FRAME_HEIGHT) for i in range(10)]
+            ).arrange_in_grid(2, 5, buff=(0.1, 0.1)).move_to(TITLED_CENTER)
+            for j in range(3)
+        ]
 
+        self.add(mnist_title)
         self.play(
-            FadeIn(training_sample, lag_ratio=0.2, run_time=2),
+            FadeIn(training_sample[0], run_time=1, lag_ratio=1),
             Write(mnist_title)
+        )
+        self.wait(0.5)
+        self.play(
+            Succession(
+                Succession(
+                    training_sample[0][i].animate(run_time=0).become(training_sample[1][i]),
+                    Wait(0.1)
+                )
+                for i in range(10)
+            )
+        )
+        self.wait(0.5)
+        self.play(
+            Succession(
+                Succession(
+                    training_sample[0][i].animate(run_time=0).become(training_sample[2][i]),
+                    Wait(0.1)
+                )
+                for i in range(10)
+            )
         )
 
         # SLIDE 09:  ===========================================================
@@ -193,19 +217,21 @@ class W5Matlab_slides(MOOCSlide):
             '''
         )
 
+        training_sample: Group = training_sample[0]
+        ex_digit: PixelImage = training_sample[2]
         self.play(
             AnimationGroup(
-                FadeOut(training_sample[1:]),
-                training_sample[0].animate.scale_to_fit_height(0.45*FRAME_HEIGHT).move_to(TITLED_CENTER),
+                FadeOut(training_sample[:2], training_sample[3:]),
+                ex_digit.animate.scale_to_fit_height(0.45*FRAME_HEIGHT).move_to(TITLED_CENTER),
                 lag_ratio=0.5
             )
         )
 
         grid_28_highlight = VGroup(
-            training_sample[0].get_pixel_highlight(color=WHITE, stroke_width=2)
+            ex_digit.get_pixel_highlight(color=WHITE, stroke_width=2)
             for _ in range(28*28)
-        ).arrange_in_grid(28, 28, buff=0).move_to(training_sample)
-        image_size_braces = get_labeled_braces(training_sample[0], LEFT, '28', DOWN, '28')
+        ).arrange_in_grid(28, 28, buff=0).move_to(ex_digit)
+        image_size_braces = get_labeled_braces(ex_digit, LEFT, '28', DOWN, '28')
 
         self.play(
             Succession(
@@ -223,36 +249,46 @@ class W5Matlab_slides(MOOCSlide):
             '''
         )
         phony_rects = VGroup(
-            Square(0.25*FRAME_HEIGHT, stroke_width=0) for _ in range(6)
-        ).arrange_in_grid(2,3, buff=(1, 0.5)).move_to(TITLED_CENTER)
-        for i in range(1,3):
+            Square(0.22*FRAME_HEIGHT, stroke_width=0) for _ in range(8)
+        ).arrange_in_grid(2,4, buff=(0.4, 0.4)).move_to(TITLED_CENTER)
+        for i in [0,1,3]:
             training_sample[i].match_height(phony_rects[i]).move_to(phony_rects[i])
         ground_truth_config = {'stroke_color':GREEN_D,'fill_color':WHITE, 'text_kwargs':{'fill_color': GREEN_D, 'stroke_color':GREEN_D}}
         training_labels = VGroup(
             DigitRecognitionOutputCircle(i, stroke_width=12, **ground_truth_config).match_height(rect).move_to(rect)
-            for i, rect in zip((3,5,8), phony_rects[3:])
+            for i, rect in zip(range(4), phony_rects[4:])
         )
         sample_rects = VGroup(
-            SurroundingRectangle(im, lab, color=BLUE, stroke_width=4, buff=0.25, corner_radius=0.25)
-            for im, lab in zip(phony_rects[:3], phony_rects[3:])
+            SurroundingRectangle(im, lab, color=BLUE, stroke_width=4, buff=0.15, corner_radius=0.25)
+            for im, lab in zip(phony_rects[:4], phony_rects[4:])
         )
-        image_label = Text('Image', font=SANS_SERIF_FONT, weight=BOLD, font_size=32, color=BLACK).next_to(phony_rects[0], LEFT, buff=0.5)
-        label_label = Text('Label', font=SANS_SERIF_FONT, weight=BOLD, font_size=32, color=BLACK).next_to(phony_rects[3], LEFT, buff=0.5).match_x(image_label)
 
         self.play(
             Succession(
                 AnimationGroup(
                     FadeOut(grid_28_highlight, image_size_braces),
-                    training_sample[0].animate.match_height(phony_rects[0]).move_to(phony_rects[0]),
-                    FadeIn(training_sample[1:3]),
+                    ex_digit.animate.match_height(phony_rects[2]).move_to(phony_rects[2]),
+                    FadeIn(*[training_sample[i] for i in [0,1,3]]),
                     lag_ratio=0.5
                 ),
                 FadeIn(training_labels),
                 Create(sample_rects),
-                FadeIn(image_label),
-                FadeIn(label_label)
             )
         )
+        image_label = Text('Image', font=SANS_SERIF_FONT, weight=BOLD, font_size=32, color=BLACK).next_to(phony_rects[0], LEFT, buff=0.5)
+        label_label = Text('Label', font=SANS_SERIF_FONT, weight=BOLD, font_size=32, color=BLACK).next_to(phony_rects[4], LEFT, buff=0.5).match_x(image_label)
+        VGroup(image_label, label_label, phony_rects).move_to(TITLED_CENTER)
+        self.play(
+            AnimationGroup(
+                Group(training_sample[:4], training_labels, sample_rects).animate.move_to(phony_rects),
+                Succession(
+                    FadeIn(image_label),
+                    FadeIn(label_label)
+                ),
+                lag_ratio=0.5
+            )
+        )
+
         # SLIDE 11:  ===========================================================
         # GRAPHIC ILLUSTRATING TRAINING AND VALIDATION DATASET APPEARS
         self.next_slide(
@@ -306,6 +342,7 @@ class W5Matlab_slides(MOOCSlide):
             '''
         )
         self.play(FadeOut(hex1, hex2, train_des_label, valid_des_label))
+        mat_env.cursor.center()
         self.play(mat_env.FadeIn())
 
         self.play(mat_env.cursor.MoveAndClick(mat_env.SIDEMENU_))
@@ -430,7 +467,7 @@ class W5Matlab_slides(MOOCSlide):
         # Create the output plot
         random_samples_plot = Group()
         for i in range(1,5):
-            img = PixelImage(rf'Assets\W5\ex5{i}.png').scale_to_fit_height(0.25*FRAME_HEIGHT)
+            img = PixelImage(rf'Assets\W5\mnist\ex5{i}.png').scale_to_fit_height(0.25*FRAME_HEIGHT)
             lab = Text(f'Sample {i}', color=BLACK, weight=BOLD, font=SANS_SERIF_FONT, font_size=18).next_to(img, UP, buff=0.1)
             img.add(lab)
             random_samples_plot.add(img)
@@ -839,35 +876,20 @@ class W5Matlab_slides(MOOCSlide):
         filter_32_highlight = HighlightRectangle(cnn_architecture_code[3][21:23])
 
         # Create the many filters and convolution
-        filter_colors = [GOLD, RED, GREEN, ORANGE, PURPLE]
-        star_symbol = MathTex('*', color=BLACK, font_size=48)
-        equal_symbol = MathTex('=', color=BLACK, font_size=48)
-        im_side_length=0.75
-        grid_of_convolutions = Group( 
-            *[m for i in range(5) for m in [
-                new_input.copy().scale_to_fit_height(im_side_length),
-                star_symbol.copy(),
-                filter_kernel.copy().set_color(filter_colors[i]).scale_to_fit_height(im_side_length),
-                equal_symbol.copy(),
-                ms.conv_layer[i].copy().scale_to_fit_height(im_side_length)
-            ]]
-        ).arrange_in_grid(5,5, (1.25, 0.15))
-        vdots = VGroup(
-            MathTex(r'\vdots', color=BLACK, font_size=32).next_to(grid_of_convolutions[j], DOWN, buff=0.25)
-            for j in [-1, -3, -5]
-        )
-        grid_of_convolutions.add(vdots)
-        grid_of_convolutions.move_to(DSS.secondaryRect)
+        goc = GridOfConvolutions(
+            input_image=new_input, filtered_images=ms.conv_layer, kernel=filter_kernel, n_filters=5,
+            im_side_length=0.75, filter_colors=[GOLD, RED, GREEN, ORANGE, PURPLE]
+        ).move_to(DSS.secondaryRect)
 
         self.play(
             AnimationGroup(
                 FadeOut(kernel_braces, ms.conv_highlight_1, ms.input_highlight, new_giz1, new_giz2),
                 AnimationGroup(
-                    *[new_conv[i].animate.become(grid_of_convolutions[4+5*i]) for i in range(5)],
-                    new_input.animate.become(grid_of_convolutions[0]),
-                    ReplacementTransform(filter_kernel, grid_of_convolutions[2]),
+                    *[new_conv[i].animate.become(goc.filtered[i]) for i in range(5)],
+                    new_input.animate.become(goc.inputs[0]),
+                    ReplacementTransform(filter_kernel, goc.kernels[0]),
                 ),
-                FadeIn(*[grid_of_convolutions[i] for i in range(len(grid_of_convolutions)) if i not in [0,2, *[4+5*j for j in range(5)]]]),
+                FadeIn(goc.inputs[1:], goc.stars, goc.kernels[1:], goc.equals, goc.vdots, goc.numbers),
                 lag_ratio=0.5
             ),
         )
@@ -890,7 +912,7 @@ class W5Matlab_slides(MOOCSlide):
             Succession(
                 AnimationGroup(
                     FadeOut(  # FadeOut input images, *,=
-                        *[grid_of_convolutions[i] for i in range(len(grid_of_convolutions)) if i not in [4+5*j for j in range(5)]]
+                        *[mob for mob in goc.submobjects if mob not in [goc.inputs[0], *goc.filtered]]
                     ),
                     AnimationGroup(
                         new_input.animate.restore().move_to(phony_input_rect),
@@ -901,8 +923,6 @@ class W5Matlab_slides(MOOCSlide):
             )
         )
         self.play(ReplacementTransform(filter_32_highlight, padding_highlight))
-
-
 
         # SLIDE 45:  ===========================================================
         # RELU DISAPPEARS, RETURN REST TO CENTER
@@ -1648,7 +1668,7 @@ class W5Matlab_slides(MOOCSlide):
             return draw_plot(fig).scale_to_fit_height(0.25*FRAME_HEIGHT)
 
         predict_3_prob = np.array([0,0, 0.008, 0.99,0,0,0,0, 0.003,0])
-        predict_3_output = visualize_probabilites(r'Assets\W5\validation3.png', predict_3_prob)
+        predict_3_output = visualize_probabilites(r'Assets\W5\mnist\validation3.png', predict_3_prob)
 
         first_prediction_code.add_background_window(FullScreenBackground(WHITE))
         mat_env.clear()
@@ -1699,7 +1719,7 @@ class W5Matlab_slides(MOOCSlide):
             '''
         )
         predict_5_prob = np.array([0,0,0,0.373, 0.003, 0.569, 0.001, 0,0.048,0.005])
-        predict_5_output = visualize_probabilites(r'Assets\W5\validation5.png', predict_5_prob)
+        predict_5_output = visualize_probabilites(r'Assets\W5\mnist\validation5.png', predict_5_prob)
 
         mat_env.add_output_plot(predict_5_output)
         self.play(mat_env.Run())
