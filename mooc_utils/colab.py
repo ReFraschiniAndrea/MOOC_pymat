@@ -44,6 +44,7 @@ COLAB_FONT_SIZE = 12   # Font size for code in the editor
 GOOGLE_FONT = "Google Sans Flex"  # Font of the Colab UI
 _COLAB_UI_FONT_GRAY = "#1f1f1f"   # Color of the words in the Colab UI
 _COLAB_FILE_ICON = r"Assets\colab_file_icon.png"
+_COLAB_FOLDER_ICON = r"Assets\colab_folder_icon.png"
 _COLAB_UI_FONT_SIZE = 12
 
 # colab environment constants
@@ -118,13 +119,13 @@ class ColabCode(CustomCode):
                 ReplacementTransform(self.window, target.window, **kwargs),
                 ReplacementTransform(self.code, target.code, **kwargs),
                 # if we fade in the whole environment, also the new cell will appear before it should
-                FadeIn(colab_env.background, *cells_to_fade, outputs_to_fade, colab_env.cursor,
+                FadeIn(colab_env.background, *cells_to_fade, outputs_to_fade, *colab_env.sidemenu, colab_env.cursor,
                        target.gutter, target.playButton, **kwargs)
             )
         else:
             return AnimationGroup(
                 ReplacementTransform(self.code, target.code, **kwargs),
-                FadeIn(colab_env.background, *cells_to_fade,outputs_to_fade, colab_env.cursor,
+                FadeIn(colab_env.background, *cells_to_fade, outputs_to_fade, *colab_env.sidemenu, colab_env.cursor,
                        target.window, target.gutter, target.playButton, **kwargs)
             )
 
@@ -216,11 +217,10 @@ class ColabEnv():
     UPLOAD_ = _pixel2p(83, 206)
     PLUS_CODE_ = _pixel2p(210, 105)
     # Side menu COnstants
-    SIDE_MENU_FIRST_FILE_ = _pixel2p(89, 319)
+    SIDE_MENU_FIRST_FILE_ = _pixel2p(100, 332)
     SIDE_MENU_WIDTH_ = (425-50) * PIXEL
-    FILE_ICON_HEIGHT_ = 26 * PIXEL
-    FILE_TO_FILE_BUFFER_ = 16 * PIXEL
-    ICON_TO_FILE_NAME_BUFFER_ = 10 * PIXEL
+    FILE_TO_FILE_BUFFER_ = (16 + 26)* PIXEL
+    ICON_TO_FILE_NAME_BUFFER_ = (10 + 10)* PIXEL
 
 
     def __init__(self, scene: Scene, background=None):
@@ -309,7 +309,7 @@ class ColabEnv():
         return AnimationGroup(
             Transform(cell.code, target.code, **kwargs),
             Transform(cell.window, target.window, **kwargs),
-            FadeOut(self.background, *cells_to_fade, outputs_to_fade, cell.gutter, cell.playButton, self.cursor, **kwargs)
+            FadeOut(self.background, *cells_to_fade, outputs_to_fade, *self.sidemenu, cell.gutter, cell.playButton, self.cursor, **kwargs)
         )
     
     def Run(
@@ -363,14 +363,22 @@ class ColabEnv():
             return output
         return ApplyFunction(_focus, output, **kwargs)
     
-    def add_file_to_sidemenu(self, name: str, add_to_scene: bool = True):
-        file_icon = ImageMobject(_COLAB_FILE_ICON).scale_to_fit_height(self.FILE_ICON_HEIGHT_).set_resampling_algorithm(RESAMPLING_ALGORITHMS['nearest'])
+    def add_file_to_sidemenu(self, name: str, add_to_scene: bool = True, type='file'):
+        match type:
+            case 'file':
+                file_icon = ImageMobject(_COLAB_FILE_ICON)
+            case 'folder':
+                file_icon = ImageMobject(_COLAB_FOLDER_ICON)
+            case _:
+                raise ValueError()
+        file_icon.scale_to_fit_height(self.PIXEL*file_icon.pixel_array.shape[0]).set_resampling_algorithm(RESAMPLING_ALGORITHMS['nearest'])
+
         if len(self.sidemenu) == 0:
-            file_icon.move_to(self.SIDE_MENU_FIRST_FILE_, aligned_edge=UL)
+            file_icon.move_to(self.SIDE_MENU_FIRST_FILE_)
         else:
-            file_icon.next_to(self.sidemenu[-1][0], DOWN, buff=self.FILE_TO_FILE_BUFFER_)
+            file_icon.move_to(self.sidemenu[-1][0].get_center() + DOWN*self.FILE_TO_FILE_BUFFER_)
         file_name = Text(name, color=_COLAB_UI_FONT_GRAY, font=GOOGLE_FONT, font_size=_COLAB_UI_FONT_SIZE, weight=MEDIUM)
-        file_name.next_to(file_icon, RIGHT, buff= self.ICON_TO_FILE_NAME_BUFFER_)
+        file_name.next_to(file_icon.get_center(), RIGHT, buff=self.ICON_TO_FILE_NAME_BUFFER_)
         file_name.shift(DOWN*3*self.PIXEL)
 
         self.sidemenu.append(Group(file_icon, file_name))

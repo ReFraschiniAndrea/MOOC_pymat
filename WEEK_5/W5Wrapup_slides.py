@@ -243,7 +243,7 @@ class W5Wrapup_slides(MOOCSlide):
         dense_layer_highlight = ms.get_layer_highlight('dense', **layer_highlight_config)
         dense_layer_code_highlight = VGroup(
             HighlightRectangle(cnn_python_code[7]),
-            HighlightRectangle(cnn_matlab_code[7:9]),
+            HighlightRectangle(cnn_matlab_code[7:10]),
         )
         self.play(
             ReplacementTransform(flatten_layer_highlight, dense_layer_highlight),
@@ -319,7 +319,7 @@ class W5Wrapup_slides(MOOCSlide):
         )
 
         # SLIDE 13:  ===========================================================
-        # LABELED DATASET EXAMPLES APPEAR 
+        # MANY LABELED DATASET EXAMPLES APPEAR 
         self.next_slide(
             notes=
             '''Then, we perform training, using a large set of "examples":
@@ -327,46 +327,48 @@ class W5Wrapup_slides(MOOCSlide):
         )
         self.play(FadeOut(cnn_options_python_code, cnn_options_matlab_code, learning_rate_highligths))
 
-        phony_rects = VGroup(Square(0.2*FRAME_HEIGHT) for _ in range(20)).arrange_in_grid(4, 5, buff=(0.5, 0.2))
-        phony_rects[10:].shift(DOWN*0.5)
+        N_SHOWN_SAMPLES = 40
+        N_PER_ROW = 10; N_ROWS = N_SHOWN_SAMPLES//N_PER_ROW
+        phony_rects = VGroup(Square(0.08*FRAME_HEIGHT) for _ in range(N_SHOWN_SAMPLES*2)).arrange_in_grid(N_ROWS*2, N_PER_ROW, buff=(0.5, 0.2))
+        for i in range(1, N_ROWS):
+            phony_rects[2*N_PER_ROW*i:].shift(DOWN*0.5)
         phony_rects.center()
+        image_phony_rects = [p for i in range(N_ROWS) for p in phony_rects[N_PER_ROW*2*i:N_PER_ROW*(2*i+1)]]
+        label_phony_rects = [p for i in range(N_ROWS) for p in phony_rects[N_PER_ROW*(2*i+1):N_PER_ROW*(2*i+2)]]
 
-        training_sample = [
-            Group(
-                *[PixelImage(rf'Assets\W5\mnist\mnist{i}{j}.png').match_height(rect).move_to(rect)
-                  for i, rect in zip(range(10), [*phony_rects[:5], *phony_rects[10:15]])]
-            )
-            for j in range(3)
-        ]
+        # generate random order
+        np.random.seed(2)
+        sample_files = [f for f in os.listdir(r'Assets\W5\mnist') if f.startswith('mnist')]
+        sample_labels = [int(f[-6]) for f in sample_files]
+        _shuffled = np.arange(N_SHOWN_SAMPLES)
+        np.random.shuffle(_shuffled)
+        training_sample = Group(
+            *[PixelImage(os.path.join(r'Assets\W5\mnist', sample_files[i])).match_height(rect).move_to(rect)
+              for i, rect in zip(_shuffled, image_phony_rects)]
+        )
+
         ground_truth_config = {'stroke_color':GREEN_D,'fill_color':WHITE, 'text_kwargs':{'fill_color': GREEN_D, 'stroke_color':GREEN_D}}
         training_labels = VGroup(
-            DigitRecognitionOutputCircle(i, stroke_width=12, **ground_truth_config).match_height(rect).move_to(rect)
-            for i, rect in zip(range(10), [*phony_rects[5:10], *phony_rects[15:]])
+            DigitRecognitionOutputCircle(sample_labels[i], stroke_width=6, **ground_truth_config).match_height(rect).move_to(rect)
+            for i, rect in zip(_shuffled, label_phony_rects)
         )
         sample_rects = VGroup(
             SurroundingRectangle(im, lab, color=BLUE, stroke_width=4, buff=0.15, corner_radius=0.25)
-            for i in range(2) for im, lab in zip(phony_rects[10*i:10*i+5], phony_rects[10*i+5:10*i+10])
+            for im, lab in zip(image_phony_rects, label_phony_rects)
         )
 
         self.play(
-            FadeIn(training_sample[0], run_time=1, lag_ratio=1),
-            FadeIn(training_labels, run_time=1, lag_ratio=1),
-            Create(sample_rects, run_time=1, lag_ratio=1)
-        )
-        for j in range(1,3):
-            self.wait(0.25)
-            self.play(
+            Succession(
                 Succession(
-                    Succession(
-                        training_sample[0][i].animate(run_time=0).become(training_sample[j][i]),
-                        Wait(0.1)
-                    )
-                    for i in range(10)
+                    FadeIn(sample, label, rect, run_time=0),
+                    Wait(1.5/40)
                 )
+                for sample, label, rect in zip(training_sample, training_labels, sample_rects)
             )
+        )
 
         # SLIDE 14:  ===========================================================
-        # 
+        # PYTON AN DMATLAB TRAINING CODE APPEAR
         self.next_slide(
             notes=
             '''in Python, with tensor flow, we use the method "fit", and in

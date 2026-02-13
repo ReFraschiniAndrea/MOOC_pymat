@@ -182,10 +182,9 @@ class W5Matlab_slides(MOOCSlide):
             for j in range(3)
         ]
 
-        self.add(mnist_title)
         self.play(
             FadeIn(training_sample[0], run_time=1, lag_ratio=1),
-            Write(mnist_title)
+            Write(mnist_title, run_time=1)
         )
         self.wait(0.5)
         self.play(
@@ -662,7 +661,7 @@ class W5Matlab_slides(MOOCSlide):
         full_layers_highlight = ms.get_layer_highlight('all', **layer_highlight_config)
 
         self.play(cnn_architecture_code.TypeLetterbyLetter(lines=[0,1,10]))
-        self.play(ShowPassingFlash(full_layers_highlight, run_time=2, time_width=0.3))
+        self.play(ShowPassingFlash(full_layers_highlight, rate_func=smoothstep, run_time=3, time_width=0.3))
 
         # SLIDE 31:  ===========================================================
         # INPUTLAYER LINE WRITTEN
@@ -1444,7 +1443,6 @@ class W5Matlab_slides(MOOCSlide):
         )
 
         training_code.add_background_window(FullScreenBackground(WHITE))
-        self.wait(0.5)
         self.play(training_code.IntoMatlab(mat_env))
         self.wait(0.5)
         mat_env.add_cell()

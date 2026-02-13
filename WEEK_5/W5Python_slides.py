@@ -160,108 +160,10 @@ class W5Python_slides(MOOCSlide):
         self.play(cl_env.Run(cell=0, new_cursor=False))
 
         # SLIDE 08:  ===========================================================
-        # COLAB ENV FADES OUT
-        # GRAPHIC ILLUSTRATING TRAINING AND VALIDATION DATASET APPEARS
-        self.next_slide(
-            notes=
-            ''' We will use two separate datasets: one for training the network,
-            called training dataset,
-            '''
-        )
-        self.play(cl_env.FadeOut())
-
-        hex1 = RegularPolygon(n=6, stroke_color=GRAY, stroke_width=12, fill_color=BLUE, fill_opacity=0.4).round_corners(0.1)
-        hex2 = RegularPolygon(n=6, stroke_color=GRAY, stroke_width=12, fill_color=ORANGE, fill_opacity=0.4).round_corners(0.1)
-        VGroup(hex1, hex2).arrange(buff=0.2).scale_to_fit_width(0.8*FRAME_WIDTH)
-        dataset_text_config = {'color':BLACK, 'font':SANS_SERIF_FONT, 'weight': BOLD, 'alignment':'center'}
-        train_dat_label = Paragraph('Training\nDataset',   **dataset_text_config, font_size=48).move_to(hex1)
-        hex1.add(train_dat_label)
-        valid_dat_label = Paragraph('Validation\nDataset', **dataset_text_config, font_size=48).move_to(hex2)
-        hex2.add(valid_dat_label)
-        train_des_label = Paragraph('To train\nthe model', **dataset_text_config, font_size=40).next_to(hex1, DOWN, buff=0.35)
-        valid_des_label = Paragraph('To evaluate\nmodel performance', **dataset_text_config, font_size=40).next_to(hex2, DOWN, buff=0.35)
-        
-        self.play(
-            Succession(
-                FadeIn(hex1),
-                FadeIn(train_des_label)
-            )
-        )
-
-        # SLIDE 09:  ===========================================================
-        # BACK TO COLAB, OPENS SIDE MENU, CLICK UPLOAD BUTTON, ZIP FILE APPEARS
-        self.next_slide(
-            notes=
-            '''and one for evaluating its performance, called validation
-            dataset. Let's start with the training dataset.
-            '''
-        )
-        self.play(
-            Succession(
-                FadeIn(hex2),
-                FadeIn(valid_des_label)
-            )
-        )
-
-        # SLIDE 10:  ===========================================================
-        # BACK TO COLAB, OPENS SIDE MENU, CLICK UPLOAD BUTTON, ZIP FILE APPEARS
-        self.next_slide(
-            notes=
-            '''We upload the zip file digits_dataset.zip in the colab folder. To
-            do so, we click Files on the left tab, select upload, and pick the
-            zip file from your disk.
-            '''
-        )
-        [mob.set_z_index(-10) for mob in self.mobjects]
-        self.play(cl_env.FadeIn())
-        self.remove(hex1, hex2, train_des_label, valid_des_label)
-
-        self.play(
-            Succession(
-                Wait(0.2),
-                ApplyMethod(hand_cursor.move_to, cl_env.UPLOAD_),
-                hand_cursor.Click()
-            )
-        )
-        cl_env.add_file_to_sidemenu('digits_dataset.zip')
-
-        # SLIDE 11:  ===========================================================
-        # CLICK NEW CELL, OUT OF COLAB, WRITE UNZIP COMMAND
-        # INTO COLAB, RUN CELL
-        self.next_slide(
-            notes=
-            '''Once done, we extract it with the command unzip by running this
-            cell.
-            '''
-        )
-        unzip_code = ColabCode(
-            r'''
-            !unzip -q "/content/digits_dataset.zip" -d /content/digits_dataset
-            '''
-        )
-        # Close sidemenu
-        self.play(cl_env.cursor.MoveAndClick(cl_env.MENU_))
-        cl_env.set_image(r'Assets\W5\colabCNN.png')
-        cl_env.get_cell(0).shift(LEFT*cl_env.SIDE_MENU_WIDTH_)
-        cl_env.clear_sidemenu()
-        # New cell
-        self.play(hand_cursor.MoveAndClick(cl_env.PLUS_CODE_))
-        cl_env.add_cell()
-        self.wait(0.3)
-        self.play(cl_env.OutofColab(cell=1))
-        # Unzip code
-        self.play(unzip_code.TypeLetterbyLetter())
-        self.wait(1)
-        unzip_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
-        cl_env.remove_cell()
-        self.play(unzip_code.IntoColab(cl_env))
-        self.play(cl_env.Run(cell=1, new_cursor=False))
-
-        # SLIDE 12:  ===========================================================
         # MNIST DATASET ILLUSTRATION: IMAGES APPEAR
         self.next_slide(
             notes=
-            '''The folder contains images from the open-source MNIST dataset,
+            '''The dataset we will use is the open-source MNIST dataset,
             '''
         )
         self.play(cl_env.FadeOut())
@@ -274,10 +176,9 @@ class W5Python_slides(MOOCSlide):
             for j in range(3)
         ]
 
-        self.add(mnist_title)
         self.play(
             FadeIn(training_sample[0], run_time=1, lag_ratio=1),
-            Write(mnist_title)
+            Write(mnist_title, run_time=1)
         )
         self.wait(0.5)
         self.play(
@@ -300,7 +201,7 @@ class W5Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 13:  ===========================================================
+        # SLIDE 09:  ===========================================================
         # DIMENSIONS WITH BRACES APPEAR
         self.next_slide(
             notes=
@@ -331,7 +232,7 @@ class W5Python_slides(MOOCSlide):
             )
         )
 
-        # SLIDE 14:  ===========================================================
+        # SLIDE 10:  ===========================================================
         # LABEL WRITTEN UNDER THE IMAGES
         self.next_slide(
             notes=
@@ -380,7 +281,105 @@ class W5Python_slides(MOOCSlide):
             )
         )
 
+        # SLIDE 11:  ===========================================================
+        # COLAB ENV FADES OUT
+        # GRAPHIC ILLUSTRATING TRAINING AND VALIDATION DATASET APPEARS
+        self.next_slide(
+            notes=
+            ''' We will use two separate datasets: one for training the network,
+            called training dataset,
+            '''
+        )
+        self.play(FadeOut(*[mob for mob in self.mobjects]))
+
+        hex1 = RegularPolygon(n=6, stroke_color=GRAY, stroke_width=12, fill_color=BLUE, fill_opacity=0.4).round_corners(0.1)
+        hex2 = RegularPolygon(n=6, stroke_color=GRAY, stroke_width=12, fill_color=ORANGE, fill_opacity=0.4).round_corners(0.1)
+        VGroup(hex1, hex2).arrange(buff=0.2).scale_to_fit_width(0.8*FRAME_WIDTH)
+        dataset_text_config = {'color':BLACK, 'font':SANS_SERIF_FONT, 'weight': BOLD, 'alignment':'center'}
+        train_dat_label = Paragraph('Training\nDataset',   **dataset_text_config, font_size=48).move_to(hex1)
+        hex1.add(train_dat_label)
+        valid_dat_label = Paragraph('Validation\nDataset', **dataset_text_config, font_size=48).move_to(hex2)
+        hex2.add(valid_dat_label)
+        train_des_label = Paragraph('To train\nthe model', **dataset_text_config, font_size=40).next_to(hex1, DOWN, buff=0.35)
+        valid_des_label = Paragraph('To evaluate\nmodel performance', **dataset_text_config, font_size=40).next_to(hex2, DOWN, buff=0.35)
+        
+        self.play(
+            Succession(
+                FadeIn(hex1),
+                FadeIn(train_des_label)
+            )
+        )
+
+        # SLIDE 12:  ===========================================================
+        # BACK TO COLAB, OPENS SIDE MENU, CLICK UPLOAD BUTTON, ZIP FILE APPEARS
+        self.next_slide(
+            notes=
+            '''and one for evaluating its performance, called validation
+            dataset.
+            '''
+        )
+        self.play(
+            Succession(
+                FadeIn(hex2),
+                FadeIn(valid_des_label)
+            )
+        )
+
+        # SLIDE 13:  ===========================================================
+        # BACK TO COLAB, OPENS SIDE MENU, CLICK UPLOAD BUTTON, ZIP FILE APPEARS
+        self.next_slide(
+            notes=
+            '''We need to upload the file digits_dataset.zip containing the
+            MNIST dataset in the colab folder. To do so, we click Files on the
+            left tab, select upload, and pick the zip file from your disk.
+            '''
+        )
+        [mob.set_z_index(-10) for mob in self.mobjects]
+        self.play(cl_env.FadeIn())
+        self.remove(hex1, hex2, train_des_label, valid_des_label)
+
+        self.play(
+            Succession(
+                Wait(0.2),
+                ApplyMethod(hand_cursor.move_to, cl_env.UPLOAD_),
+                hand_cursor.Click()
+            )
+        )
+        cl_env.add_file_to_sidemenu('digits_dataset.zip', type='folder')
+
+        # SLIDE 14:  ===========================================================
+        # CLICK NEW CELL, OUT OF COLAB, WRITE UNZIP COMMAND
+        # INTO COLAB, RUN CELL
+        # UNZIPPED FILES APPEAR IN SIDEMENU
+        self.next_slide(
+            notes=
+            '''Once done, we extract it with the command unzip by running this
+            cell.
+            '''
+        )
+        unzip_code = ColabCode(
+            r'''
+            !unzip -q "/content/digits_dataset.zip" -d /content/digits_dataset
+            '''
+        )
+        # New cell
+        self.play(cl_env.cursor.MoveAndClick(cl_env.PLUS_CODE_))
+        cl_env.add_cell()
+        self.wait(0.3)
+        self.play(cl_env.OutofColab(cell=1))
+        # Unzip code
+        self.play(unzip_code.TypeLetterbyLetter())
+        self.wait(1)
+        # into colab: target cell already in the right place
+        cl_env.remove_cell()
+        unzip_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
+        self.play(unzip_code.IntoColab(cl_env))
+        self.play(cl_env.Run(cell=1, new_cursor=False))
+        cl_env.add_file_to_sidemenu('training_set', type='folder')
+        cl_env.add_file_to_sidemenu('validation_set', type='folder')
+
         # SLIDE 15:  ===========================================================
+        # CLOSE SIDEMENU; NEW CELL, OUT OF COLAB
         # TRAINING PATH WRITTEN
         self.next_slide(
             notes=
@@ -388,10 +387,16 @@ class W5Python_slides(MOOCSlide):
             folder containing the images and their labels.
             '''
         )
-        dummy_rect = FullScreenBackground(COLAB_LIGHTGRAY).set_z_index(1)
-        self.play(FadeIn(dummy_rect))
-        [self.remove(mob) for mob in self.mobjects if mob is not dummy_rect]
-        dummy_rect.set_z_index(-1)
+        # Close sidemenu
+        self.play(cl_env.cursor.MoveAndClick(cl_env.MENU_))
+        cl_env.set_image(r'Assets\W5\colabCNN.png')
+        cl_env.get_cells().shift(LEFT*cl_env.SIDE_MENU_WIDTH_)
+        cl_env.clear_sidemenu()
+        # New cell, out of colab
+        self.play(cl_env.cursor.MoveAndClick(cl_env.PLUS_CODE_))
+        cl_env.add_cell()
+        self.wait(0.3)
+        self.play(cl_env.OutofColab(cell=-1))
 
         load_training_code = ColabCode(
             r'''
@@ -484,7 +489,7 @@ class W5Python_slides(MOOCSlide):
             '''
             '''
         )
-        load_training_code.add_background_window(dummy_rect)
+        load_training_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
         cl_env.clear()
         self.play(load_training_code.IntoColab(cl_env))
 
@@ -606,9 +611,8 @@ class W5Python_slides(MOOCSlide):
         # FOCUS ON OUTPUT
         self.next_slide(
             notes=
-            '''we see that the training dataset contains 9,990 images
-            made of 28x28 pixels, while the validation dataset contains 1000
-            images.
+            '''we see that the training dataset contains 9,990 images made of
+            28x28 pixels, while the validation dataset contains 1000 images.
             '''
         )
         dataset_sizes_code.add_background_window(FullScreenBackground(COLAB_LIGHTGRAY))
@@ -739,7 +743,7 @@ class W5Python_slides(MOOCSlide):
         layer_highlight_config = {'height':5.5, 'v_buff':0.25, 'h_buff':0.15}
         full_layers_highlight = ms.get_layer_highlight('all', **layer_highlight_config)
         self.play(cnn_architecture_code.TypeLetterbyLetter(lines=[1,8]))
-        self.play(ShowPassingFlash(full_layers_highlight, run_time=2, time_width=0.3))
+        self.play(ShowPassingFlash(full_layers_highlight, rate_func=smoothstep, run_time=3, time_width=0.3))
 
         # SLIDE 34:  ===========================================================
         # KEARS.INPUT WRITTEN
@@ -1326,7 +1330,7 @@ class W5Python_slides(MOOCSlide):
         )
 
         # SLIDE 58:  ===========================================================
-        # LEARNABLE COEFFICIENT FADES OUT
+        # LEARNABLE COEFFICIENT BROUGHT OUT
         # KEARS OPTMIZER LINE WRITTEN
         self.next_slide(
             notes=
@@ -1335,6 +1339,14 @@ class W5Python_slides(MOOCSlide):
             learning rate of 0.01.
             '''
         )
+        DSS.reset()
+        DSS.add_empty_side_obj(FRAME_HEIGHT)
+        DSS.hard_bring_in()
+        self.add(DSS)
+        DSS.add_side_obj(VGroup(LCNNscheme, training_title))
+        self.play(DSS.bringOut())
+        self.remove(training_title, LCNNscheme)
+
         compile_cnn_code = ColabCode(
             r'''
             # Select the optmizer
@@ -1349,15 +1361,8 @@ class W5Python_slides(MOOCSlide):
             CNN.summary()
             '''
         )
-        dummy_rect = FullScreenBackground(COLAB_LIGHTGRAY).set_z_index(0)
 
-        self.play(
-            Succession(
-                FadeIn(dummy_rect),
-                compile_cnn_code.TypeLetterbyLetter(lines=[0,1]),
-            )
-        )
-        self.remove(training_title, LCNNscheme)
+        self.play(compile_cnn_code.TypeLetterbyLetter(lines=[0,1]))
 
         # SLIDE 59:  ===========================================================
         # COMPILE CNN LINES WRITTEN
@@ -1418,7 +1423,7 @@ class W5Python_slides(MOOCSlide):
         )
 
         cl_env.clear_cursor()
-        compile_cnn_code.add_background_window(dummy_rect.set_z_index(-1))
+        compile_cnn_code.add_background_window(DSS.mainRect.suspend_updating())
         self.play(compile_cnn_code.IntoColab(cl_env))
         cl_env.get_cell(-1).add_output(
             KerasCNNSummary().scale_to_fit_height(3)
